@@ -1,1 +1,241 @@
 
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mini GTA 2D — Cidade do Crime</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#101319;color:white;font-family:Arial,sans-serif;text-align:center}
+header{padding:12px;background:#191f29;border-bottom:2px solid #e9b42e}
+h1{margin:0;font-size:23px;color:#f5c542}
+p{margin:7px 0;font-size:13px;color:#c7ced9}
+#gamebox{position:relative;width:min(100%,960px);margin:auto}
+canvas{display:block;width:100%;height:auto;background:#555d50;image-rendering:pixelated}
+#hud{position:absolute;top:10px;left:10px;text-align:left;background:#111d;color:white;padding:10px 13px;border:1px solid #647080;border-radius:7px;font-size:13px;line-height:1.8;pointer-events:none}
+#msg{position:absolute;top:12px;right:10px;background:#111d;padding:9px;border-radius:6px;font-size:12px;max-width:45%}
+#controls{padding:12px;color:#d8deea;font-size:13px;line-height:1.8}
+button{background:#e8b632;color:#171717;border:0;padding:10px 18px;font-weight:bold;border-radius:5px;cursor:pointer;margin:4px}
+</style>
+</head>
+<body>
+<header>
+<h1>🚘 MINI GTA 2D</h1>
+<p>CIDADE DO CRIME • Mundo aberto • Fuja da polícia!</p>
+</header>
+<div id="gamebox">
+<canvas id="game" width="960" height="600"></canvas>
+<div id="hud"></div>
+<div id="msg">Missão: colete 5 notas de dinheiro 💵</div>
+</div>
+<div id="controls">
+<b>⌨️ Controles:</b> WASD / setas = mover ou dirigir · E = entrar/sair do carro · Shift = correr<br>
+<b>📱 Celular:</b> toque nos botões abaixo para jogar.
+<div>
+<button id="up">▲</button><br>
+<button id="left">◀</button><button id="down">▼</button><button id="right">▶</button>
+<button id="action">ENTRAR / SAIR</button>
+</div>
+<button onclick="restart()">REINICIAR JOGO</button>
+</div>
+<script>
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+const hud=document.getElementById("hud");
+const msg=document.getElementById("msg");
+const W=2000,H=1600;
+const keys={};
+let player,cars,cash,cops,money,wanted,mission,gameOver;
+const roadsX=[100,450,800,1150,1500,1850];
+const roadsY=[100,380,660,940,1220,1500];
+const buildings=[];
+for(let i=0;i<roadsX.length-1;i++){
+ for(let j=0;j<roadsY.length-1;j++){
+  let x=roadsX[i]+65,y=roadsY[j]+55;
+  buildings.push({x,y,w:220,h:170,c:["#777b83","#6b737b","#827b72","#646d75"][(i*3+j)%4]});
+ }
+}
+function restart(){
+ player={x:150,y:150,a:0,speed:0,inCar:null};
+ cars=[
+  {x:250,y:145,a:0,color:"#e84b45"},
+  {x:520,y:310,a:Math.PI/2,color:"#35a8e0"},
+  {x:890,y:410,a:0,color:"#e8c544"},
+  {x:1220,y:600,a:Math.PI/2,color:"#d5d8dc"},
+  {x:1600,y:850,a:0,color:"#bd6be0"},
+  {x:750,y:1100,a:Math.PI/2,color:"#4dcc8b"}
+ ];
+ cash=[];
+ for(let i=0;i<15;i++){
+  let rx=roadsX[Math.floor(Math.random()*roadsX.length)];
+  let ry=roadsY[Math.floor(Math.random()*roadsY.length)];
+  cash.push({x:rx+(Math.random()-.5)*45,y:ry+(Math.random()-.5)*45,taken:false});
+ }
+ cops=[];
+ money=0;wanted=0;mission=0;gameOver=false;
+ msg.textContent="Missão: colete 5 notas de dinheiro 💵";
+}
+restart();
+document.addEventListener("keydown",e=>{
+ keys[e.key.toLowerCase()]=true;
+ if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "].includes(e.key))e.preventDefault();
+ if(e.key.toLowerCase()==="e")toggleCar();
+ if(e.key.toLowerCase()==="r")restart();
+});
+document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
+function toggleCar(){
+ if(player.inCar){
+  const c=player.inCar;
+  player.x=c.x+Math.cos(c.a+Math.PI/2)*35;
+  player.y=c.y+Math.sin(c.a+Math.PI/2)*35;
+  player.inCar=null;player.speed=0;
+ }else{
+  let nearest=null,dist=55;
+  for(const c of cars){
+   let d=Math.hypot(c.x-player.x,c.y-player.y);
+   if(d<dist){dist=d;nearest=c}
+  }
+  if(nearest){player.inCar=nearest;player.speed=0;wanted=Math.min(5,wanted+1)}
+ }
+}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function collides(x,y,r){
+ return buildings.some(b=>x+r>b.x&&x-r<b.x+b.w&&y+r>b.y&&y-r<b.y+b.h);
+}
+function update(){
+ if(gameOver)return;
+ const up=keys.w||keys.arrowup||keys[" "];
+ const down=keys.s||keys.arrowdown;
+ const left=keys.a||keys.arrowleft;
+ const right=keys.d||keys.arrowright;
+ if(player.inCar){
+  let c=player.inCar;
+  if(up)player.speed+=.15;
+  if(down)player.speed-=.12;
+  player.speed*=.975;
+  player.speed=clamp(player.speed,-3.2,5.5);
+  if(left)c.a-=.045*(player.speed>=0?1:-1);
+  if(right)c.a+=.045*(player.speed>=0?1:-1);
+  let nx=c.x+Math.cos(c.a)*player.speed;
+  let ny=c.y+Math.sin(c.a)*player.speed;
+  if(!collides(nx,ny,17)){c.x=nx;c.y=ny}else{player.speed*=-.35}
+  c.x=clamp(c.x,20,W-20);c.y=clamp(c.y,20,H-20);
+  player.x=c.x;player.y=c.y;
+ }else{
+  let dx=0,dy=0;
+  if(up)dy--;
+  if(down)dy++;
+  if(left)dx--;
+  if(right)dx++;
+  if(dx||dy){
+   const len=Math.hypot(dx,dy);
+   const speed=keys.shift?3.5:2.4;
+   dx=dx/len*speed;dy=dy/len*speed;
+   if(!collides(player.x+dx,player.y,10))player.x+=dx;
+   if(!collides(player.x,player.y+dy,10))player.y+=dy;
+  }
+ }
+ player.x=clamp(player.x,10,W-10);player.y=clamp(player.y,10,H-10);
+ for(const c of cash){
+  if(!c.taken&&Math.hypot(player.x-c.x,player.y-c.y)<25){
+   c.taken=true;money+=100;mission++;
+   msg.textContent=mission>=5?"Missão concluída! +$500 🏆":"Dinheiro coletado! "+mission+"/5 notas";
+   if(mission===5)wanted=Math.max(0,wanted);
+  }
+ }
+ if(wanted>0&&Math.random()<.012&&cops.length<Math.min(wanted,5)){
+  cops.push({x:player.x+(Math.random()-.5)*500,y:player.y-350,a:Math.PI/2});
+ }
+ for(const cop of cops){
+  const dx=player.x-cop.x,dy=player.y-cop.y;
+  const a=Math.atan2(dy,dx);cop.a=a;
+  const sp=1.4+wanted*.25;
+  const nx=cop.x+Math.cos(a)*sp,ny=cop.y+Math.sin(a)*sp;
+  if(!collides(nx,ny,13)){cop.x=nx;cop.y=ny}
+  if(Math.hypot(player.x-cop.x,player.y-cop.y)<24){
+   if(player.inCar){player.speed*=.6}
+   else {money=Math.max(0,money-100);player.x=150;player.y=150;wanted=Math.max(0,wanted-1);cops=[];msg.textContent="A polícia pegou você! Perdeu $100."}
+  }
+ }
+ if(wanted>0&&cops.length===0&&Math.random()<.003)wanted--;
+}
+function rect(x,y,w,h,color){ctx.fillStyle=color;ctx.fillRect(x,y,w,h)}
+function drawCar(c){
+ ctx.save();ctx.translate(c.x,c.y);ctx.rotate(c.a);
+ rect(-20,-11,40,22,c.color);
+ rect(-12,-9,17,18,"#b9d9e8");
+ rect(7,-9,7,18,"#24323e");
+ rect(-15,-13,8,4,"#111");
+ rect(8,-13,8,4,"#111");
+ rect(-15,9,8,4,"#111");
+ rect(8,9,8,4,"#111");
+ rect(17,-7,3,5,"#fff4b0");rect(17,3,3,5,"#fff4b0");
+ ctx.restore();
+}
+function draw(){
+ ctx.clearRect(0,0,canvas.width,canvas.height);
+ const camX=clamp(player.x-canvas.width/2,0,W-canvas.width);
+ const camY=clamp(player.y-canvas.height/2,0,H-canvas.height);
+ ctx.save();ctx.translate(-camX,-camY);
+ rect(0,0,W,H,"#5b7057");
+ // ruas
+ for(const x of roadsX){rect(x-50,0,100,H,"#343941");rect(x-2,0,4,H,"#d7c77b");}
+ for(const y of roadsY){rect(0,y-42,W,84,"#343941");rect(0,y-2,W,4,"#d7c77b");}
+ // faixas
+ ctx.fillStyle="#d5d8db";
+ for(const x of roadsX)for(let y=0;y<H;y+=55)rect(x-3,y,6,25,"#d5d8db");
+ for(const y of roadsY)for(let x=0;x<W;x+=55)rect(x,y-3,25,6,"#d5d8db");
+ // prédios e parques
+ for(const b of buildings){
+  rect(b.x+7,b.y+8,b.w,b.h,"#292d31");
+  rect(b.x,b.y,b.w,b.h,b.c);
+  rect(b.x+9,b.y+9,b.w-18,b.h-18,"#535b62");
+  for(let x=b.x+20;x<b.x+b.w-10;x+=35)
+   for(let y=b.y+20;y<b.y+b.h-10;y+=35)
+    rect(x,y,13,12,"#b7c7c5");
+  rect(b.x+5,b.y+5,b.w-10,5,"#aeb3b8");
+ }
+ // dinheiro
+ for(const c of cash)if(!c.taken){
+  ctx.fillStyle="#42ef83";ctx.fillRect(c.x-9,c.y-6,18,12);
+  ctx.fillStyle="#135c35";ctx.font="bold 12px Arial";ctx.fillText("$",c.x-4,c.y+4);
+ }
+ for(const c of cars)drawCar(c);
+ // policiais
+ for(const c of cops){
+  ctx.save();ctx.translate(c.x,c.y);ctx.rotate(c.a);
+  rect(-17,-10,34,20,"#2865e8");rect(-9,-8,14,16,"#9fd4f1");
+  rect(-5,-13,10,5,"#ff3030");rect(-5,8,10,5,"#4a82ff");
+  ctx.restore();
+ }
+ // jogador
+ if(!player.inCar){
+  ctx.fillStyle="#f4cf9b";ctx.beginPath();ctx.arc(player.x,player.y-5,7,0,Math.PI*2);ctx.fill();
+  rect(player.x-6,player.y,12,14,"#f2a33a");
+  rect(player.x-7,player.y+12,5,8,"#20232a");rect(player.x+2,player.y+12,5,8,"#20232a");
+ }else{
+  ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(player.x,player.y,25,0,Math.PI*2);ctx.strokeStyle="#f9db63";ctx.stroke();
+ }
+ ctx.restore();
+ hud.innerHTML="💵 Dinheiro: $"+money+"<br>🚓 Procurado: "+"★".repeat(wanted)+"☆".repeat(5-wanted)+"<br>🚗 "+(player.inCar?"Dirigindo":"A pé")+"<br>📍 "+Math.floor(player.x)+", "+Math.floor(player.y);
+}
+function loop(){update();draw();requestAnimationFrame(loop)}
+loop();
+// Controles de toque
+function bindButton(id,keysList){
+ const el=document.getElementById(id);
+ const press=e=>{e.preventDefault();keysList.forEach(k=>keys[k]=true)};
+ const release=e=>{e.preventDefault();keysList.forEach(k=>keys[k]=false)};
+ el.addEventListener("pointerdown",press);
+ el.addEventListener("pointerup",release);
+ el.addEventListener("pointerleave",release);
+ el.addEventListener("pointercancel",release);
+}
+bindButton("up",["w"]);bindButton("down",["s"]);
+bindButton("left",["a"]);bindButton("right",["d"]);
+document.getElementById("action").addEventListener("click",toggleCar);
+</script>
+</body>
+</html>
+
