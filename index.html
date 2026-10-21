@@ -1,1 +1,270 @@
 
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Classroom of the Elite — Elite Academy</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;background:#080d17;color:#edf2fa;
+ font-family:Arial,sans-serif;min-height:100vh;
+ background-image:radial-gradient(ellipse at top,#182943 0%,#080d17 65%);
+}
+header{
+ padding:24px 16px;text-align:center;
+ border-bottom:1px solid #30425a;background:#0b1220;
+}
+header small{color:#d9ae62;letter-spacing:4px}
+h1{margin:12px 0 6px;font-size:clamp(25px,5vw,42px)}
+header p{color:#91a2ba;margin:0}
+.container{max-width:950px;margin:auto;padding:20px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat,.panel{
+ background:#111b2b;border:1px solid #2a3b53;
+ border-radius:10px;padding:16px;
+}
+.stat span{font-size:12px;color:#95a9c3;text-transform:uppercase}
+.stat strong{display:block;color:#e4bd73;font-size:25px;margin-top:8px}
+.bar{height:7px;background:#26354a;border-radius:10px;margin-top:12px;overflow:hidden}
+.bar div{height:100%;background:#d7ad65;transition:width .3s}
+.panel{margin-top:16px}
+h2{font-size:20px;margin:0 0 12px}
+.muted{color:#9baec5;line-height:1.65}
+.badge{display:inline-block;padding:6px 10px;border-radius:5px;
+ background:#382d1e;color:#f0c77b;font-size:12px;font-weight:bold}
+#story{font-size:16px;line-height:1.8;white-space:pre-line}
+button{
+ width:100%;text-align:left;padding:14px;margin-top:10px;
+ background:#17253a;color:#edf2fa;border:1px solid #344b68;
+ border-radius:7px;font-size:15px;cursor:pointer;transition:.2s
+}
+button:hover{background:#243b58;border-color:#d5ad69;transform:translateY(-1px)}
+button:disabled{opacity:.4;cursor:not-allowed}
+.primary{background:#6f5228;border-color:#cba45f;text-align:center;font-weight:bold}
+.primary:hover{background:#8a6835}
+.log{font-size:13px;line-height:1.8;color:#a8bbd1}
+.log div{border-bottom:1px solid #25364b;padding:7px 0}
+.ranking{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.class-card{padding:12px 5px;text-align:center;border-radius:7px;background:#192538;border:1px solid #30435b}
+.class-card strong{display:block;font-size:23px;margin:6px}
+.class-card small{color:#9bacc1}
+.active{border-color:#d8b56e;background:#352b1d}
+footer{text-align:center;color:#637790;padding:24px;font-size:12px}
+@media(max-width:520px){.stats{grid-template-columns:1fr}.ranking{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<header>
+ <small>ADVANCED NURTURING HIGH SCHOOL</small>
+ <h1>CLASSROOM OF THE ELITE</h1>
+ <p>O talento não é nada sem estratégia.</p>
+</header>
+
+<main class="container">
+ <div class="stats">
+  <div class="stat"><span>Pontos privados</span><strong id="points">1000</strong><div class="bar"><div id="pointBar" style="width:10%"></div></div></div>
+  <div class="stat"><span>Reputação</span><strong id="rep">10</strong><div class="bar"><div id="repBar" style="width:10%"></div></div></div>
+  <div class="stat"><span>Dia escolar</span><strong id="day">1 / 10</strong><div class="bar"><div id="dayBar" style="width:10%"></div></div></div>
+ </div>
+
+ <section class="panel">
+  <span class="badge" id="classBadge">TURMA D</span>
+  <h2 style="margin-top:12px">Ranking das turmas</h2>
+  <div class="ranking" id="ranking"></div>
+  <p class="muted" id="rankText">Sua turma começa na última posição. Mude esse destino.</p>
+ </section>
+
+ <section class="panel">
+  <h2 id="chapter">Capítulo 1 — Um novo começo</h2>
+  <div id="story">Você chegou à Advanced Nurturing High School, uma instituição onde os alunos desfrutam de liberdade quase absoluta.
+
+Mas há uma regra que todos aprendem rapidamente: tudo tem um preço.
+
+Seu objetivo é simples: sobreviver aos testes, acumular pontos e alcançar a Classe A.</div>
+  <div id="choices"></div>
+ </section>
+
+ <section class="panel">
+  <h2>Relatório estratégico</h2>
+  <div class="log" id="log"><div>Dia 1: Você entrou na Classe D.</div><div>Objetivo: alcançar a Classe A.</div></div>
+ </section>
+ <button class="primary" onclick="restart()">Recomeçar a jornada</button>
+</main>
+<footer>Jogo de fã inspirado em Classroom of the Elite · Projeto HTML independente</footer>
+
+<script>
+let points=1000, rep=10, day=1, chapter=0, finished=false;
+let scores={A:4000,B:3000,C:2000,D:1000};
+let history=[];
+const $=id=>document.getElementById(id);
+
+const scenes=[
+{
+title:"Capítulo 1 — O primeiro teste",
+story:"O professor anuncia uma avaliação surpresa. Alguns alunos querem estudar juntos; outros pretendem guardar tudo para si.\n\nSua primeira decisão definirá sua reputação.",
+choices:[
+{text:"Estudar sozinho e analisar cada questão.",p:300,r:5,s:80,msg:"Sua análise cuidadosa impressionou o professor."},
+{text:"Formar um grupo e dividir o conhecimento.",p:150,r:10,s:120,msg:"Você ganhou aliados e a confiança da turma."},
+{text:"Descobrir quais questões cairão na prova.",p:450,r:-3,s:40,msg:"Você encontrou informações úteis, mas despertou suspeitas."}
+]},
+{
+title:"Capítulo 2 — O acordo secreto",
+story:"Um aluno da Classe C oferece informações sobre a próxima prova em troca de pontos privados.\n\nVocê não sabe se ele está falando a verdade.",
+choices:[
+{text:"Aceitar o acordo e pagar 200 pontos.",p:-200,r:3,s:180,msg:"As informações eram úteis, mas custaram caro."},
+{text:"Negociar: pagar apenas 100 pontos.",p:-100,r:5,s:120,msg:"Você negociou um preço melhor para sua turma."},
+{text:"Recusar e investigar por conta própria.",p:100,r:4,s:70,msg:"Você evitou a armadilha e descobriu uma pista."}
+]},
+{
+title:"Capítulo 3 — A prova de lógica",
+story:"Na tela aparecem três portas. Apenas uma permite avançar.\n\nPorta 1: 'A saída está atrás da porta 2.'\nPorta 2: 'A saída não está aqui.'\nPorta 3: 'A saída está aqui.'\n\nApenas UMA dessas afirmações é verdadeira. Qual porta você escolhe?",
+choices:[
+{text:"Porta 1",p:350,r:8,s:100,msg:"Correto! A saída estava atrás da porta 1? Não: a afirmação da porta 1 é falsa, a da porta 2 é verdadeira e a da porta 3 é falsa quando a saída está na porta 1? Reavalie sua lógica." ,quiz:1},
+{text:"Porta 2",p:100,r:2,s:40,msg:"Você arriscou uma resposta, mas não resolveu o enigma.",quiz:2},
+{text:"Porta 3",p:100,r:2,s:40,msg:"Você confiou na afirmação mais óbvia e perdeu a oportunidade.",quiz:3}
+]},
+{
+title:"Capítulo 4 — Traição na Classe D",
+story:"Você descobre que alguém está compartilhando a estratégia da sua turma com um rival. Seus colegas querem uma resposta imediata.",
+choices:[
+{text:"Investigar discretamente antes de acusar alguém.",p:250,r:8,s:100,msg:"Sua cautela revelou o verdadeiro espião."},
+{text:"Confrontar o suspeito na frente de todos.",p:-100,r:-5,s:-60,msg:"A acusação dividiu a turma e prejudicou a confiança."},
+{text:"Usar informações falsas para testar o traidor.",p:350,r:5,s:130,msg:"A armadilha funcionou. Você identificou o vazamento."}
+]},
+{
+title:"Capítulo 5 — Exame especial",
+story:"O exame especial está chegando. Você pode investir seus recursos em preparação, alianças ou numa estratégia arriscada.",
+choices:[
+{text:"Treinar intensamente para a prova.",p:-150,r:5,s:220,msg:"Sua preparação aumentou as chances da turma."},
+{text:"Construir alianças com alunos de outras turmas.",p:-100,r:12,s:150,msg:"Você criou uma rede de contatos valiosa."},
+{text:"Apostar tudo numa estratégia surpresa.",p:500,r:-5,s:60,msg:"Você ganhou recursos, mas perdeu parte da confiança."}
+]},
+{
+title:"Capítulo 6 — O desafio de matemática",
+story:"Um professor apresenta o problema: se 5 alunos resolvem 5 questões em 5 minutos, quanto tempo 20 alunos levariam para resolver 20 questões, mantendo o mesmo ritmo individual?",
+choices:[
+{text:"5 minutos",p:350,r:8,s:150,msg:"Resposta correta! Você entendeu a taxa individual de trabalho.",correct:true},
+{text:"20 minutos",p:100,r:1,s:30,msg:"Incorreto. Mais alunos podem resolver mais questões ao mesmo tempo.",correct:false},
+{text:"100 minutos",p:50,r:0,s:0,msg:"Você confundiu o número de alunos com o tempo necessário.",correct:false}
+]},
+{
+title:"Capítulo 7 — Uma proposta da Classe A",
+story:"Um representante da Classe A oferece ajuda para o próximo exame. Em troca, quer conhecer a estratégia da sua turma.",
+choices:[
+{text:"Compartilhar apenas informações não essenciais.",p:200,r:6,s:100,msg:"Você manteve o controle da negociação."},
+{text:"Recusar e preparar um plano independente.",p:-50,r:4,s:180,msg:"Sua independência fortaleceu a estratégia da Classe D."},
+{text:"Entregar toda a estratégia em troca de pontos.",p:450,r:-10,s:-100,msg:"O acordo trouxe recursos, mas comprometeu sua turma."}
+]},
+{
+title:"Capítulo 8 — Festival esportivo",
+story:"O festival esportivo oferece uma oportunidade para conquistar prestígio. Você precisa decidir como liderar sua equipe.",
+choices:[
+{text:"Montar equipes equilibradas e treinar.",p:-100,r:10,s:200,msg:"O trabalho em equipe trouxe excelentes resultados."},
+{text:"Concentrar os melhores atletas em uma prova.",p:200,r:2,s:100,msg:"Sua aposta deu resultados moderados."},
+{text:"Sabotar os rivais e correr riscos.",p:400,r:-12,s:-120,msg:"O escândalo prejudicou a imagem da sua turma."}
+]},
+{
+title:"Capítulo 9 — O último plano",
+story:"Falta apenas um dia para o resultado final. Seus rivais estão preparados e qualquer erro pode custar sua promoção.",
+choices:[
+{text:"Usar pontos para reforçar o desempenho da turma.",p:-300,r:8,s:250,msg:"Você investiu seus recursos no objetivo coletivo."},
+{text:"Negociar uma trégua temporária com a Classe B.",p:-100,r:7,s:180,msg:"A trégua reduziu os riscos e abriu novas possibilidades."},
+{text:"Jogar sozinho para maximizar seus pontos.",p:500,r:-8,s:40,msg:"Você priorizou o ganho individual em detrimento da equipe."}
+]},
+{
+title:"Capítulo 10 — O julgamento final",
+story:"A diretoria anuncia o último exame. O resultado definirá a posição da Classe D e seu futuro na escola.",
+choices:[
+{text:"Apresentar um plano lógico e cooperativo.",p:300,r:10,s:300,msg:"Seu plano convenceu os avaliadores."},
+{text:"Usar os recursos acumulados para uma última vantagem.",p:-250,r:4,s:240,msg:"Sua preparação valeu a pena."},
+{text:"Arriscar tudo em uma jogada psicológica.",p:650,r:-6,s:100,msg:"Sua ousadia rendeu pontos, mas deixou dúvidas."}
+]}
+];
+
+function renderRanking(){
+ let ordered=Object.entries(scores).sort((a,b)=>b[1]-a[1]);
+ $("ranking").innerHTML=ordered.map(([c,v],i)=>
+ `<div class="class-card ${c==="D"?"active":""}"><small>${i+1}º LUGAR</small><strong>Classe ${c}</strong><small>${Math.max(0,v)} pts</small></div>`
+ ).join("");
+ $("rankText").textContent="A Classe D tem "+scores.D+" pontos de turma. Faltam "+Math.max(0,scores.A-scores.D)+" pontos para alcançar a pontuação atual da Classe A.";
+}
+function renderStats(){
+ points=Math.max(0,Math.min(99999,points));
+ rep=Math.max(0,Math.min(100,rep));
+ $("points").textContent=points.toLocaleString("pt-BR");
+ $("rep").textContent=rep;
+ $("day").textContent=Math.min(day,10)+" / 10";
+ $("pointBar").style.width=Math.min(100,points/100)+"%";
+ $("repBar").style.width=rep+"%";
+ $("dayBar").style.width=Math.min(100,day*10)+"%";
+ $("classBadge").textContent="TURMA "+(scores.D>=scores.A?"D":"D — EM ASCENSÃO");
+ renderRanking();
+}
+function log(msg){
+ history.unshift("Dia "+day+": "+msg);
+ $("log").innerHTML=history.slice(0,8).map(x=>"<div>"+x+"</div>").join("");
+}
+function renderScene(){
+ if(day>10){ending();return}
+ const scene=scenes[day-1];
+ $("chapter").textContent=scene.title;
+ $("story").textContent=scene.story;
+ $("choices").innerHTML="";
+ scene.choices.forEach((c,i)=>{
+  const b=document.createElement("button");
+  b.textContent=(i+1)+". "+c.text;
+  b.onclick=()=>choose(c);
+  $("choices").appendChild(b);
+ });
+ renderStats();
+}
+function choose(c){
+ if(finished)return;
+ let gainP=c.p,gainR=c.r,gainS=c.s;
+ // Questões de lógica: somente a porta 1 não é correta.
+ // Com a saída na porta 1, as três frases seriam F, V, F.
+ // Logo, a Porta 1 é a resposta correta.
+ if(c.quiz){
+  if(c.quiz===1){gainP=350;gainR=8;gainS=100;log("Você resolveu a questão por lógica.")}
+  else {gainP=100;gainR=1;gainS=20;log("O enigma revelou uma falha na sua análise.")}
+ }else if(c.correct===true){
+  gainP=350;gainR=8;gainS=150;
+ }else if(c.correct===false){
+  gainP=80;gainR=0;gainS=20;
+ }
+ points+=gainP;rep+=gainR;scores.D+=gainS;
+ log(c.msg);
+ day++;
+ renderStats();
+ renderScene();
+}
+function ending(){
+ finished=true;
+ let pos=Object.entries(scores).sort((a,b)=>b[1]-a[1]).findIndex(x=>x[0]==="D")+1;
+ $("chapter").textContent="Resultado final — Sua jornada";
+ $("story").textContent=
+ "Os resultados foram anunciados. Sua posição final é "+pos+"º lugar entre as quatro turmas.\n\n"+
+ (pos===1?"INCRÍVEL! A Classe D alcançou o topo! Você provou que estratégia e trabalho em equipe podem mudar tudo.":
+ pos===2?"Excelente desempenho! A Classe D chegou ao segundo lugar. A Classe A está ao alcance.":
+ pos===3?"A jornada foi difícil. A Classe D melhorou, mas ainda há rivais pela frente.":
+ "A Classe D continua sob pressão. Você aprendeu que cada escolha tem consequências.")+
+ "\n\nPontos privados finais: "+points.toLocaleString("pt-BR")+
+ "\nReputação: "+rep+"/100"+
+ "\n\nQuer tentar uma estratégia diferente?";
+ $("choices").innerHTML='<button class="primary" onclick="restart()">Jogar novamente</button>';
+ renderStats();
+ log("Jornada concluída. Classe D: "+scores.D+" pontos.");
+}
+function restart(){
+ points=1000;rep=10;day=1;finished=false;history=[];
+ scores={A:4000,B:3000,C:2000,D:1000};
+ $("log").innerHTML="<div>Dia 1: Você entrou na Classe D.</div>";
+ renderScene();
+}
+renderScene();
+</script>
+</body>
+</html>
+
