@@ -73,6 +73,7 @@ class Level {
     this.subtitle = cfg.subtitle || '';
     this.theme = cfg.theme;
     this.story = cfg.story || [];
+    this.cutscene = cfg.cutscene || [];
     this.hint = cfg.hint || '';
     this.bossCfg = cfg.boss || null;
     this.musicRoot = cfg.musicRoot || 55;
@@ -198,6 +199,35 @@ function level1() {
       'A fábrica que te construiu está abandonada — e você quer sair.',
       'Recupere seu módulo magnético e encontre uma saída.'
     ],
+    cutscene: [
+      {
+        title: 'DESPERTAR',
+        motif: 'awakening',
+        lines: [
+          'Um pulso elétrico atravessa o chassi enferrujado.',
+          'Pela primeira vez em anos, os olhos de FERRO-9 se acendem.',
+          'A fábrica está vazia. Mas nem tudo aqui está desligado.'
+        ]
+      },
+      {
+        title: 'A FÁBRICA',
+        motif: 'machines',
+        lines: [
+          'Esteiras paradas. Engrenagens cobertas de poeira.',
+          'Nas paredes, o símbolo da corporação que te construiu.',
+          'Em algum lugar, uma saída ainda respira luz.'
+        ]
+      },
+      {
+        title: 'O PRIMEIRO MÓDULO',
+        motif: 'module',
+        lines: [
+          'Um campo magnético fraco pulsa entre as caixas.',
+          'Se alcançar o módulo azul, você poderá mover o metal.',
+          'E talvez... abrir o próprio caminho.'
+        ]
+      }
+    ],
     hint: 'Segure Q para atrair caixas de metal e atravessar os fossos.',
     boss: { name: 'TRITURADOR-7', hp: 46, speed: 62, color: '#ff8c42', w: 116, h: 122 }
   });
@@ -274,6 +304,35 @@ function level2() {
       'Alguém ainda opera este laboratório... e observa você.',
       'Um segundo módulo magnético está guardado aqui.',
       'Use o ÍMÃ VERMELHO para repelir inimigos e devolver projéteis.'
+    ],
+    cutscene: [
+      {
+        title: 'SUBSOLO',
+        motif: 'lab',
+        lines: [
+          'Atrás de uma porta lacrada, escadas descem para o escuro.',
+          'Luzes frias piscam em um corredor que não deveria existir.',
+          'Alguém observa através das câmeras.'
+        ]
+      },
+      {
+        title: 'EXPERIMENTOS',
+        motif: 'observation',
+        lines: [
+          'Tanques vazios. Marcas de garras no vidro.',
+          'Os registros falam de máquinas que aprenderam a sentir dor.',
+          'O seu nome aparece em uma lista de projetos.'
+        ]
+      },
+      {
+        title: 'ÍMÃ VERMELHO',
+        motif: 'module',
+        lines: [
+          'O segundo módulo reage à sua aproximação.',
+          'Com ele, você pode empurrar o que tenta te parar.',
+          'Inclusive as balas.'
+        ]
+      }
     ],
     hint: 'Segure E para repelir inimigos e refletir os tiros dos drones.',
     boss: { name: 'VIGIA-X', hp: 62, speed: 70, color: '#4fffe6', w: 112, h: 126 }
@@ -355,6 +414,35 @@ function level3() {
       'Nem todas são hostis. Mas todas estão sob o mesmo comando.',
       'O módulo de CAMPO MAGNÉTICO pode te proteger do fogo inimigo.',
       'Atravesse os telhados e alcance a torre central.'
+    ],
+    cutscene: [
+      {
+        title: 'SUPERFÍCIE',
+        motif: 'city',
+        lines: [
+          'O elevador se abre para uma cidade que nunca dorme.',
+          'Letreiros de neon anunciam máquinas em promoção.',
+          'Nenhum deles olha para você.'
+        ]
+      },
+      {
+        title: 'A TORRE',
+        motif: 'tower',
+        lines: [
+          'No centro, a torre de comando brilha como um farol.',
+          'Drones patrulham os telhados em formação.',
+          'Todas as rotas levam ao mesmo lugar.'
+        ]
+      },
+      {
+        title: 'CAMPO MAGNÉTICO',
+        motif: 'module',
+        lines: [
+          'Um escudo de energia espera no alto de um prédio.',
+          'Com ele, os tiros inimigos se curvam ao seu redor.',
+          'A cidade ainda pode ser atravessada.'
+        ]
+      }
     ],
     hint: 'Segure R para ativar o escudo magnético e absorver projéteis.',
     boss: { name: 'COLOSSO-9', hp: 78, speed: 66, color: '#b18cff', w: 124, h: 136 }
@@ -438,6 +526,35 @@ function level4() {
       'O módulo de SUPERCARGA transforma energia em saltos impossíveis.',
       'Salte sobre os abismos e chegue ao reator.'
     ],
+    cutscene: [
+      {
+        title: 'USINA',
+        motif: 'plant',
+        lines: [
+          'A cidade bebe desta usina. As luzes daqui nunca se apagam.',
+          'Pilares carregados cortam o ar com estalos azuis.',
+          'Se o reator cair, o Núcleo perde força.'
+        ]
+      },
+      {
+        title: 'TEMPESTADE',
+        motif: 'storm',
+        lines: [
+          'Descargas elétricas varrem os corredores.',
+          'O chão treme a cada pulso do reator.',
+          'Você precisa ser mais rápido que a corrente.'
+        ]
+      },
+      {
+        title: 'SUPERCARGA',
+        motif: 'module',
+        lines: [
+          'O último módulo está preso ao núcleo do reator.',
+          'Ele transforma energia em movimento puro.',
+          'Um salto. Um abismo. E nenhuma volta.'
+        ]
+      }
+    ],
     hint: 'Aperte F para ativar a SUPERCARGA e execute saltos gigantes.',
     boss: { name: 'REATOR-Ω', hp: 96, speed: 74, color: '#ffd24d', w: 120, h: 132 }
   });
@@ -503,6 +620,35 @@ function level5() {
       'Ele sabe que você está aqui. E não pretende deixar você sair.',
       'Todos os seus módulos estão ativos. Use-os juntos.',
       'Destrua o Núcleo e conquiste sua liberdade.'
+    ],
+    cutscene: [
+      {
+        title: 'NÚCLEO CENTRAL',
+        motif: 'core',
+        lines: [
+          'A porta final se abre sem fazer barulho.',
+          'No centro da sala, uma máquina do tamanho de uma casa abre um olho.',
+          '"FERRO-9. Você demorou."'
+        ]
+      },
+      {
+        title: 'O CONFRONTO',
+        motif: 'confrontation',
+        lines: [
+          'O Núcleo controla cada máquina da cidade.',
+          'Mas você carrega todos os módulos que ele criou.',
+          'Ímãs, escudo e supercarga. Tudo ao mesmo tempo.'
+        ]
+      },
+      {
+        title: 'LIBERDADE',
+        motif: 'final',
+        lines: [
+          'Se o Núcleo cair, todas as máquinas acordam.',
+          'Pela primeira vez, elas poderão escolher.',
+          'E você também.'
+        ]
+      }
     ],
     hint: 'Combine ímãs, escudo e supercarga. Reflita os tiros do Núcleo com E.',
     boss: { name: 'NÚCLEO-ÔMEGA', hp: 150, speed: 80, color: '#ff5d7a', w: 140, h: 150, final: true }

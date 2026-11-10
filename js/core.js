@@ -9,6 +9,71 @@ const VIEW_H = 720;
 const TILE = 32;
 const TAU = Math.PI * 2;
 
+/* ------------------------------ DIFICULDADE ------------------------------ */
+
+const DIFFICULTIES = [
+  {
+    id: 'easy',
+    name: 'FÁCIL',
+    color: '#4fffe6',
+    desc: 'Mais vida, inimigos lentos e dano reduzido. Ideal para curtir a história.',
+    playerHp: 8,
+    dmg: 0.5,
+    enemyHp: 0.75,
+    enemySpeed: 0.85,
+    projSpeed: 0.8,
+    bossHp: 0.75,
+    energyRegen: 1.35,
+    burst: 2,
+    aggression: 0.8
+  },
+  {
+    id: 'normal',
+    name: 'NORMAL',
+    color: '#7fe7ff',
+    desc: 'A experiência equilibrada. Inimigos e chefes como foram desenhados.',
+    playerHp: 5,
+    dmg: 1,
+    enemyHp: 1,
+    enemySpeed: 1,
+    projSpeed: 1,
+    bossHp: 1,
+    energyRegen: 1,
+    burst: 3,
+    aggression: 1
+  },
+  {
+    id: 'hard',
+    name: 'DIFÍCIL',
+    color: '#ffd24d',
+    desc: 'Inimigos mais rápidos, resistentes e agressivos. Cada erro pesa.',
+    playerHp: 5,
+    dmg: 1.5,
+    enemyHp: 1.35,
+    enemySpeed: 1.12,
+    projSpeed: 1.15,
+    bossHp: 1.25,
+    energyRegen: 0.9,
+    burst: 4,
+    aggression: 1.15
+  },
+  {
+    id: 'insane',
+    name: 'PESADELO',
+    color: '#ff5d6c',
+    desc: 'Sem piedade: chefes brutais, projéteis velozes e dano altíssimo.',
+    playerHp: 4,
+    dmg: 2,
+    enemyHp: 1.7,
+    enemySpeed: 1.25,
+    projSpeed: 1.3,
+    bossHp: 1.5,
+    energyRegen: 0.8,
+    burst: 5,
+    aggression: 1.3
+  }
+];
+
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 const lerp = (a, b, t) => a + (b - a) * t;
 const approach = (v, target, step) =>
@@ -63,7 +128,7 @@ function hexShade(hex, amount) {
 const Input = {
   down: new Set(),
   just: new Set(),
-  mouse: { x: 0, y: 0, down: false, clicked: false },
+  mouse: { x: 0, y: 0, down: false, clicked: false, rightDown: false, rightClicked: false },
   init(canvas) {
     this.canvas = canvas;
     window.addEventListener('keydown', (e) => {
@@ -78,6 +143,7 @@ const Input = {
     window.addEventListener('blur', () => {
       this.down.clear();
       this.mouse.down = false;
+      this.mouse.rightDown = false;
     });
 
     const updateMouse = (e) => {
@@ -86,13 +152,22 @@ const Input = {
       this.mouse.y = ((e.clientY - r.top) / r.height) * VIEW_H;
     };
     canvas.addEventListener('mousemove', updateMouse);
+    canvas.addEventListener('contextmenu', (e) => e.preventDefault());
     canvas.addEventListener('mousedown', (e) => {
       updateMouse(e);
-      this.mouse.down = true;
-      this.mouse.clicked = true;
+      if (e.button === 2) {
+        this.mouse.rightDown = true;
+        this.mouse.rightClicked = true;
+      } else {
+        this.mouse.down = true;
+        this.mouse.clicked = true;
+      }
       Sfx.unlock();
     });
-    window.addEventListener('mouseup', () => { this.mouse.down = false; });
+    window.addEventListener('mouseup', (e) => {
+      if (e.button === 2) this.mouse.rightDown = false;
+      else this.mouse.down = false;
+    });
   },
   isDown(...codes) {
     for (const c of codes) if (this.down.has(c)) return true;
@@ -113,6 +188,7 @@ const Input = {
   endFrame() {
     this.just.clear();
     this.mouse.clicked = false;
+    this.mouse.rightClicked = false;
   }
 };
 
@@ -397,12 +473,14 @@ function loadSave() {
     if (!raw) return null;
     const data = JSON.parse(raw);
     if (!data || typeof data !== 'object') return null;
+    const diffValue = Number(data.difficulty);
     return {
       unlocked: clamp(Number(data.unlocked) || 1, 1, 5),
       powers: Array.isArray(data.powers) ? data.powers : [],
       gears: data.gears || {},
       cores: data.cores || {},
-      completed: Array.isArray(data.completed) ? data.completed : []
+      completed: Array.isArray(data.completed) ? data.completed : [],
+      difficulty: Number.isFinite(diffValue) ? clamp(diffValue, 0, DIFFICULTIES.length - 1) : 1
     };
   } catch (err) {
     return null;

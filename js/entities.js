@@ -37,6 +37,12 @@ class Player {
     this.magnetSfx = 0;
     this.landSquash = 0;
     this.prevVy = 0;
+    this.attackCd = 0;
+    this.attackTimer = 0;
+    this.shotCd = 0;
+    this.combo = 0;
+    this.comboTimer = 0;
+    this.recoil = 0;
   }
 
   get cx() { return this.x + this.w / 2; }
@@ -62,6 +68,12 @@ class Player {
     this.energyLock = Math.max(0, this.energyLock - dt);
     this.landSquash = Math.max(0, this.landSquash - dt * 4);
     this.superTimer = Math.max(0, this.superTimer - dt);
+    this.attackCd = Math.max(0, this.attackCd - dt);
+    this.attackTimer = Math.max(0, this.attackTimer - dt);
+    this.shotCd = Math.max(0, this.shotCd - dt);
+    this.comboTimer = Math.max(0, this.comboTimer - dt);
+    this.recoil = Math.max(0, this.recoil - dt);
+    if (this.comboTimer <= 0) this.combo = 0;
 
     /* ------- movimento ------- */
     const left = Input.isDown('ArrowLeft', 'KeyA');
@@ -133,6 +145,13 @@ class Player {
       });
     }
 
+    /* ------- combate ------- */
+    const meleePressed = Input.pressed('KeyJ') || Input.mouse.clicked;
+    if (meleePressed && this.attackCd <= 0) this.meleeAttack(game);
+
+    const shotPressed = Input.pressed('KeyK') || Input.mouse.rightClicked;
+    if (shotPressed && this.shotCd <= 0) this.shootBolt(game);
+
     if (drain > 0) {
       this.energy = Math.max(0, this.energy - drain * dt);
       if (this.energy <= 0) {
@@ -140,7 +159,8 @@ class Player {
         this.attract = this.repel = this.shield = false;
       }
     } else {
-      this.energy = Math.min(this.maxEnergy, this.energy + 11 * dt);
+      const regen = game.diff ? game.diff.energyRegen : 1;
+      this.energy = Math.min(this.maxEnergy, this.energy + 11 * regen * dt);
     }
 
     /* ------- som contínuo dos ímãs ------- */
@@ -182,6 +202,101 @@ class Player {
     }
   }
 
+  meleeAttack(game) {
+    this.attackCd = 0.34;
+    this.attackTimer = 0.2;
+    this.combo = this.comboTimer > 0 ? Math.min(3, this.combo + 1) : 1;
+    this.comboTimer = 0.9;
+
+    const reach = 54 + (this.combo === 3 ? 8 : 0);
+    const box = {
+      x: this.face > 0 ? this.x + this.w - 6 : this.x - reach + 6,
+      y: this.y + 2,
+      w: reach,
+      h: this.h - 4
+    };
+    const baseDamage = 2 + (this.combo === 3 ? 2 : 0) + (this.superActive ? 2 : 0);
+    const bossDamage = 4 + (this.combo === 3 ? 2 : 0) + (this.superActive ? 2 : 0);
+    let hit = false;
+
+    for (const e of game.enemies) {
+      if (e.dead || !aabb(box, e)) continue;
+      e.hurt(baseDamage, game);
+      const dir = Math.sign((e.x + e.w / 2) - this.cx) || this.face;
+      e.mx = clamp((e.mx || 0) + dir * 440, -720, 720);
+      e.my = clamp((e.my || 0) - 180, -720, 720);
+      hit = true;
+    }
+
+    if (game.boss && !game.boss.dead && aabb(box, game.boss)) {
+      game.boss.takeDamage(bossDamage, game);
+      hit = true;
+    }
+
+    for (const c of game.crates) {
+      if (!aabb(box, c)) continue;
+      c.vx += this.face * 320;
+      c.vy = Math.min(c.vy, -140);
+      c.magnetTimer = 0.25;
+      c.glow = 1;
+      hit = true;
+    }
+
+    for (const pr of game.projectiles) {
+      if (pr.dead || pr.owner !== 'enemy') continue;
+      if (!circleRect(pr.x, pr.y, pr.r, box)) continue;
+      pr.owner = 'player';
+      pr.color = '#66e0ff';
+      pr.damage = 2;
+      pr.bossDamage = 5;
+      pr.vx = -pr.vx * 1.15;
+      pr.vy = -pr.vy * 1.15;
+      pr.life = 4;
+      hit = true;
+    }
+
+    const sx = this.face > 0 ? this.x + this.w + 8 : this.x - 8;
+    FX.burst(sx, this.y + this.h * 0.45, hit ? 12 : 6, {
+      color: this.combo === 3 ? '#ffd24d' : '#7fe7ff',
+      speedMax: hit ? 260 : 140,
+      lifeMax: 0.4,
+      shape: 'line'
+    });
+    Sfx.tone(this.combo === 3 ? 300 : 240, 0.08, {
+      type: 'square', vol: 0.07, slide: this.combo === 3 ? 240 : 90
+    });
+    if (hit) {
+      game.shake(0.16 + this.combo * 0.03);
+      Sfx.noise(0.08, 0.06, { freq: 1100 });
+    }
+  }
+
+  shootBolt(game) {
+    this.shotCd = 0.3;
+    if (this.energy < 8) {
+      this.shotCd = 0.24;
+      game.toast('ENERGIA INSUFICIENTE', '#ff8fa5', 0.9);
+      Sfx.tone(120, 0.08, { type: 'square', vol: 0.04, slide: -40 });
+      return;
+    }
+    this.energy -= 8;
+    this.recoil = 0.12;
+    const dir = this.face;
+    const px = this.cx + dir * 22;
+    const py = this.cy - 2;
+    game.projectiles.push(new Projectile(px, py, dir * 780, 0, 'player', {
+      color: '#7fe7ff',
+      r: 6,
+      damage: 2,
+      bossDamage: 4,
+      life: 1.1
+    }));
+    Sfx.tone(620, 0.08, { type: 'square', vol: 0.06, slide: 220 });
+    FX.burst(px, py, 7, {
+      color: '#7fe7ff', speedMax: 180, lifeMax: 0.3, angle: dir > 0 ? 0 : Math.PI, spread: 0.9
+    });
+  }
+
   collideCrate(c) {
     if (!aabb(this, c)) return;
 
@@ -209,6 +324,8 @@ class Player {
       Sfx.tone(420, 0.1, { type: 'sine', vol: 0.06, slide: -120 });
       return;
     }
+    const diff = this.game.diff;
+    if (diff && diff.dmg !== 1) amount = Math.max(1, Math.round(amount * diff.dmg));
     this.hp -= amount;
     this.invuln = 1.25;
     this.hurtFlash = 0.25;
@@ -361,6 +478,43 @@ class Player {
       ctx.globalAlpha = 1;
     }
 
+    if (this.attackTimer > 0) {
+      const prog = 1 - this.attackTimer / 0.2;
+      const cx = x + this.w / 2;
+      const cy = y + 20;
+      const color = this.combo === 3 ? '#ffd24d' : '#7fe7ff';
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = Math.max(0, 1 - prog) * 0.95;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 5 - prog * 2;
+      const base = this.face > 0 ? -1.1 : Math.PI - 1.1;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 32 + prog * 20, base + prog * 1.4, base + 1.5 + prog * 1.4);
+      ctx.stroke();
+      ctx.globalAlpha *= 0.5;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 24 + prog * 16, base + prog * 1.4, base + 1.5 + prog * 1.4);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    if (this.recoil > 0) {
+      const mx = x + (this.face > 0 ? this.w + 10 : -10);
+      const my = y + 19;
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = this.recoil / 0.12;
+      ctx.fillStyle = '#7fe7ff';
+      ctx.shadowColor = '#7fe7ff';
+      ctx.shadowBlur = 16;
+      ctx.beginPath();
+      ctx.arc(mx, my, 7, 0, TAU);
+      ctx.fill();
+      ctx.restore();
+    }
+
     if (this.hurtFlash > 0) {
       ctx.globalCompositeOperation = 'lighter';
       ctx.globalAlpha = this.hurtFlash * 2;
@@ -465,6 +619,7 @@ class Crate {
 
 class Walker {
   constructor(x, y, game) {
+    const diff = (game && game.diff) || DIFFICULTIES[1];
     this.game = game;
     this.w = 34;
     this.h = 30;
@@ -477,44 +632,117 @@ class Walker {
     this.onGround = false;
     this.hitWall = 0;
     this.dir = -1;
-    this.hp = 2;
+    this.hp = Math.max(1, Math.round(2 * diff.enemyHp));
+    this.maxHp = this.hp;
+    this.speed = 70 * diff.enemySpeed;
+    this.aggro = diff.aggression;
     this.flash = 0;
     this.dead = false;
     this.anim = 0;
+    this.state = 'patrol';
+    this.stateTimer = 0;
+    this.attackCd = rand(1.2, 2.2);
+    this.alerted = false;
   }
 
   update(dt, game) {
     if (this.dead) return;
     this.flash = Math.max(0, this.flash - dt);
+    this.attackCd = Math.max(0, this.attackCd - dt);
+    this.stateTimer = Math.max(0, this.stateTimer - dt);
     this.mx *= Math.pow(0.05, dt);
     this.my *= Math.pow(0.05, dt);
 
     this.vy = Math.min(this.vy + 1900 * dt, 1000);
-    this.vx = this.dir * 70 + this.mx;
-    this.vy += this.my;
 
+    const p = game.player;
+    const dx = p ? p.cx - (this.x + this.w / 2) : 0;
+    const dy = p ? p.cy - (this.y + this.h / 2) : 0;
+    const d = p ? Math.hypot(dx, dy) : 9999;
+    this.alerted = !!p && !p.dead && d < 360;
+
+    if (this.state === 'patrol') {
+      this.vx = this.dir * this.speed + this.mx;
+      if (this.alerted) {
+        this.state = 'chase';
+        this.dir = dx > 0 ? 1 : -1;
+      }
+    } else if (this.state === 'chase') {
+      if (!this.alerted) {
+        this.state = 'patrol';
+        this.vx = this.dir * this.speed + this.mx;
+      } else {
+        this.dir = dx > 0 ? 1 : -1;
+        this.vx = this.dir * this.speed * 1.7 + this.mx;
+        if (d < 125 && Math.abs(dy) < 82 && this.attackCd <= 0) {
+          this.state = 'windup';
+          this.stateTimer = 0.34 / this.aggro;
+          this.vx = 0;
+          Sfx.tone(150, 0.12, { type: 'sawtooth', vol: 0.05, slide: 80 });
+          FX.burst(this.x + this.w / 2, this.y + this.h / 2, 5, {
+            color: '#ff5a3c', speedMax: 80, lifeMax: 0.3
+          });
+        }
+      }
+    } else if (this.state === 'windup') {
+      this.vx = approach(this.vx, 0, 3000 * dt);
+      if (this.stateTimer <= 0) {
+        this.state = 'lunge';
+        this.stateTimer = 0.3;
+        this.vx = this.dir * 480;
+        this.attackCd = 2.4 / this.aggro;
+        Sfx.tone(220, 0.1, { type: 'square', vol: 0.06, slide: -80 });
+      }
+    } else if (this.state === 'lunge') {
+      this.vx = approach(this.vx, this.dir * 480, 1400 * dt);
+      if (this.stateTimer <= 0) {
+        this.state = 'recover';
+        this.stateTimer = 0.42;
+      }
+    } else if (this.state === 'recover') {
+      this.vx = approach(this.vx, 0, 2400 * dt);
+      if (this.stateTimer <= 0) this.state = this.alerted ? 'chase' : 'patrol';
+    }
+
+    this.vy += this.my;
     const speed = Math.abs(this.mx);
     moveBody(this, game.level, dt);
 
     if (this.hitWall) {
       if (speed > 250) this.hurt(1, game);
+      if (this.state === 'lunge') {
+        this.state = 'recover';
+        this.stateTimer = 0.35;
+        game.shake(0.14);
+        FX.burst(this.x + this.w / 2, this.y + this.h / 2, 8, {
+          color: '#ffb066', speedMax: 160, lifeMax: 0.4
+        });
+      }
       this.dir *= -1;
       this.mx = 0;
       this.vx = 0;
     }
 
     if (this.onGround) {
-      const aheadX = this.dir > 0 ? this.x + this.w + 3 : this.x - 3;
-      if (!game.level.isSolid(aheadX, this.y + this.h + 6)) this.dir *= -1;
+      const aheadX = this.dir > 0 ? this.x + this.w + 4 : this.x - 4;
+      if (!game.level.isSolid(aheadX, this.y + this.h + 8)) {
+        if (this.state === 'patrol') this.dir *= -1;
+        else this.vx = 0;
+      }
     }
 
     if (game.level.hazardRect(this.x + 2, this.y + 2, this.w - 4, this.h - 4)) {
       this.hurt(3, game);
     }
 
-    const p = game.player;
     if (p && !p.dead && aabb(this, p)) {
-      p.hurt(1, this.x + this.w / 2);
+      const dmg = this.state === 'lunge' ? 2 : 1;
+      p.hurt(dmg, this.x + this.w / 2);
+      if (this.state === 'lunge') {
+        this.state = 'recover';
+        this.stateTimer = 0.3;
+        this.vx *= -0.25;
+      }
     }
 
     if (this.y > game.level.heightPx + 120) {
@@ -541,6 +769,8 @@ class Walker {
     const x = this.x - cam.x;
     const y = this.y - cam.y;
     const bob = Math.sin(this.anim * 6) * 1.5;
+    const charging = this.state === 'windup';
+    const lunging = this.state === 'lunge';
 
     ctx.save();
     ctx.fillStyle = 'rgba(0,0,0,0.3)';
@@ -548,7 +778,7 @@ class Walker {
     ctx.ellipse(x + 17, y + 31, 16, 4, 0, 0, TAU);
     ctx.fill();
 
-    ctx.fillStyle = this.flash > 0 ? '#ffffff' : '#8a4b2a';
+    ctx.fillStyle = this.flash > 0 ? '#ffffff' : charging ? '#c0392b' : '#8a4b2a';
     roundRect(ctx, x + 2, y + 8 + bob, 30, 18, 5);
     ctx.fill();
     ctx.strokeStyle = '#4a2414';
@@ -562,9 +792,9 @@ class Walker {
     ctx.fillStyle = '#2a1a12';
     roundRect(ctx, x + 7, y + 12 + bob, 20, 8, 3);
     ctx.fill();
-    ctx.fillStyle = '#ff5a3c';
-    ctx.shadowColor = '#ff5a3c';
-    ctx.shadowBlur = 8;
+    ctx.fillStyle = charging ? '#ff2d4a' : '#ff5a3c';
+    ctx.shadowColor = charging ? '#ff2d4a' : '#ff5a3c';
+    ctx.shadowBlur = charging ? 16 : 8;
     ctx.fillRect(this.dir > 0 ? x + 21 : x + 9, y + 14 + bob, 5, 4);
     ctx.shadowBlur = 0;
 
@@ -578,12 +808,34 @@ class Walker {
     ctx.beginPath();
     ctx.arc(x + 17, y + 2 + bob, 2, 0, TAU);
     ctx.fill();
+
+    if (charging) {
+      ctx.fillStyle = '#ff5d6c';
+      ctx.shadowColor = '#ff2d4a';
+      ctx.shadowBlur = 12;
+      ctx.font = 'bold 18px Consolas, monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('!', x + 17, y - 14 + bob);
+      ctx.shadowBlur = 0;
+    } else if (lunging) {
+      ctx.strokeStyle = 'rgba(255,90,60,0.55)';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 3; i++) {
+        const tx = x + 17 - this.dir * (22 + i * 9);
+        ctx.beginPath();
+        ctx.moveTo(tx, y + 12 + i * 6);
+        ctx.lineTo(tx - this.dir * 12, y + 12 + i * 6);
+        ctx.stroke();
+      }
+    }
     ctx.restore();
   }
 }
 
 class Drone {
   constructor(x, y, game) {
+    const diff = (game && game.diff) || DIFFICULTIES[1];
     this.game = game;
     this.w = 36;
     this.h = 26;
@@ -597,11 +849,22 @@ class Drone {
     this.my = 0;
     this.onGround = false;
     this.hitWall = 0;
-    this.hp = 2;
+    this.hp = Math.max(1, Math.round(2 * diff.enemyHp));
+    this.maxHp = this.hp;
+    this.projSpeed = 300 * diff.projSpeed;
+    this.burstCount = diff.burst;
+    this.aggro = diff.aggression;
     this.flash = 0;
     this.dead = false;
     this.phase = rand(0, TAU);
-    this.shootTimer = rand(1.4, 2.6);
+    this.shootTimer = rand(1.2, 2.4) / this.aggro;
+    this.mode = 'hover';
+    this.aimTimer = 0;
+    this.burstLeft = 0;
+    this.burstTimer = 0;
+    this.strafe = Math.random() < 0.5 ? -1 : 1;
+    this.orbit = rand(0, TAU);
+    this.muzzle = 0;
   }
 
   update(dt, game) {
@@ -611,33 +874,53 @@ class Drone {
     this.mx *= Math.pow(0.06, dt);
     this.my *= Math.pow(0.06, dt);
     this.shootTimer -= dt;
+    this.aimTimer -= dt;
+    this.burstTimer -= dt;
+    this.muzzle = Math.max(0, this.muzzle - dt);
+    this.orbit += dt * 1.2 * this.strafe;
 
     const p = game.player;
-    let tx = this.homeX + Math.sin(this.phase * 0.7) * 26;
-    let ty = this.homeY + Math.sin(this.phase) * 16;
+    let tx = this.homeX + Math.sin(this.phase * 0.7) * 30;
+    let ty = this.homeY + Math.sin(this.phase) * 18;
+    let d = 9999;
 
     if (p && !p.dead) {
-      const d = dist(this.x + this.w / 2, this.y + this.h / 2, p.cx, p.cy);
+      const cx = this.x + this.w / 2;
+      const cy = this.y + this.h / 2;
+      d = dist(cx, cy, p.cx, p.cy);
       if (d < 470) {
-        tx = lerp(tx, p.cx - this.w / 2, 0.35);
-        ty = lerp(ty, p.cy - this.h / 2 - 30, 0.25);
+        const ang = Math.atan2(cy - p.cy, cx - p.cx) + Math.sin(this.orbit) * 0.55;
+        tx = lerp(tx, p.cx + Math.cos(ang) * 155 - this.w / 2, 0.35);
+        ty = lerp(ty, p.cy + Math.sin(ang) * 120 - this.h / 2, 0.3);
       }
-      if (d < 520 && this.shootTimer <= 0) {
-        this.shootTimer = rand(1.7, 2.6);
-        const cx = this.x + this.w / 2;
-        const cy = this.y + this.h / 2;
-        const ang = Math.atan2(p.cy - cy, p.cx - cx);
-        const spd = 300;
-        game.projectiles.push(new Projectile(cx, cy, Math.cos(ang) * spd, Math.sin(ang) * spd, 'enemy', {
-          color: '#ff5a6e', r: 7
-        }));
-        Sfx.tone(520, 0.08, { type: 'square', vol: 0.05, slide: -180 });
-        FX.burst(cx, cy, 4, { color: '#ff5a6e', speedMax: 100, lifeMax: 0.3 });
+      if (d < 540 && this.mode === 'hover' && this.shootTimer <= 0) {
+        this.mode = 'aim';
+        this.aimTimer = 0.42 / this.aggro;
+        Sfx.tone(700, 0.08, { type: 'square', vol: 0.03, slide: 120 });
       }
     }
 
-    const targetVx = clamp((tx - this.x) * 2.2, -140, 140) + this.mx;
-    const targetVy = clamp((ty - this.y) * 2.2, -140, 140) + this.my;
+    if (this.mode === 'aim') {
+      if (this.aimTimer <= 0) {
+        this.mode = 'fire';
+        this.burstLeft = this.burstCount;
+        this.burstTimer = 0;
+      }
+    } else if (this.mode === 'fire') {
+      if (this.burstTimer <= 0) {
+        this.fire(game);
+        this.burstLeft--;
+        this.burstTimer = 0.11;
+        if (this.burstLeft <= 0) {
+          this.mode = 'hover';
+          this.shootTimer = rand(1.9, 3.0) / this.aggro;
+        }
+      }
+    }
+
+    const moveScale = this.mode === 'aim' ? 0.35 : 1;
+    const targetVx = clamp((tx - this.x) * 2.2, -150, 150) * moveScale + this.mx;
+    const targetVy = clamp((ty - this.y) * 2.2, -150, 150) * moveScale + this.my;
     this.vx = targetVx;
     this.vy = targetVy;
 
@@ -651,6 +934,25 @@ class Drone {
 
     if (p && !p.dead && aabb(this, p)) p.hurt(1, this.x + this.w / 2);
     if (this.y > game.level.heightPx + 120) this.dead = true;
+  }
+
+  fire(game) {
+    const p = game.player;
+    if (!p || p.dead) return;
+    const cx = this.x + this.w / 2;
+    const cy = this.y + this.h / 2;
+    const lead = 0.14;
+    const ang = Math.atan2((p.cy + p.vy * lead) - cy, (p.cx + p.vx * lead) - cx);
+    const a = ang + (Math.random() - 0.5) * 0.06;
+    const spd = this.projSpeed;
+    game.projectiles.push(new Projectile(cx, cy, Math.cos(a) * spd, Math.sin(a) * spd, 'enemy', {
+      color: '#ff5a6e', r: 6, damage: 1
+    }));
+    this.muzzle = 0.12;
+    Sfx.tone(520, 0.07, { type: 'square', vol: 0.045, slide: -160 });
+    FX.burst(cx + Math.cos(a) * 12, cy + Math.sin(a) * 12, 4, {
+      color: '#ff5a6e', speedMax: 110, lifeMax: 0.25
+    });
   }
 
   hurt(n, game) {
@@ -671,6 +973,8 @@ class Drone {
     const x = this.x - cam.x;
     const y = this.y - cam.y;
     const bob = Math.sin(this.phase) * 2;
+    const alert = this.mode === 'aim' || this.mode === 'fire';
+    const eye = alert ? '#ff5a6e' : '#7ffff0';
 
     ctx.save();
     ctx.fillStyle = 'rgba(0,0,0,0.2)';
@@ -692,9 +996,9 @@ class Drone {
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    ctx.fillStyle = '#7ffff0';
-    ctx.shadowColor = '#7ffff0';
-    ctx.shadowBlur = 12;
+    ctx.fillStyle = eye;
+    ctx.shadowColor = eye;
+    ctx.shadowBlur = alert ? 18 : 12;
     ctx.beginPath();
     ctx.arc(x + 18, y + 14 + bob, 4, 0, TAU);
     ctx.fill();
@@ -703,6 +1007,35 @@ class Drone {
     ctx.fillStyle = '#0b262b';
     ctx.fillRect(x + 1, y + 10 + bob, 3, 10);
     ctx.fillRect(x + 32, y + 10 + bob, 3, 10);
+
+    if (this.mode === 'aim' && this.game && this.game.player && !this.game.player.dead) {
+      const p = this.game.player;
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.strokeStyle = 'rgba(255,90,110,0.5)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([7, 7]);
+      ctx.lineDashOffset = -this.phase * 20;
+      ctx.beginPath();
+      ctx.moveTo(x + 18, y + 14 + bob);
+      ctx.lineTo(p.cx - cam.x, p.cy - cam.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
+
+    if (this.muzzle > 0) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = this.muzzle / 0.12;
+      ctx.fillStyle = '#ff5a6e';
+      ctx.shadowColor = '#ff5a6e';
+      ctx.shadowBlur = 18;
+      ctx.beginPath();
+      ctx.arc(x + 18, y + 15 + bob, 9, 0, TAU);
+      ctx.fill();
+      ctx.restore();
+    }
     ctx.restore();
   }
 }
@@ -721,9 +1054,11 @@ class Boss {
     this.vy = 0;
     this.onGround = false;
     this.hitWall = 0;
-    this.hp = cfg.hp;
-    this.maxHp = cfg.hp;
-    this.speed = cfg.speed || 70;
+    const diff = (game && game.diff) || DIFFICULTIES[1];
+    this.maxHp = Math.max(1, Math.round(cfg.hp * diff.bossHp));
+    this.hp = this.maxHp;
+    this.speed = (cfg.speed || 70) * diff.enemySpeed;
+    this.aggro = diff.aggression;
     this.color = cfg.color || '#ff8c42';
     this.state = 'idle';
     this.timer = 1.4;
@@ -736,6 +1071,7 @@ class Boss {
     this.anim = 0;
     this.summoned = 0;
     this.explosionTimer = 0;
+    this.attackCycle = 0;
   }
 
   get cx() { return this.x + this.w / 2; }
@@ -780,7 +1116,7 @@ class Boss {
         game.toast(this.cfg.name + ' DESPERTOU', this.color);
         game.shake(0.6);
         Sfx.tone(70, 0.7, { type: 'sawtooth', vol: 0.16, slide: -30 });
-        this.begin('idle', 1.0);
+        this.begin('idle', 1.0 / this.aggro);
       }
       return;
     }
@@ -810,15 +1146,23 @@ class Boss {
       case 'idle':
         this.vx = approach(this.vx, this.dir * this.speed, 420 * dt);
         if (this.timer <= 0) {
-          if (d < 260 && Math.random() < 0.55) this.begin('chargeTele', 0.45);
-          else this.begin('shootTele', 0.5);
+          const roll = Math.random();
+          if (this.phase === 2 && d > 280 && roll < 0.3) {
+            this.begin('rainTele', 0.6 / this.aggro);
+          } else if (d < 250 && roll < 0.62) {
+            this.begin('chargeTele', 0.45 / this.aggro);
+          } else if (d < 430 && roll < 0.82) {
+            this.begin('slamTele', 0.55 / this.aggro);
+          } else {
+            this.begin('shootTele', 0.5 / this.aggro);
+          }
         }
         break;
       case 'shootTele':
         this.vx = approach(this.vx, 0, 2200 * dt);
         if (this.timer <= 0) {
           this.shoot(game);
-          this.begin('idle', rand(0.9, 1.4));
+          this.begin('idle', rand(0.9, 1.4) / this.aggro);
         }
         break;
       case 'chargeTele':
@@ -833,7 +1177,8 @@ class Boss {
       case 'charge':
         if (this.hitWall || this.timer <= 0) {
           this.vx = 0;
-          this.begin('recover', 0.7);
+          if (this.hitWall) this.shockwaves(game, 1.05);
+          this.begin('recover', 0.7 / this.aggro);
           game.shake(0.45);
           Sfx.noise(0.2, 0.12, { freq: 300 });
           FX.burst(this.cx + this.dir * this.w / 2, this.cy, 12, {
@@ -841,9 +1186,23 @@ class Boss {
           });
         }
         break;
+      case 'slamTele':
+        this.vx = approach(this.vx, 0, 2600 * dt);
+        if (this.timer <= 0) {
+          this.slam(game);
+          this.begin('recover', 0.6 / this.aggro);
+        }
+        break;
+      case 'rainTele':
+        this.vx = approach(this.vx, 0, 2600 * dt);
+        if (this.timer <= 0) {
+          this.rain(game);
+          this.begin('recover', 0.6 / this.aggro);
+        }
+        break;
       case 'recover':
         this.vx = approach(this.vx, 0, 1600 * dt);
-        if (this.timer <= 0) this.begin('idle', rand(0.8, 1.3));
+        if (this.timer <= 0) this.begin('idle', rand(0.8, 1.3) / this.aggro);
         break;
       default:
         this.begin('idle', 1);
@@ -862,23 +1221,94 @@ class Boss {
   shoot(game) {
     const p = game.player;
     if (!p) return;
-    const count = this.phase === 2 ? 5 : 3;
-    const spread = this.phase === 2 ? 0.42 : 0.3;
-    const base = Math.atan2(p.cy - this.cy, p.cx - this.cx);
-    for (let i = 0; i < count; i++) {
-      const ang = base + (i - (count - 1) / 2) * spread;
-      const spd = this.phase === 2 ? 380 : 330;
-      game.projectiles.push(new Projectile(
-        this.cx + Math.cos(ang) * (this.w / 2 + 8),
-        this.cy - 10 + Math.sin(ang) * 20,
-        Math.cos(ang) * spd,
-        Math.sin(ang) * spd,
-        'enemy',
-        { color: this.color, r: 9, life: 5 }
-      ));
+    this.attackCycle++;
+    const projMul = game.diff ? game.diff.projSpeed : 1;
+
+    if (this.phase === 2 && this.attackCycle % 3 === 0) {
+      const count = 10;
+      const spd = 250 * projMul;
+      for (let i = 0; i < count; i++) {
+        const ang = (TAU * i) / count + this.anim * 0.5;
+        game.projectiles.push(new Projectile(
+          this.cx,
+          this.cy - 10,
+          Math.cos(ang) * spd,
+          Math.sin(ang) * spd,
+          'enemy',
+          { color: this.color, r: 8, life: 5 }
+        ));
+      }
+      game.toast('DESCARGA RADIAL', this.color, 1.2);
+      game.shake(0.25);
+    } else {
+      const count = this.phase === 2 ? 5 : 3;
+      const spread = this.phase === 2 ? 0.42 : 0.3;
+      const lead = 0.12;
+      const base = Math.atan2(
+        (p.cy + p.vy * lead) - (this.cy - 10),
+        (p.cx + p.vx * lead) - this.cx
+      );
+      for (let i = 0; i < count; i++) {
+        const ang = base + (i - (count - 1) / 2) * spread;
+        const spd = (this.phase === 2 ? 380 : 330) * projMul;
+        game.projectiles.push(new Projectile(
+          this.cx + Math.cos(ang) * (this.w / 2 + 8),
+          this.cy - 10 + Math.sin(ang) * 20,
+          Math.cos(ang) * spd,
+          Math.sin(ang) * spd,
+          'enemy',
+          { color: this.color, r: 9, life: 5 }
+        ));
+      }
     }
     Sfx.tone(260, 0.16, { type: 'square', vol: 0.09, slide: -100 });
     FX.burst(this.cx + this.dir * 30, this.cy - 10, 8, { color: this.color, speedMax: 140, lifeMax: 0.4 });
+  }
+
+  shockwaves(game, mul = 1) {
+    const spd = 430 * mul * (game.diff ? game.diff.projSpeed : 1);
+    for (const dir of [-1, 1]) {
+      game.projectiles.push(new Projectile(
+        this.cx + dir * this.w * 0.34,
+        this.bottom - 20,
+        dir * spd,
+        0,
+        'enemy',
+        { color: this.color, r: 12, life: 2.0, damage: 1, wave: true }
+      ));
+    }
+    FX.burst(this.cx, this.bottom - 10, 20, {
+      color: this.color, speedMax: 300, lifeMax: 0.5, gravity: 600
+    });
+  }
+
+  slam(game) {
+    game.shake(0.8);
+    Sfx.noise(0.4, 0.2, { freq: 220 });
+    Sfx.tone(70, 0.3, { type: 'sawtooth', vol: 0.14, slide: -30 });
+    this.shockwaves(game, 1);
+  }
+
+  rain(game) {
+    const p = game.player;
+    if (!p) return;
+    const count = this.phase === 2 ? 7 : 5;
+    const projMul = game.diff ? game.diff.projSpeed : 1;
+    for (let i = 0; i < count; i++) {
+      const x = clamp(p.cx + rand(-300, 300), 48, game.level.widthPx - 48);
+      const y = Math.max(60, this.y - rand(120, 320));
+      game.projectiles.push(new Projectile(
+        x,
+        y,
+        rand(-30, 30),
+        430 * projMul,
+        'enemy',
+        { color: this.color, r: 8, damage: 1, life: 4 }
+      ));
+      FX.burst(x, y, 5, { color: this.color, speedMax: 90, lifeMax: 0.3 });
+    }
+    game.toast('CHUVA DE METAIS', this.color, 1.4);
+    Sfx.tone(180, 0.3, { type: 'sawtooth', vol: 0.1, slide: -80 });
   }
 
   summon(game) {
@@ -969,7 +1399,9 @@ class Boss {
     ctx.stroke();
 
     // olho
-    const eyeGlow = this.state === 'shootTele' ? 1 : 0.55 + Math.sin(this.anim * 6) * 0.2;
+    const eyeGlow = (this.state === 'shootTele' || this.state === 'slamTele' || this.state === 'rainTele')
+      ? 1
+      : 0.55 + Math.sin(this.anim * 6) * 0.2;
     ctx.fillStyle = this.dead ? '#333' : '#12060a';
     roundRect(ctx, x + this.w / 2 - 19, y + 10 + bob, 38, 13, 5);
     ctx.fill();
@@ -1001,6 +1433,39 @@ class Boss {
       ctx.stroke();
     }
 
+    if (this.state === 'slamTele') {
+      const pulse = 0.5 + Math.sin(this.anim * 18) * 0.3;
+      ctx.strokeStyle = withAlpha('#ff5a3c', 0.55 + pulse * 0.35);
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.ellipse(x + this.w / 2, y + this.h, this.w * 0.9, 18, 0, 0, TAU);
+      ctx.stroke();
+      ctx.globalAlpha = 0.18 + pulse * 0.12;
+      ctx.fillStyle = '#ff5a3c';
+      ctx.beginPath();
+      ctx.ellipse(x + this.w / 2, y + this.h, this.w * 0.8, 14, 0, 0, TAU);
+      ctx.fill();
+      ctx.globalAlpha = alpha;
+    }
+
+    if (this.state === 'rainTele' && this.game.player && !this.game.player.dead) {
+      const p = this.game.player;
+      const px = p.cx - cam.x;
+      const py = p.cy - cam.y;
+      const rr = 44 + Math.sin(this.anim * 16) * 5;
+      ctx.strokeStyle = withAlpha('#ff2d4a', 0.6);
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(px, py, rr, 0, TAU);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(px - rr - 8, py);
+      ctx.lineTo(px + rr + 8, py);
+      ctx.moveTo(px, py - rr - 8);
+      ctx.lineTo(px, py + rr + 8);
+      ctx.stroke();
+    }
+
     ctx.restore();
   }
 }
@@ -1018,6 +1483,8 @@ class Projectile {
     this.life = opts.life || 4;
     this.color = opts.color || (owner === 'enemy' ? '#ff5a6e' : '#66e0ff');
     this.damage = opts.damage || 1;
+    this.bossDamage = opts.bossDamage ?? 5;
+    this.wave = opts.wave || false;
     this.dead = false;
     this.trail = 0;
   }
@@ -1062,13 +1529,13 @@ class Projectile {
       }
     } else {
       if (game.boss && !game.boss.dead && circleRect(this.x, this.y, this.r, game.boss)) {
-        game.boss.takeDamage(5, game);
+        game.boss.takeDamage(this.bossDamage, game);
         this.explode(game);
         return;
       }
       for (const e of game.enemies) {
         if (!e.dead && circleRect(this.x, this.y, this.r, e)) {
-          e.hurt(2, game);
+          e.hurt(this.damage, game);
           this.explode(game);
           return;
         }
@@ -1090,16 +1557,29 @@ class Projectile {
     const y = this.y - cam.y;
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
-    ctx.fillStyle = this.color;
-    ctx.shadowColor = this.color;
-    ctx.shadowBlur = 14;
-    ctx.beginPath();
-    ctx.arc(x, y, this.r, 0, TAU);
-    ctx.fill();
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.arc(x, y, this.r * 0.45, 0, TAU);
-    ctx.fill();
+    if (this.wave) {
+      ctx.fillStyle = this.color;
+      ctx.shadowColor = this.color;
+      ctx.shadowBlur = 16;
+      ctx.beginPath();
+      ctx.ellipse(x, y, this.r * 1.7, this.r * 0.55, 0, 0, TAU);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.ellipse(x, y, this.r * 0.8, this.r * 0.22, 0, 0, TAU);
+      ctx.fill();
+    } else {
+      ctx.fillStyle = this.color;
+      ctx.shadowColor = this.color;
+      ctx.shadowBlur = 14;
+      ctx.beginPath();
+      ctx.arc(x, y, this.r, 0, TAU);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(x, y, this.r * 0.45, 0, TAU);
+      ctx.fill();
+    }
     ctx.restore();
   }
 }
