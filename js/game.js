@@ -1,7 +1,7 @@
 'use strict';
 
 /* ============================================================
-   FERRO-9 — lógica principal e fluxo de telas
+   CÓDIGO VERDE — lógica principal e fluxo de telas
    ============================================================ */
 
 class Game {
@@ -17,12 +17,20 @@ class Game {
     this.pauseIndex = 0;
     this.resetIndex = 0;
     this.selectedLevel = 0;
-    this.tutorialStep = 0;
-    this.tutorialTime = 0;
-    this.usedMagnet = false;
-    this.usedRepel = false;
+
+    this.weaponIndex = 0;
+    this.tutorialParries = 0;
+    this.focusActive = false;
+    this.pulseRings = [];
+    this.parryFlash = 0;
+    this.hitStop = 0;
+
+    this.usedPulse = false;
+    this.usedFocus = false;
+    this.usedShield = false;
     this.usedMelee = false;
-    this.usedShot = false;
+    this.usedRanged = false;
+
     this.lastFrame = performance.now();
     this.save = loadSave();
     this.powers = new Set(this.save ? this.save.powers : []);
@@ -32,6 +40,7 @@ class Game {
     this.cutsceneIndex = 0;
     this.cutsceneTime = 0;
     this.cutsceneReveal = 0;
+    this.cutsceneThenStory = false;
 
     this.level = null;
     this.levelIndex = 0;
@@ -41,14 +50,23 @@ class Game {
     this.projectiles = [];
     this.pickups = [];
     this.checkpoints = [];
+    this.springs = [];
+    this.crumbles = [];
+    this.kennedito = null;
+    this.kenneditoAlly = null;
+    this.kenneditoRescued = false;
+    this.gates = [];
     this.exit = null;
     this.boss = null;
     this.bossDefeated = false;
     this.bossActive = false;
+    this.cluesFound = new Set(
+      this.save && this.save.clues ? Object.keys(this.save.clues).map(Number).filter((n) => n >= 1 && n <= 4) : []
+    );
 
     this.cam = { x: 0, y: 0, shake: 0 };
     this.toasts = [];
-    this.stats = { gears: 0, cores: 0, deaths: 0, time: 0 };
+    this.stats = { gears: 0, cores: 0, clues: 0, deaths: 0, time: 0 };
     this.totalGears = 0;
     this.totalCores = 0;
     this.checkpointPos = { x: 0, y: 0 };
@@ -60,6 +78,7 @@ class Game {
     this.completeRects = [];
     this.helpRect = null;
 
+    window.codigoVerde = this;
     window.ferro9 = this;
     requestAnimationFrame((t) => this.loop(t));
   }
@@ -73,10 +92,13 @@ class Game {
         powers: [],
         gears: {},
         cores: {},
+        clues: {},
         completed: [],
+        tutorialDone: false,
         difficulty: this.difficulty
       };
     }
+    if (!this.save.clues) this.save.clues = {};
     return this.save;
   }
 
@@ -89,7 +111,7 @@ class Game {
 
   hasProgress() {
     const s = this.save;
-    return !!s && (s.unlocked > 1 || s.completed.length > 0);
+    return !!s && (!!s.tutorialDone || s.unlocked > 1 || s.completed.length > 0);
   }
 
   /* ------------------------------ LOOP ------------------------------ */
@@ -103,6 +125,7 @@ class Game {
     FX.update(dt);
     Sfx.updateMusic();
     this.updateToasts(dt);
+    this.parryFlash = Math.max(0, this.parryFlash - dt);
 
     if (Input.pressed('KeyM')) {
       const muted = Sfx.toggleMute();
@@ -117,7 +140,6 @@ class Game {
       case 'levelselect': this.updateLevelSelect(dt); break;
       case 'help': this.updateHelp(dt); break;
       case 'resetconfirm': this.updateResetConfirm(dt); break;
-      case 'tutorial': this.updateTutorial(dt); break;
       case 'cutscene': this.updateCutscene(dt); break;
       case 'story': this.updateStory(dt); break;
       case 'playing': this.updatePlaying(dt); break;
@@ -138,14 +160,14 @@ class Game {
     const items = [
       { label: has ? 'CONTINUAR' : 'INICIAR', action: 'start' },
       { label: 'DIFICULDADE: ' + DIFFICULTIES[this.difficulty].name, action: 'difficulty' },
-      { label: 'TUTORIAL', action: 'tutorial' },
+      { label: 'TREINAMENTO', action: 'tutorial' },
       { label: 'SELECIONAR FASE', action: 'levels' },
       { label: 'COMO JOGAR', action: 'help' }
     ];
     if (has) items.push({ label: 'APAGAR PROGRESSO', action: 'reset' });
 
-    const startY = 298;
-    const w = 380, h = 44, gap = 9;
+    const startY = 304;
+    const w = 396, h = 46, gap = 9;
     return items.map((it, i) => ({
       ...it,
       x: VIEW_W / 2 - w / 2,
@@ -187,7 +209,7 @@ class Game {
       this.startTutorial();
     } else if (action === 'levels') {
       const s = this.ensureSave();
-      this.selectedLevel = clamp(s.unlocked - 1, 0, 4);
+      this.selectedLevel = clamp(s.unlocked, 1, 5);
       this.state = 'levelselect';
       Sfx.tone(500, 0.06, { type: 'square', vol: 0.04 });
     } else if (action === 'help') {
@@ -206,130 +228,36 @@ class Game {
       powers: [],
       gears: {},
       cores: {},
+      clues: {},
       completed: [],
+      tutorialDone: false,
       difficulty: this.difficulty
     };
     this.powers.clear();
+    this.cluesFound.clear();
     this.startTutorial();
   }
 
   startTutorial() {
     this.loadLevel(0);
-    this.tutorialStep = 0;
-    this.tutorialTime = 0;
-    this.state = 'tutorial';
-    Sfx.stopMusic();
-  }
-
-  tutorialSteps() {
-    return [
-      {
-        type: 'text',
-        title: 'CALIBRAGEM INICIAL',
-        lines: [
-          'Sistemas de FERRO-9 reiniciados.',
-          'Antes de escapar, vamos testar seus circuitos.',
-          'Siga as instruções usando o teclado.'
-        ]
-      },
-      {
-        type: 'action',
-        title: 'MOVER',
-        desc: 'Segure A ou D (ou as setas) para andar.',
-        keys: ['A', 'D'],
-        test: () => Input.isDown('KeyA', 'KeyD', 'ArrowLeft', 'ArrowRight')
-      },
-      {
-        type: 'action',
-        title: 'PULAR',
-        desc: 'Pressione ESPAÇO. Segure para saltar mais alto.',
-        keys: ['ESPAÇO'],
-        test: () => Input.pressed('Space', 'KeyW', 'ArrowUp')
-      },
-      {
-        type: 'action',
-        title: 'CORRER',
-        desc: 'Segure SHIFT enquanto se move para correr.',
-        keys: ['SHIFT', 'A/D'],
-        test: () => Input.isDown('ShiftLeft', 'ShiftRight') &&
-          Input.isDown('KeyA', 'KeyD', 'ArrowLeft', 'ArrowRight')
-      },
-      {
-        type: 'action',
-        title: 'GOLPE',
-        desc: 'Pressione J ou clique com o botão esquerdo para atacar.',
-        keys: ['J', 'CLIQUE'],
-        test: () => Input.pressed('KeyJ') || Input.mouse.clicked
-      },
-      {
-        type: 'action',
-        title: 'TIRO DE ENERGIA',
-        desc: 'Pressione K ou clique com o botão direito para disparar.',
-        keys: ['K', 'CLIQUE DIR.'],
-        test: () => Input.pressed('KeyK') || Input.mouse.rightClicked
-      },
-      {
-        type: 'text',
-        title: 'ÍMÃ AZUL',
-        lines: [
-          'O módulo azul está logo à frente, na fábrica.',
-          'Segure Q perto de caixas de metal para atraí-las.',
-          'Caixas podem virar pontes sobre fossos e espinhos.'
-        ],
-        keys: ['Q']
-      },
-      {
-        type: 'text',
-        title: 'OUTROS PODERES',
-        lines: [
-          'E — ÍMÃ VERMELHO: repele inimigos e reflete projéteis.',
-          'R — CAMPO MAGNÉTICO: escudo que bloqueia dano.',
-          'F — SUPERCARGA: saltos gigantes por 6 segundos.',
-          'Você vai desbloquear cada um nas próximas fases.'
-        ]
-      },
-      {
-        type: 'text',
-        title: 'SISTEMAS PRONTOS',
-        lines: [
-          'Tudo calibrado.',
-          'A saída fica no fim da fábrica — e algo grande a protege.',
-          'Boa sorte, FERRO-9.'
-        ]
-      }
-    ];
-  }
-
-  updateTutorial(dt) {
-    this.tutorialTime += dt;
-    const steps = this.tutorialSteps();
-    const step = steps[Math.min(this.tutorialStep, steps.length - 1)];
-
-    if (Input.pressed('Escape') || Input.clickIn(VIEW_W - 300, VIEW_H - 72, 260, 48)) {
-      this.finishTutorial();
-      return;
-    }
-
-    if (step.type === 'text') {
-      if (Input.pressed('Enter', 'Space') || Input.clickIn(VIEW_W / 2 - 190, 596, 380, 54)) {
-        this.advanceTutorial();
-      }
-    } else if (step.type === 'action' && step.test()) {
-      this.advanceTutorial();
-    }
-  }
-
-  advanceTutorial() {
-    const steps = this.tutorialSteps();
-    this.tutorialStep++;
-    Sfx.tone(520 + this.tutorialStep * 40, 0.09, { type: 'square', vol: 0.06 });
-    if (this.tutorialStep >= steps.length) {
-      this.finishTutorial();
-    }
+    this.tutorialParries = 0;
+    this.state = 'playing';
+    Sfx.startMusic(this.level.musicRoot, this.level.musicMode);
+    this.cam.x = clamp(this.player.cx - VIEW_W / 2, 0, Math.max(0, this.level.widthPx - VIEW_W));
+    this.cam.y = 0;
+    this.toast('TREINAMENTO — SIGA OS HOLOGRAMAS', '#6dff9e', 2.4);
   }
 
   finishTutorial() {
-    this.startCutscene(0, true);
+    if (this.state !== 'playing') return;
+    Sfx.stopMusic();
+    const s = this.ensureSave();
+    s.unlocked = Math.max(s.unlocked, 1);
+    s.tutorialDone = true;
+    this.persist();
+    this.toast('TREINAMENTO CONCLUÍDO', '#6dff9e', 2.2);
+    this.loadLevel(1);
+    this.startCutscene(1, true);
     Sfx.tone(660, 0.16, { type: 'triangle', vol: 0.1 });
     Sfx.tone(880, 0.24, { type: 'triangle', vol: 0.1, delay: 0.1 });
   }
@@ -337,13 +265,13 @@ class Game {
   continueGame() {
     const s = this.ensureSave();
     this.powers = new Set(s.powers || []);
-    this.beginLevel(clamp(s.unlocked - 1, 0, 4), true);
+    this.beginLevel(clamp(s.unlocked, 1, 5), true);
   }
 
   /* ------------------------------ DIFICULDADE ------------------------------ */
 
   difficultyLayout() {
-    const w = 250, h = 320, gap = 22;
+    const w = 250, h = 356, gap = 22;
     const total = w * DIFFICULTIES.length + gap * (DIFFICULTIES.length - 1);
     const startX = (VIEW_W - total) / 2;
     return DIFFICULTIES.map((diff, i) => ({
@@ -407,11 +335,11 @@ class Game {
     const w = 196, h = 250, gap = 18;
     const total = w * 5 + gap * 4;
     const startX = (VIEW_W - total) / 2;
-    return LEVELS.map((fn, i) => ({
+    return [1, 2, 3, 4, 5].map((levelIndex, i) => ({
       x: startX + i * (w + gap),
       y: 320,
       w, h,
-      index: i
+      index: levelIndex
     }));
   }
 
@@ -420,15 +348,16 @@ class Game {
     this.levelRects = cards;
     const s = this.ensureSave();
     const unlocked = s.unlocked;
+    this.selectedLevel = clamp(this.selectedLevel, 1, 5);
 
     for (const c of cards) {
       if (Input.hoverIn(c.x, c.y, c.w, c.h)) this.selectedLevel = c.index;
     }
 
-    if (Input.pressed('ArrowLeft', 'KeyA')) this.selectedLevel = clamp(this.selectedLevel - 1, 0, 4);
-    if (Input.pressed('ArrowRight', 'KeyD')) this.selectedLevel = clamp(this.selectedLevel + 1, 0, 4);
-    if (Input.pressed('ArrowUp', 'KeyW')) this.selectedLevel = clamp(this.selectedLevel - 1, 0, 4);
-    if (Input.pressed('ArrowDown', 'KeyS')) this.selectedLevel = clamp(this.selectedLevel + 1, 0, 4);
+    if (Input.pressed('ArrowLeft', 'KeyA')) this.selectedLevel = clamp(this.selectedLevel - 1, 1, 5);
+    if (Input.pressed('ArrowRight', 'KeyD')) this.selectedLevel = clamp(this.selectedLevel + 1, 1, 5);
+    if (Input.pressed('ArrowUp', 'KeyW')) this.selectedLevel = clamp(this.selectedLevel - 1, 1, 5);
+    if (Input.pressed('ArrowDown', 'KeyS')) this.selectedLevel = clamp(this.selectedLevel + 1, 1, 5);
 
     if (Input.pressed('Escape')) {
       this.state = 'menu';
@@ -444,7 +373,7 @@ class Game {
     }
 
     if (go) {
-      if (this.selectedLevel + 1 <= unlocked) {
+      if (this.selectedLevel <= unlocked) {
         this.beginLevel(this.selectedLevel, false);
       } else {
         Sfx.tone(120, 0.18, { type: 'square', vol: 0.08, slide: -40 });
@@ -453,15 +382,13 @@ class Game {
     }
   }
 
-  /* ------------------------------ AJUDA ------------------------------ */
+  /* ------------------------------ AJUDA / RESET ------------------------------ */
 
   updateHelp() {
     if (Input.pressed('Escape', 'Enter', 'Space') || Input.clickIn(0, 0, VIEW_W, VIEW_H)) {
       this.state = 'menu';
     }
   }
-
-  /* ------------------------------ RESET ------------------------------ */
 
   updateResetConfirm() {
     if (Input.pressed('ArrowLeft', 'ArrowRight', 'KeyA', 'KeyD', 'Tab')) {
@@ -476,6 +403,7 @@ class Game {
         clearSave();
         this.save = null;
         this.powers.clear();
+        this.cluesFound.clear();
         this.toast('PROGRESSO APAGADO', '#ff5d6c', 2);
       }
       this.state = 'menu';
@@ -513,15 +441,32 @@ class Game {
     this.projectiles = [];
     this.pickups = [];
     this.checkpoints = [];
+    this.springs = [];
+    this.crumbles = [];
+    this.kennedito = null;
+    this.kenneditoAlly = null;
+    this.kenneditoRescued = false;
+    this.gates = level.gates.slice();
     this.exit = null;
     this.boss = null;
     this.bossDefeated = false;
     this.bossActive = false;
     this.toasts = [];
+    this.pulseRings = [];
+    this.focusActive = false;
+    this.parryFlash = 0;
+    this.hitStop = 0;
+    this.tutorialParries = 0;
+    this.weaponIndex = 0;
+    this.usedPulse = false;
+    this.usedFocus = false;
+    this.usedShield = false;
+    this.usedMelee = false;
+    this.usedRanged = false;
     FX.clear();
 
     let spawn = { tx: 2, ty: 17 };
-    let gears = 0, cores = 0;
+    let gears = 0, cores = 0, clues = 0;
 
     for (const e of level.entities) {
       const cx = e.tx * TILE + TILE / 2;
@@ -534,10 +479,25 @@ class Game {
           this.crates.push(new Crate(cx, bottom));
           break;
         case 'walker':
-          this.enemies.push(new Walker(cx, bottom, this));
+          this.enemies.push(new Walker(cx, bottom, this, e));
           break;
         case 'drone':
-          this.enemies.push(new Drone(cx, bottom, this));
+          this.enemies.push(new Drone(cx, bottom, this, e));
+          break;
+        case 'turret':
+          this.enemies.push(new Turret(cx, bottom, this, e));
+          break;
+        case 'charger':
+          this.enemies.push(new Charger(cx, bottom, this, e));
+          break;
+        case 'swooper':
+          this.enemies.push(new Swooper(cx, bottom, this, e));
+          break;
+        case 'spring':
+          this.springs.push(new Spring(cx, bottom, this, e));
+          break;
+        case 'crumble':
+          this.crumbles.push(new CrumblePlatform(e, this));
           break;
         case 'gear':
           this.pickups.push(new Pickup('gear', cx, e.ty * TILE + TILE / 2));
@@ -547,11 +507,22 @@ class Game {
           this.pickups.push(new Pickup('core', cx, e.ty * TILE + TILE / 2));
           cores++;
           break;
+        case 'clue': {
+          const clueId = Number(String(e.clue || '').replace(/[^0-9]/g, '')) || level.id;
+          if (!this.cluesFound.has(clueId)) {
+            this.pickups.push(new Pickup('clue', cx, e.ty * TILE + TILE / 2, { clue: e.clue }));
+            clues++;
+          }
+          break;
+        }
         case 'power':
           this.pickups.push(new Pickup('power', cx, e.ty * TILE + TILE / 2, { power: e.power }));
           break;
         case 'checkpoint':
           this.checkpoints.push(new Checkpoint(cx, bottom));
+          break;
+        case 'kennedito':
+          this.kennedito = new KenneditoCage(cx, bottom, this, e);
           break;
         case 'exit':
           this.exit = new Exit(cx, bottom);
@@ -564,12 +535,9 @@ class Game {
 
     this.totalGears = gears;
     this.totalCores = cores;
-    this.stats = { gears: 0, cores: 0, deaths: 0, time: 0 };
+    this.totalClues = clues;
+    this.stats = { gears: 0, cores: 0, clues: 0, deaths: 0, time: 0 };
     this.completeStats = null;
-    this.usedMagnet = false;
-    this.usedRepel = false;
-    this.usedMelee = false;
-    this.usedShot = false;
 
     this.player = new Player(spawn.tx * TILE + TILE / 2, spawn.ty * TILE + TILE, this);
     const diff = this.diff || DIFFICULTIES[this.difficulty];
@@ -663,25 +631,19 @@ class Game {
 
   updatePlaying(dt) {
     const level = this.level;
+    if (this.hitStop > 0) {
+      this.hitStop = Math.max(0, this.hitStop - dt);
+      dt *= 0.18;
+    }
     level.update(dt);
     this.stats.time += dt;
 
-    this.player.update(dt);
-    this.updateMagnet(dt);
+    const p = this.player;
+    p.update(dt);
 
-    if (Input.pressed('KeyJ') || Input.mouse.clicked) this.usedMelee = true;
-    if (Input.pressed('KeyK') || Input.mouse.rightClicked) this.usedShot = true;
+    this.updatePowers(dt);
 
-    if (this.player.attract && !this.usedMagnet) {
-      this.usedMagnet = true;
-      if (this.level.id === 1) {
-        this.toast('ÍMÃ AZUL ATIVO — arraste as caixas para o fosso', '#4da6ff', 3.4);
-      }
-    }
-    if (this.player.repel && !this.usedRepel) {
-      this.usedRepel = true;
-      this.toast('ÍMÃ VERMELHO ATIVO — inimigos e tiros são empurrados', '#ff5d6c', 3);
-    }
+    const slow = this.focusActive ? 0.42 : 1;
 
     for (const c of this.crates) {
       c.impactCd = Math.max(0, (c.impactCd || 0) - dt);
@@ -689,23 +651,39 @@ class Game {
     }
     this.resolveCrates();
 
-    for (const e of this.enemies) e.update(dt, this);
-    if (this.boss) this.boss.update(dt, this);
+    for (const e of this.enemies) e.update(dt * slow, this);
+    if (this.boss) this.boss.update(dt * slow, this);
 
     this.handleCrateImpacts();
 
-    for (const pr of this.projectiles) pr.update(dt, this);
+    for (const pr of this.projectiles) {
+      pr.update(dt * (pr.owner === 'enemy' ? slow : 1), this);
+    }
     for (const pk of this.pickups) pk.update(dt, this);
     for (const cp of this.checkpoints) cp.update(dt, this);
+    for (const sp of this.springs) sp.update(dt, this);
+    for (const cr of this.crumbles) cr.update(dt, this);
+    if (this.kennedito) this.kennedito.update(dt, this);
+    if (this.kenneditoAlly) this.kenneditoAlly.update(dt, this);
+
     if (this.exit) {
-      this.exit.open = this.bossDefeated;
+      const tutorialReady = this.level.tutorial
+        ? this.level.stations.every((s) => s.action === 'exit' || s.done)
+        : this.bossDefeated;
+      this.exit.open = tutorialReady;
       this.exit.update(dt, this);
     }
 
     this.crates = this.crates.filter((c) => !c.dead);
     this.enemies = this.enemies.filter((e) => !e.dead);
-    this.projectiles = this.projectiles.filter((p) => !p.dead);
-    this.pickups = this.pickups.filter((p) => !p.dead);
+    this.projectiles = this.projectiles.filter((pr) => !pr.dead);
+    this.pickups = this.pickups.filter((pk) => !pk.dead);
+
+    this.updateTutorialStations(dt);
+
+    p.justDoubleJumped = false;
+    p.justDashed = false;
+    p.justJumped = false;
 
     this.updateCamera(dt);
 
@@ -716,93 +694,37 @@ class Game {
     }
   }
 
-  updateMagnet(dt) {
+  updatePowers(dt) {
     const p = this.player;
-    if (!p || p.dead) return;
-    const range = p.magnetRange();
-    const attract = p.attract;
-    const repel = p.repel;
+    if (!p || p.dead) {
+      this.focusActive = false;
+      return;
+    }
 
-    if (attract || repel) {
-      for (const c of this.crates) {
-        const dx = p.cx - (c.x + c.w / 2);
-        const dy = p.cy - (c.y + c.h / 2);
-        const d = Math.hypot(dx, dy);
-        if (d > range || d < 1) continue;
-        const nx = dx / d, ny = dy / d;
-        const k = 1 - (d / range) * 0.4;
-        if (attract) {
-          c.vx += nx * 1700 * k * dt;
-          c.vy += ny * 1500 * k * dt;
-        } else {
-          c.vx -= nx * 2350 * k * dt;
-          c.vy -= ny * 1950 * k * dt;
-        }
-        c.magnetTimer = 0.18;
-        c.glow = 1;
-        if (Math.random() < 0.3) {
-          FX.spawn(c.x + rand(0, c.w), c.y + rand(0, c.h), {
-            color: attract ? '#4da6ff' : '#ff5d6c',
-            life: 0.3, size: rand(1, 3), vy: rand(-40, 40)
-          });
-        }
-      }
+    this.focusActive = !!p.focus;
 
-      for (const e of this.enemies) {
-        if (e.dead) continue;
-        const dx = p.cx - (e.x + e.w / 2);
-        const dy = p.cy - (e.y + e.h / 2);
-        const d = Math.hypot(dx, dy);
-        if (d > range || d < 1) continue;
-        const nx = dx / d, ny = dy / d;
-        const k = 1 - (d / range) * 0.4;
-        if (attract) {
-          e.mx = clamp((e.mx || 0) + nx * 900 * k * dt, -620, 620);
-          e.my = clamp((e.my || 0) + ny * 650 * k * dt, -620, 620);
-        } else {
-          e.mx = clamp((e.mx || 0) - nx * 1900 * k * dt, -700, 700);
-          e.my = clamp((e.my || 0) - ny * 1250 * k * dt, -700, 700);
-        }
-        e.flash = Math.max(e.flash || 0, 0.04);
-        if (Math.random() < 0.3) {
-          FX.spawn(e.x + e.w / 2, e.y + e.h / 2, {
-            color: attract ? '#4da6ff' : '#ff5d6c',
-            life: 0.28, size: rand(1, 3), vx: rand(-70, 70), vy: rand(-70, 70)
-          });
-        }
-      }
+    for (let i = this.pulseRings.length - 1; i >= 0; i--) {
+      const ring = this.pulseRings[i];
+      ring.life -= dt;
+      ring.r += 520 * dt;
+      if (ring.life <= 0) this.pulseRings.splice(i, 1);
+    }
 
-      if (repel) {
-        for (const pr of this.projectiles) {
-          if (pr.dead || pr.owner !== 'enemy') continue;
-          if (dist(pr.x, pr.y, p.cx, p.cy) > range * 1.05) continue;
-          let tx, ty;
-          if (this.boss && !this.boss.dead) {
-            tx = this.boss.cx;
-            ty = this.boss.cy;
-          } else {
-            tx = pr.x - pr.vx;
-            ty = pr.y - pr.vy;
-          }
-          const ang = Math.atan2(ty - pr.y, tx - pr.x);
-          const spd = 640;
-          pr.vx = Math.cos(ang) * spd;
-          pr.vy = Math.sin(ang) * spd;
-          pr.owner = 'player';
-          pr.color = '#66e0ff';
-          pr.life = 4;
-          Sfx.tone(720, 0.1, { type: 'sine', vol: 0.06, slide: 260 });
-          FX.burst(pr.x, pr.y, 8, { color: '#66e0ff', speedMax: 170, lifeMax: 0.35 });
-        }
+    if (p.pulseFlash > 0) {
+      p.pulseFlash -= dt;
+      if (Math.random() < 0.5) {
+        FX.spawn(p.cx + rand(-60, 60), p.cy + rand(-60, 60), {
+          color: '#6dff9e', life: 0.35, size: rand(2, 5), vy: rand(-40, 40)
+        });
       }
     }
 
     if (p.shield) {
       for (const pr of this.projectiles) {
         if (pr.dead || pr.owner !== 'enemy') continue;
-        if (dist(pr.x, pr.y, p.cx, p.cy) < 74) {
+        if (dist(pr.x, pr.y, p.cx, p.cy) < 78) {
           pr.explode(this);
-          FX.burst(pr.x, pr.y, 5, { color: '#b57bff', speedMax: 120, lifeMax: 0.3 });
+          FX.burst(pr.x, pr.y, 6, { color: '#b57bff', speedMax: 140, lifeMax: 0.35 });
         }
       }
       for (const e of this.enemies) {
@@ -810,13 +732,219 @@ class Game {
         const dx = e.x + e.w / 2 - p.cx;
         const dy = e.y + e.h / 2 - p.cy;
         const d = Math.hypot(dx, dy);
-        if (d < 90 && d > 1) {
-          e.mx = clamp((e.mx || 0) + (dx / d) * 500 * dt, -500, 500);
-          e.my = clamp((e.my || 0) + (dy / d) * 500 * dt, -500, 500);
+        if (d < 100 && d > 1) {
+          e.mx = clamp((e.mx || 0) + (dx / d) * 520 * dt, -500, 500);
+          e.my = clamp((e.my || 0) + (dy / d) * 520 * dt, -500, 500);
         }
       }
     }
+
+    if (this.focusActive && Math.random() < 0.4) {
+      FX.spawn(p.cx + rand(-26, 26), p.cy + rand(-30, 30), {
+        color: '#7fe7ff', life: 0.4, size: rand(1, 3), vy: rand(-50, 10)
+      });
+    }
+
+    if (p.superActive && Math.random() < 0.5) {
+      FX.spawn(p.cx + rand(-20, 20), p.cy + rand(-24, 24), {
+        color: pick(['#ffd24d', '#c6ff6a', '#6dff9e']),
+        life: 0.4, size: rand(2, 4), vy: rand(-90, -20)
+      });
+    }
   }
+
+  playerPulse() {
+    const p = this.player;
+    if (!p || p.dead) return;
+    if (!this.powers.has('pulse')) {
+      this.toast('PULSO AINDA BLOQUEADO', '#8fa8bb', 1.2);
+      return;
+    }
+    if (p.pulseCd > 0) return;
+    if (p.energy < 20) {
+      this.toast('ENERGIA INSUFICIENTE', '#ff8fa5', 1);
+      Sfx.tone(120, 0.08, { type: 'square', vol: 0.04, slide: -40 });
+      return;
+    }
+
+    p.energy -= 20;
+    p.pulseCd = 0.9;
+    p.pulseFlash = 0.35;
+    this.pulseRings.push({ x: p.cx, y: p.cy, r: 20, life: 0.5, max: 0.5 });
+    this.shake(0.4);
+    Sfx.tone(160, 0.28, { type: 'sawtooth', vol: 0.12, slide: 520 });
+    Sfx.noise(0.18, 0.08, { freq: 900 });
+
+    for (const pr of this.projectiles) {
+      if (pr.dead || pr.owner !== 'enemy') continue;
+      if (dist(pr.x, pr.y, p.cx, p.cy) < 210) {
+        pr.explode(this);
+        FX.burst(pr.x, pr.y, 5, { color: '#6dff9e', speedMax: 170, lifeMax: 0.35 });
+      }
+    }
+
+    for (const e of this.enemies) {
+      if (e.dead) continue;
+      const dx = e.x + e.w / 2 - p.cx;
+      const dy = e.y + e.h / 2 - p.cy;
+      const d = Math.hypot(dx, dy);
+      if (d > 190 || d < 1) continue;
+      e.hurt(2, this, p);
+      e.mx = clamp((e.mx || 0) + (dx / d) * 520, -700, 700);
+      e.my = clamp((e.my || 0) + (dy / d) * 360, -700, 700);
+      if (e.stagger) e.stagger(0.6);
+    }
+
+    if (this.boss && !this.boss.dead && dist(this.boss.cx, this.boss.cy, p.cx, p.cy) < 250) {
+      this.boss.takeDamage(3, this);
+      if (this.boss.stagger) this.boss.stagger(0.35, this);
+    }
+
+    FX.burst(p.cx, p.cy, 24, {
+      color: '#6dff9e', speedMax: 360, lifeMax: 0.6, sizeMax: 6, shape: 'line'
+    });
+    this.usedPulse = true;
+  }
+
+  onParry(p, perfect = false, chain = 1) {
+    this.tutorialParries++;
+    this.parryFlash = perfect ? 0.62 : 0.4;
+    this.shake(perfect ? 0.62 : 0.35);
+    if (perfect) this.hitStop = Math.max(this.hitStop, 0.07);
+    const parryColor = perfect ? '#ffd24d' : '#6dff9e';
+    Sfx.tone(perfect ? 1040 : 880, 0.12, { type: 'triangle', vol: 0.12, slide: perfect ? 320 : 240 });
+    Sfx.tone(perfect ? 1560 : 1320, 0.16, { type: 'sine', vol: 0.08, delay: 0.05 });
+    if (perfect) Sfx.tone(520, 0.18, { type: 'square', vol: 0.06, slide: 460 });
+    FX.burst(p.cx, p.cy, perfect ? 34 : 22, {
+      color: parryColor, speedMax: perfect ? 390 : 300, lifeMax: 0.6, sizeMax: 6, shape: 'line'
+    });
+    if (perfect) {
+      this.pulseRings.push({ x: p.cx, y: p.cy, r: 26, life: 0.38, max: 0.38 });
+    }
+
+    for (const pr of this.projectiles) {
+      if (pr.dead || pr.owner !== 'enemy') continue;
+      if (dist(pr.x, pr.y, p.cx, p.cy) < (perfect ? 210 : 160)) {
+        if (pr.parryable) pr.reflect(this, perfect);
+        else pr.explode(this);
+      }
+    }
+
+    for (const e of this.enemies) {
+      if (e.dead) continue;
+      if (dist(e.x + e.w / 2, e.y + e.h / 2, p.cx, p.cy) < (perfect ? 200 : 150) && e.stagger) {
+        e.stagger(perfect ? 1.45 : 0.9);
+      }
+    }
+
+    if (this.boss && !this.boss.dead &&
+        dist(this.boss.cx, this.boss.cy, p.cx, p.cy) < (perfect ? 230 : 190) && this.boss.stagger) {
+      this.boss.stagger(perfect ? 1.25 : 0.8, this);
+    }
+
+    if (perfect) {
+      this.toast(`PARRY PERFEITO!${chain > 1 ? '  x' + chain : ''}`, '#ffd24d', 1.15);
+    } else {
+      this.toast('PARRY!', '#6dff9e', 0.8);
+    }
+  }
+
+  onKenneditoRescued(cage) {
+    this.kenneditoRescued = true;
+    const allClues = this.cluesFound.size >= 4;
+    const blessing = allClues ? 2 : 1;
+
+    // Bênção de resgate: aumenta a vida máxima e cura por completo.
+    this.player.maxHp += blessing;
+    this.player.hp = this.player.maxHp;
+
+    // Abre o portão de resgate que bloqueia a passagem para a diretora.
+    for (const gate of this.level.gates) {
+      if (gate.station === 'rescue') this.level.openGate(gate);
+    }
+
+    this.toast(
+      allClues ? 'KENNEDITO LIBERTO! BÊNÇÃO COMPLETA +2 HP' : 'KENNEDITO LIBERTO! +1 HP MÁXIMO',
+      '#6dff9e', 3.2
+    );
+    this.shake(0.5);
+    Sfx.tone(880, 0.16, { type: 'triangle', vol: 0.1 });
+    Sfx.tone(1040, 0.16, { type: 'sine', vol: 0.08, delay: 0.1 });
+    Sfx.tone(1320, 0.22, { type: 'sine', vol: 0.07, delay: 0.2 });
+
+    // Kennedito passa a lutar ao lado de VEGA contra a diretora.
+    this.kenneditoAlly = new KenneditoAlly(cage.x + cage.w + 26, cage.bottom, this);
+    this.kennedito = null;
+  }
+
+  /* ------------------------------ TUTORIAL ------------------------------ */
+
+  completeStation(station) {
+    if (station.done) return;
+    station.done = true;
+    station.doneAt = this.time;
+    for (const gate of this.level.gates) {
+      if (gate.station !== station.action || gate.open) continue;
+      this.level.openGate(gate);
+      const gx = gate.tx * TILE + TILE / 2;
+      const gy = gate.ty * TILE + TILE / 2;
+      FX.burst(gx, gy, 22, { color: '#6dff9e', speedMax: 260, lifeMax: 0.7, sizeMax: 6 });
+    }
+    Sfx.tone(620, 0.1, { type: 'triangle', vol: 0.09 });
+    Sfx.tone(930, 0.16, { type: 'triangle', vol: 0.08, delay: 0.08 });
+    this.toast(station.label + ' OK', '#6dff9e', 1.1);
+
+    const pending = this.level.stations.some((s) => s.action !== 'exit' && !s.done);
+    if (!pending) this.toast('PORTAL ABERTO', '#7fe7ff', 2);
+  }
+
+  updateTutorialStations(dt) {
+    if (!this.level || !this.level.tutorial) return;
+    const p = this.player;
+    if (!p || p.dead) return;
+
+    for (const s of this.level.stations) {
+      if (s.done) continue;
+      const sx = s.tx * TILE + TILE / 2;
+      const near = Math.abs(p.cx - sx) < 6 * TILE;
+
+      switch (s.action) {
+        case 'move':
+          if (near && Math.abs(p.vx) > 40) this.completeStation(s);
+          break;
+        case 'jump':
+          if (near && p.justJumped) this.completeStation(s);
+          break;
+        case 'double':
+          if (near && p.justDoubleJumped) this.completeStation(s);
+          break;
+        case 'dash':
+          if (near && p.justDashed) this.completeStation(s);
+          break;
+        case 'attack': {
+          const dummy = this.enemies.find((e) => e.tag === 'melee');
+          if (!dummy || dummy.dead) this.completeStation(s);
+          break;
+        }
+        case 'shoot': {
+          const target = this.enemies.find((e) => e.tag === 'shoot');
+          if (!target || target.dead) this.completeStation(s);
+          break;
+        }
+        case 'parry':
+          if (near && this.tutorialParries > 0) this.completeStation(s);
+          break;
+        case 'focus':
+          if (near && p.focus) this.completeStation(s);
+          break;
+        case 'dash_alt':
+          if (near && p.justDashed) this.completeStation(s);
+          break;
+      }
+    }
+  }
+
+  /* ------------------------------ CAIXAS / CÂMERA ------------------------------ */
 
   resolveCrates() {
     for (let i = 0; i < this.crates.length; i++) {
@@ -856,9 +984,9 @@ class Game {
     for (const c of this.crates) {
       if ((c.impactCd || 0) > 0) continue;
       const speed = Math.abs(c.vx) + Math.abs(c.vy);
-      if (speed < 280) continue;
+      if (speed < 300) continue;
       if (this.boss && !this.boss.dead && aabb(c, this.boss)) {
-        this.boss.takeDamage(5, this);
+        this.boss.takeDamage(6, this);
         c.impactCd = 0.55;
         c.vx *= -0.35;
         c.vy = -220;
@@ -867,7 +995,7 @@ class Game {
       }
       for (const e of this.enemies) {
         if (!e.dead && aabb(c, e)) {
-          e.hurt(2, this);
+          e.hurt(2, this, c);
           c.impactCd = 0.3;
           c.vx *= -0.4;
         }
@@ -898,7 +1026,7 @@ class Game {
     Sfx.tone(90, 0.5, { type: 'sawtooth', vol: 0.18, slide: -50 });
     Sfx.noise(0.35, 0.18, { freq: 420 });
     FX.burst(this.player.cx, this.player.cy, 26, {
-      color: '#ff8c42', speedMax: 320, lifeMax: 0.9, sizeMax: 6, gravity: 500
+      color: '#6dff9e', speedMax: 320, lifeMax: 0.9, sizeMax: 6, gravity: 500
     });
   }
 
@@ -912,8 +1040,16 @@ class Game {
     p.vy = 0;
     p.x = this.checkpointPos.x - p.w / 2;
     p.y = this.checkpointPos.y - p.h;
+    p.dashTimer = 0;
+    p.dashCd = 0;
+    p.parryTimer = 0;
+    p.parryPerfect = 0;
+    p.parryCd = 0;
+    p.parryChain = 0;
+    p.parryChainTimer = 0;
+    for (const cr of this.crumbles) cr.reset(this);
     this.projectiles = this.projectiles.filter((pr) => pr.owner === 'player');
-    FX.burst(p.cx, p.cy, 18, { color: '#7fe7ff', speedMax: 220, lifeMax: 0.7 });
+    FX.burst(p.cx, p.cy, 18, { color: '#6dff9e', speedMax: 220, lifeMax: 0.7 });
     Sfx.tone(440, 0.2, { type: 'sine', vol: 0.1, slide: 200 });
     this.toast('REINICIANDO...', '#7fe7ff', 1.2);
   }
@@ -945,7 +1081,28 @@ class Game {
       Sfx.tone(990, 0.16, { type: 'sine', vol: 0.09, delay: 0.08 });
       FX.burst(pickup.x, pickup.y, 20, { color: '#ff5d7a', speedMax: 220, lifeMax: 0.7 });
       this.shake(0.25);
-      this.toast('NÚCLEO ENCONTRADO', '#ff5d7a', 2);
+      this.toast('NÚCLEO DO SISTEMA', '#ff5d7a', 2);
+    } else if (pickup.kind === 'clue') {
+      const clueId = Number(String(pickup.clue || '').replace(/[^0-9]/g, '')) || this.level.id;
+      if (this.cluesFound.has(clueId)) return;
+      this.cluesFound.add(clueId);
+      this.stats.clues++;
+      const s = this.ensureSave();
+      s.clues[clueId] = true;
+      this.persist();
+      const total = this.cluesFound.size;
+      Sfx.tone(760, 0.12, { type: 'triangle', vol: 0.09 });
+      Sfx.tone(1040, 0.18, { type: 'sine', vol: 0.08, delay: 0.08 });
+      FX.burst(pickup.x, pickup.y, 24, {
+        color: '#b6ff9a', speedMax: 240, lifeMax: 0.7, sizeMax: 5
+      });
+      this.shake(0.2);
+      this.toast(
+        total >= 4
+          ? `PISTA ${clueId}/4 — TODAS AS PEGADAS ENCONTRADAS!`
+          : `PISTA ${clueId}/4 — PEGADA DE KENNEDITO`,
+        '#b6ff9a', 2.8
+      );
     } else if (pickup.kind === 'power' && pickup.power) {
       const info = POWER_INFO[pickup.power];
       if (!this.powers.has(pickup.power)) {
@@ -970,12 +1127,12 @@ class Game {
 
   onEnemyKilled(enemy) {
     FX.burst(enemy.x + enemy.w / 2, enemy.y + enemy.h / 2, 20, {
-      color: '#ffb066', speedMax: 280, lifeMax: 0.8, sizeMax: 6, gravity: 400
+      color: '#6dff9e', speedMax: 280, lifeMax: 0.8, sizeMax: 6, gravity: 400
     });
     Sfx.tone(140, 0.16, { type: 'square', vol: 0.08, slide: -80 });
     Sfx.noise(0.16, 0.1, { freq: 800 });
     if (this.player) {
-      this.player.energy = Math.min(this.player.maxEnergy, this.player.energy + 6);
+      this.player.energy = Math.min(this.player.maxEnergy, this.player.energy + 8);
     }
   }
 
@@ -991,6 +1148,10 @@ class Game {
 
   completeLevel() {
     if (this.state !== 'playing') return;
+    if (this.level.tutorial) {
+      this.finishTutorial();
+      return;
+    }
     Sfx.stopMusic();
     this.stats.time = Math.round(this.stats.time);
 
@@ -1047,8 +1208,12 @@ class Game {
     if (action === 'resume') {
       this.state = 'playing';
     } else if (action === 'restart') {
-      this.loadLevel(this.levelIndex);
-      this.startPlaying();
+      if (this.level.tutorial) {
+        this.startTutorial();
+      } else {
+        this.loadLevel(this.levelIndex);
+        this.startPlaying();
+      }
     } else if (action === 'menu') {
       Sfx.stopMusic();
       this.state = 'menu';
@@ -1076,7 +1241,7 @@ class Game {
       return;
     }
     if (Input.pressed('Enter', 'Space') || Input.clickIn(rects[0].x, rects[0].y, rects[0].w, rects[0].h)) {
-      if (this.levelIndex < 4) this.beginLevel(this.levelIndex + 1, true);
+      if (this.levelIndex < 5) this.beginLevel(this.levelIndex + 1, true);
       else this.state = 'victory';
     }
   }
@@ -1102,3 +1267,7 @@ class Game {
     }
   }
 }
+
+window.addEventListener('load', () => {
+  new Game();
+});

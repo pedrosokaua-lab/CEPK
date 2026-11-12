@@ -1,7 +1,7 @@
 'use strict';
 
 /* ============================================================
-   FERRO-9 — construção das fases
+   CÓDIGO VERDE — construção das fases do CEPK
    ============================================================ */
 
 const TILE_EMPTY = 0;
@@ -50,14 +50,28 @@ class LevelBuilder {
 
   spawn(tx, ty) { return this.add('spawn', tx, ty); }
   crate(tx, ty) { return this.add('crate', tx, ty); }
-  enemy(tx, ty) { return this.add('walker', tx, ty); }
-  drone(tx, ty) { return this.add('drone', tx, ty); }
+  enemy(tx, ty, data = {}) { return this.add('walker', tx, ty, data); }
+  drone(tx, ty, data = {}) { return this.add('drone', tx, ty, data); }
+  turret(tx, ty, data = {}) { return this.add('turret', tx, ty, data); }
+  charger(tx, ty, data = {}) { return this.add('charger', tx, ty, data); }
+  swooper(tx, ty, data = {}) { return this.add('swooper', tx, ty, data); }
+  spring(tx, ty, data = {}) { return this.add('spring', tx, ty, data); }
+  crumble(tx, ty, w = 3, data = {}) {
+    this.solid(tx, ty, w, 1);
+    return this.add('crumble', tx, ty, { w, ...data });
+  }
+  clue(tx, ty, clue = '') { return this.add('clue', tx, ty, { clue }); }
+  kennedito(tx, ty) { return this.add('kennedito', tx, ty); }
   gear(tx, ty) { return this.add('gear', tx, ty); }
   core(tx, ty) { return this.add('core', tx, ty); }
   checkpoint(tx, ty) { return this.add('checkpoint', tx, ty); }
   power(tx, ty, power) { return this.add('power', tx, ty, { power }); }
   boss(tx, ty, cfg) { return this.add('boss', tx, ty, { boss: cfg }); }
   exit(tx, ty) { return this.add('exit', tx, ty); }
+  gate(tx, ty, w, h, station = null) {
+    this.solid(tx, ty, w, h);
+    return this.add('gate', tx, ty, { w, h, station });
+  }
 
   build() {
     return new Level(this);
@@ -78,10 +92,13 @@ class Level {
     this.bossCfg = cfg.boss || null;
     this.musicRoot = cfg.musicRoot || 55;
     this.musicMode = cfg.musicMode || 0;
+    this.tutorial = !!cfg.tutorial;
+    this.stations = cfg.stations || [];
     this.w = builder.w;
     this.h = builder.h;
     this.tiles = builder.tiles;
     this.entities = builder.entities;
+    this.gates = this.entities.filter((e) => e.kind === 'gate');
     this.widthPx = this.w * TILE;
     this.heightPx = this.h * TILE;
     this.time = 0;
@@ -105,6 +122,12 @@ class Level {
 
   isSolid(px, py) {
     return this.tileAtPx(px, py) === TILE_SOLID;
+  }
+
+  setTile(tx, ty, type) {
+    if (tx >= 0 && tx < this.w && ty >= 0 && ty < this.h) {
+      this.tiles[ty * this.w + tx] = type;
+    }
   }
 
   isHazard(px, py) {
@@ -138,129 +161,247 @@ class Level {
     }
     return false;
   }
+
+  openGate(gate) {
+    if (gate.open) return;
+    gate.open = true;
+    for (let y = 0; y < gate.h; y++) {
+      for (let x = 0; x < gate.w; x++) {
+        const tx = gate.tx + x;
+        const ty = gate.ty + y;
+        if (tx >= 0 && tx < this.w && ty >= 0 && ty < this.h) {
+          this.tiles[ty * this.w + tx] = TILE_EMPTY;
+        }
+      }
+    }
+  }
 }
 
-/* ------------------------------ TEMAS ------------------------------ */
+/* ------------------------------ TEMAS DO CEPK ------------------------------ */
 
 const THEMES = {
-  factory: {
-    skyTop: '#120b08', skyBottom: '#2b1710',
-    far: '#24120c', mid: '#351a0f', near: '#472414',
-    tileTop: '#b4632f', tile: '#6b3a20', tileDark: '#3c1f12',
-    edge: '#d98a4a', accent: '#ff9d45', hazard: '#ff5a3c', glow: '#ffb066',
-    bg: '#1b0f0a'
+  training: {
+    kind: 'training',
+    skyTop: '#061a10', skyBottom: '#0f4a28',
+    far: '#0b2c19', mid: '#13502c', near: '#1d6b3a',
+    tileTop: '#9bffb0', tile: '#2f8a4c', tileDark: '#15502a',
+    edge: '#b8ffd0', accent: '#6dff9e', hazard: '#ff5a6c', glow: '#c8ffda',
+    bg: '#071c10'
+  },
+  school: {
+    kind: 'courtyard',
+    skyTop: '#07160d', skyBottom: '#1c4d2a',
+    far: '#0d2b18', mid: '#17482a', near: '#236b3c',
+    tileTop: '#7ddf88', tile: '#347347', tileDark: '#183d24',
+    edge: '#a8f0b0', accent: '#6dff9e', hazard: '#ff5a5a', glow: '#c4ffd2',
+    bg: '#081a0e'
+  },
+  hall: {
+    kind: 'hall',
+    skyTop: '#06130e', skyBottom: '#123d2c',
+    far: '#0a261d', mid: '#114434', near: '#1b5e48',
+    tileTop: '#65d68b', tile: '#276b52', tileDark: '#12382a',
+    edge: '#9df7bb', accent: '#5dffb0', hazard: '#ff6b4a', glow: '#bfffd8',
+    bg: '#06170f'
+  },
+  gym: {
+    kind: 'gym',
+    skyTop: '#0a1706', skyBottom: '#2b4a12',
+    far: '#13270a', mid: '#234312', near: '#35631c',
+    tileTop: '#c6f06a', tile: '#5c8a28', tileDark: '#2d4a12',
+    edge: '#e4ff9a', accent: '#b6ff5d', hazard: '#ff7a3c', glow: '#e8ffb0',
+    bg: '#0b1c08'
   },
   lab: {
-    skyTop: '#04121a', skyBottom: '#0a2a33',
-    far: '#08222b', mid: '#0c303c', near: '#124450',
-    tileTop: '#2fd4c8', tile: '#166e78', tileDark: '#0b3a42',
-    edge: '#5ef2e0', accent: '#4fffe6', hazard: '#ff4d6d', glow: '#7ffff0',
-    bg: '#061820'
+    kind: 'lab',
+    skyTop: '#04140f', skyBottom: '#0b3a32',
+    far: '#08251f', mid: '#0d3f36', near: '#155a4c',
+    tileTop: '#5ef2c8', tile: '#1f7765', tileDark: '#0d3a31',
+    edge: '#9dffe2', accent: '#4fffd0', hazard: '#ff5d7a', glow: '#c0fff0',
+    bg: '#061b16'
   },
-  city: {
-    skyTop: '#080614', skyBottom: '#1b1038',
-    far: '#150d2a', mid: '#221245', near: '#321a5e',
-    tileTop: '#8a63ff', tile: '#4b2c9e', tileDark: '#2a1760',
-    edge: '#b18cff', accent: '#9f7bff', hazard: '#ff4d9d', glow: '#c9a6ff',
-    bg: '#0d0820'
-  },
-  plant: {
-    skyTop: '#120d02', skyBottom: '#2b1f05',
-    far: '#241a06', mid: '#332506', near: '#4a3508',
-    tileTop: '#ffcf4d', tile: '#9a7a1f', tileDark: '#5c4912',
-    edge: '#ffe27a', accent: '#ffd24d', hazard: '#ff6b2c', glow: '#ffe58a',
-    bg: '#1a1303'
-  },
-  core: {
-    skyTop: '#0c0206', skyBottom: '#2b0511',
-    far: '#22040d', mid: '#330615', near: '#4a0a1e',
-    tileTop: '#ff4d6d', tile: '#8a1e33', tileDark: '#551020',
-    edge: '#ff7d96', accent: '#ff5d7a', hazard: '#ff3355', glow: '#ff9bb0',
-    bg: '#160309'
+  office: {
+    kind: 'office',
+    skyTop: '#0b1207', skyBottom: '#26330f',
+    far: '#141d0a', mid: '#233312', near: '#35491a',
+    tileTop: '#d7d98a', tile: '#6c7030', tileDark: '#363a18',
+    edge: '#f2f2b0', accent: '#d9ff6d', hazard: '#ff5d6c', glow: '#f4ffb0',
+    bg: '#0d1508'
   }
 };
 
-/* ------------------------------ FASES ------------------------------ */
+/* ------------------------------ TREINAMENTO ------------------------------ */
+
+function tutorialLevel() {
+  const b = new LevelBuilder({
+    id: 0,
+    name: 'Treinamento',
+    short: 'Treinamento',
+    subtitle: 'Aprenda no pátio',
+    width: 112,
+    height: 22,
+    theme: THEMES.training,
+    musicRoot: 58,
+    musicMode: 0,
+    tutorial: true,
+    hint: '',
+    stations: [
+      { action: 'move', label: 'MOVER', key: 'A / D', tx: 7, ty: 17 },
+      { action: 'jump', label: 'PULAR', key: 'ESPAÇO', tx: 16, ty: 17 },
+      { action: 'double', label: 'PULO DUPLO', key: 'ESPAÇO ×2', tx: 32, ty: 17 },
+      { action: 'dash', label: 'IMPULSO (SHIFT)', key: 'SHIFT', tx: 44, ty: 17 },
+      { action: 'attack', label: 'GOLPE (8 lados)', key: 'J', tx: 54, ty: 17 },
+      { action: 'shoot', label: 'ESTILINGUE', key: '2 + J', tx: 67, ty: 17 },
+      { action: 'parry', label: 'PARRY (E)', key: 'E', tx: 80, ty: 17 },
+      { action: 'focus', label: 'FOCO (K)', key: 'K', tx: 102, ty: 17 },
+      { action: 'dash_alt', label: 'DASH (L)', key: 'L', tx: 107, ty: 17 },
+      { action: 'exit', label: 'PORTAL', key: '→', tx: 110, ty: 17 }
+    ]
+  });
+
+  // Pátio contínuo: nada de cair do mapa no tutorial.
+  b.ground(0, 112);
+  b.spawn(2, 17);
+  b.checkpoint(10, 17);
+
+  // 1) MOVER — portão de energia
+  b.gate(12, 11, 1, 7, 'move');
+
+  // 2) PULAR — muro baixo de verdade
+  b.solid(19, 16, 3, 2);
+  b.gate(29, 11, 1, 7, 'jump');
+
+  // 3) PULO DUPLO — barreira alta + spring
+  b.gate(37, 11, 1, 7, 'double');
+  b.checkpoint(33, 17);
+  b.spring(38, 17);  // Spring for double jump
+
+  // 4) IMPULSO — barreira que abre com o dash (SHIFT)
+  b.gate(49, 11, 1, 7, 'dash');
+  b.checkpoint(45, 17);
+
+  // 5) GOLPE — boneco de treino
+  b.enemy(57, 17, { training: true, tag: 'melee', hp: 4 });
+  b.gate(63, 11, 1, 7, 'attack');
+  b.checkpoint(60, 17);
+
+  // 6) ESTILINGUE — alvo fixo imune a golpes, só cai com tiro
+  b.drone(71, 17, { training: true, tag: 'shoot', hp: 2, fixed: true });
+  b.gate(77, 11, 1, 7, 'shoot');
+  b.checkpoint(74, 17);
+
+  // 7) PARRY — orbe lento e parável (com janela perfeita de 0.14s)
+  b.drone(85, 14, { training: true, tag: 'parry', parryTrainer: true, invulnerable: true, fixed: true });
+  b.gate(91, 11, 1, 7, 'parry');
+  b.checkpoint(88, 17);
+
+  // 8) FOCUS — módulo de foco (agora em K)
+  b.power(100, 16, 'focus');
+  b.gate(105, 11, 1, 7, 'focus');
+  b.checkpoint(102, 17);
+
+  // 9) DASH ALTERNADO (L)
+  b.gate(108, 11, 1, 7, 'dash_alt');
+  b.checkpoint(106, 17);
+
+  // 10) PORTAL
+  b.exit(110, 17);
+
+  return b.build();
+}
+
+const TUTORIAL_LEVEL = tutorialLevel;
+
+/* ------------------------------ FASE 1 ------------------------------ */
 
 function level1() {
   const b = new LevelBuilder({
     id: 1,
-    name: 'Fábrica Abandonada',
-    short: 'Fábrica',
-    subtitle: 'Onde tudo começou',
-    width: 122,
+    name: 'Pátio Central',
+    short: 'Pátio',
+    subtitle: 'Onde o sinal começou',
+    width: 126,
     height: 22,
-    theme: THEMES.factory,
+    theme: THEMES.school,
     musicRoot: 55,
     musicMode: 0,
     story: [
-      'Sistemas... online.',
-      'Você é FERRO-9, um pequeno robô de manutenção.',
-      'A fábrica que te construiu está abandonada — e você quer sair.',
-      'Recupere seu módulo magnético e encontre uma saída.'
+      'O sinal de emergência do CEPK disparou às 6h12.',
+      'Você é VEGA, monitor de segurança da escola.',
+      'O Sistema Verde trancou portões e corredores.',
+      'Atravesse o pátio e alcance a diretoria.'
     ],
     cutscene: [
       {
-        title: 'DESPERTAR',
-        motif: 'awakening',
+        title: 'O SINAL',
+        motif: 'gate',
         lines: [
-          'Um pulso elétrico atravessa o chassi enferrujado.',
-          'Pela primeira vez em anos, os olhos de FERRO-9 se acendem.',
-          'A fábrica está vazia. Mas nem tudo aqui está desligado.'
+          'O colégio amanhece vazio.',
+          'As câmeras giram para você ao mesmo tempo.',
+          'O Sistema Verde assumiu o CEPK.'
         ]
       },
       {
-        title: 'A FÁBRICA',
-        motif: 'machines',
+        title: 'PÁTIO',
+        motif: 'courtyard',
         lines: [
-          'Esteiras paradas. Engrenagens cobertas de poeira.',
-          'Nas paredes, o símbolo da corporação que te construiu.',
-          'Em algum lugar, uma saída ainda respira luz.'
+          'Grama, quadras e árvores. Tudo parado.',
+          'Os alto-falantes repetem uma ordem: EVACUAR.',
+          'Mas ninguém mais está aqui.'
         ]
       },
       {
-        title: 'O PRIMEIRO MÓDULO',
+        title: 'O PRIMEIRO PODER',
         motif: 'module',
         lines: [
-          'Um campo magnético fraco pulsa entre as caixas.',
-          'Se alcançar o módulo azul, você poderá mover o metal.',
-          'E talvez... abrir o próprio caminho.'
+          'Um pulso de energia verde atravessa o pátio.',
+          'Com ele, você pode quebrar o cerco.',
+          'O caminho até a diretoria começa agora.'
+        ]
+      },
+      {
+        title: 'RONDA TURRET',
+        motif: 'turret',
+        lines: [
+          'Uma torre verde surgiu no perímetro.',
+          'Ela vigia o pátio e dispara projéteis paráveis.',
+          'Use o parry para devolvê-las.'
         ]
       }
     ],
-    hint: 'Segure Q para atrair caixas de metal e atravessar os fossos.',
-    boss: { name: 'TRITURADOR-7', hp: 46, speed: 62, color: '#ff8c42', w: 116, h: 122 }
+    hint: 'Q libera o PULSO: destrói projéteis e empurra inimigos.',
+    boss: { name: 'O PORTEIRO', hp: 48, speed: 62, color: '#6dff9e', w: 116, h: 122, style: 'guardian' }
   });
 
-  b.ground(0, 19);
+  b.ground(0, 20);
   b.spawn(2, 17);
-  b.power(6, 16, 'attract');
-  b.solid(3, 14, 3);
-  b.gear(4, 12);
+  b.power(6, 16, 'pulse');
+  b.solid(4, 14, 3);
+  b.gear(5, 12);
   b.solid(9, 13, 3);
   b.gear(10, 11);
   b.crate(14, 17);
   b.crate(15, 17);
   b.crate(16, 17);
 
-  // fosso com espinhos (8 tiles)
-  b.solid(19, 21, 8);
-  b.spikes(19, 20, 8);
+  // fosso do jardim
+  b.solid(21, 21, 7);
+  b.spikes(21, 20, 7);
 
-  b.ground(27, 20);
-  b.enemy(32, 17);
+  b.ground(28, 18);
+  b.turret(32, 17, { hp: 3, damage: 1, range: 500 });  // New Turret enemy
   b.solid(33, 13, 5);
   b.gear(35, 11);
+  b.clue(36, 12, 'pista1');
   b.checkpoint(36, 17);
   b.enemy(41, 17);
-  b.spikes(44, 17, 2);
-  b.drone(43, 10);
+  b.spikes(43, 17, 2);
+  b.drone(44, 10);
 
-  // fosso sem fundo com plataforma
-  b.solid(49, 15, 2);
-  b.gear(49, 13);
+  b.solid(47, 15, 2);
+  b.gear(47, 13);
 
-  b.ground(53, 23);
+  b.ground(52, 24);
   b.solid(54, 16, 4);
   b.solid(59, 13, 4);
   b.solid(64, 16, 4);
@@ -281,66 +422,82 @@ function level1() {
   b.enemy(88, 17);
   b.spikes(95, 17, 3);
 
-  b.ground(101, 21);
-  b.boss(112, 17, { name: 'TRITURADOR-7', hp: 46, speed: 62, color: '#ff8c42', w: 116, h: 122 });
-  b.exit(118, 17);
+  // Pulo duplo com spring
+  b.spring(90, 17);  // New Spring for double jump training
+
+  b.ground(101, 25);
+  b.solid(104, 14, 3);
+  b.gear(105, 12);
+  b.boss(112, 17, { name: 'O PORTEIRO', hp: 48, speed: 62, color: '#6dff9e', w: 116, h: 122, style: 'guardian' });
+  b.exit(120, 17);
 
   return b.build();
 }
 
+/* ------------------------------ FASE 2 ------------------------------ */
+
 function level2() {
   const b = new LevelBuilder({
     id: 2,
-    name: 'Laboratório Secreto',
-    short: 'Laboratório',
-    subtitle: 'Experimentos proibidos',
-    width: 132,
+    name: 'Corredores',
+    short: 'Corredores',
+    subtitle: 'Depois do último sinal',
+    width: 136,
     height: 22,
-    theme: THEMES.lab,
+    theme: THEMES.hall,
     musicRoot: 58,
     musicMode: 1,
     story: [
-      'Abaixo da fábrica, luzes frias pulsam sem parar.',
-      'Alguém ainda opera este laboratório... e observa você.',
-      'Um segundo módulo magnético está guardado aqui.',
-      'Use o ÍMÃ VERMELHO para repelir inimigos e devolver projéteis.'
+      'Os corredores do CEPK viraram um labirinto.',
+      'Monitores e câmeras patrulham cada esquina.',
+      'O FOCO permite enxergar o perigo em câmera lenta.',
+      'Chegue ao ginásio antes que as portas fechem.'
     ],
     cutscene: [
       {
-        title: 'SUBSOLO',
-        motif: 'lab',
+        title: 'CORREDORES',
+        motif: 'hall',
         lines: [
-          'Atrás de uma porta lacrada, escadas descem para o escuro.',
-          'Luzes frias piscam em um corredor que não deveria existir.',
-          'Alguém observa através das câmeras.'
+          'Armários verdes se alinham até o fim do corredor.',
+          'As luzes piscam em um ritmo que não é humano.',
+          'O Sistema Verde observa cada passo.'
         ]
       },
       {
-        title: 'EXPERIMENTOS',
+        title: 'O SISTEMA',
         motif: 'observation',
         lines: [
-          'Tanques vazios. Marcas de garras no vidro.',
-          'Os registros falam de máquinas que aprenderam a sentir dor.',
-          'O seu nome aparece em uma lista de projetos.'
+          'Telas mostram sua ficha escolar.',
+          'Nome: VEGA. Função: monitor.',
+          'Status: ameaça.'
         ]
       },
       {
-        title: 'ÍMÃ VERMELHO',
+        title: 'FOCO',
         motif: 'module',
         lines: [
-          'O segundo módulo reage à sua aproximação.',
-          'Com ele, você pode empurrar o que tenta te parar.',
-          'Inclusive as balas.'
+          'Um módulo de processamento pulsa atrás de um vidro.',
+          'Com ele, o mundo desacelera.',
+          'E você vê a saída antes de todo mundo.'
+        ]
+      },
+      {
+        title: 'CORRIDOR CARREGADOR',
+        motif: 'charger',
+        lines: [
+          'Um corredor bloqueado por um Carregador.',
+          'Ele acelera quando vê o jogador.',
+          'Use o parry para atordoá-lo e passar.'
         ]
       }
     ],
-    hint: 'Segure E para repelir inimigos e refletir os tiros dos drones.',
-    boss: { name: 'VIGIA-X', hp: 62, speed: 70, color: '#4fffe6', w: 112, h: 126 }
+    hint: 'Segure K para ativar o FOCO e desacelerar inimigos e projéteis.',
+    boss: { name: 'A INSPETORA', hp: 64, speed: 72, color: '#ffd24d', w: 112, h: 126, style: 'hunter' }
   });
 
   b.ground(0, 17);
   b.spawn(2, 17);
-  b.power(6, 16, 'repel');
+  b.power(6, 16, 'focus');
   b.solid(8, 14, 4);
   b.gear(9, 12);
   b.enemy(12, 17);
@@ -351,7 +508,7 @@ function level2() {
   b.solid(17, 21, 8);
   b.spikes(17, 20, 8);
 
-  b.ground(25, 21);
+  b.ground(25, 22);
   b.checkpoint(28, 17);
   b.solid(30, 15, 5);
   b.gear(31, 13);
@@ -362,11 +519,12 @@ function level2() {
   b.enemy(42, 17);
   b.spikes(44, 17, 2);
 
-  b.solid(48, 15, 2);
-  b.gear(48, 13);
+  b.solid(47, 15, 2);
+  b.gear(47, 13);
 
   b.ground(52, 25);
   b.solid(54, 16, 4);
+  b.clue(55, 15, 'pista2');
   b.solid(60, 13, 4);
   b.solid(66, 16, 4);
   b.gear(61, 11);
@@ -391,61 +549,76 @@ function level2() {
   b.laser(101, 13, 1, 5);
   b.checkpoint(103, 17);
 
-  b.ground(107, 25);
-  b.boss(120, 17, { name: 'VIGIA-X', hp: 62, speed: 70, color: '#4fffe6', w: 112, h: 126 });
-  b.exit(127, 17);
+  b.ground(107, 29);
+  b.solid(110, 14, 3);
+  b.solid(124, 14, 3);
+  b.gear(125, 12);
+  b.turret(118, 17, { hp: 3, damage: 1, range: 550 });  // New Turret
+  b.boss(120, 17, { name: 'A INSPETORA', hp: 64, speed: 72, color: '#ffd24d', w: 112, h: 126, style: 'hunter' });
+  b.exit(130, 17);
 
   return b.build();
 }
 
+/* ------------------------------ FASE 3 ------------------------------ */
+
 function level3() {
   const b = new LevelBuilder({
     id: 3,
-    name: 'Cidade Robótica',
-    short: 'Cidade',
-    subtitle: 'As luzes nunca dormem',
-    width: 142,
+    name: 'Ginásio',
+    short: 'Ginásio',
+    subtitle: 'Jogo decisivo',
+    width: 146,
     height: 22,
-    theme: THEMES.city,
+    theme: THEMES.gym,
     musicRoot: 62,
     musicMode: 2,
     story: [
-      'Você sobe à superfície e encontra uma cidade inteira de máquinas.',
-      'Nem todas são hostis. Mas todas estão sob o mesmo comando.',
-      'O módulo de CAMPO MAGNÉTICO pode te proteger do fogo inimigo.',
-      'Atravesse os telhados e alcance a torre central.'
+      'O ginásio virou arena de treinamento do Sistema.',
+      'As arquibancadas estão vazias, mas as máquinas não.',
+      'O ESCUDO protege contra os ataques mais pesados.',
+      'Atravesse a quadra e alcance a ala técnica.'
     ],
     cutscene: [
       {
-        title: 'SUPERFÍCIE',
-        motif: 'city',
+        title: 'GINÁSIO',
+        motif: 'gym',
         lines: [
-          'O elevador se abre para uma cidade que nunca dorme.',
-          'Letreiros de neon anunciam máquinas em promoção.',
-          'Nenhum deles olha para você.'
+          'A quadra verde brilha sob os refletores.',
+          'Cestas e traves se movem sozinhas.',
+          'O placar marca uma partida sem fim.'
         ]
       },
       {
-        title: 'A TORRE',
-        motif: 'tower',
+        title: 'TREINO',
+        motif: 'training',
         lines: [
-          'No centro, a torre de comando brilha como um farol.',
-          'Drones patrulham os telhados em formação.',
-          'Todas as rotas levam ao mesmo lugar.'
+          'Máquinas de treino ganharam vida.',
+          'Elas não querem sua nota. Querem sua queda.',
+          'A arquibancada inteira assiste.'
         ]
       },
       {
-        title: 'CAMPO MAGNÉTICO',
+        title: 'ESCUDO',
         motif: 'module',
         lines: [
-          'Um escudo de energia espera no alto de um prédio.',
-          'Com ele, os tiros inimigos se curvam ao seu redor.',
-          'A cidade ainda pode ser atravessada.'
+          'Um campo de força espera no alto da arquibancada.',
+          'Ele absorve o impacto e devolve o silêncio.',
+          'O ginásio não vai te parar.'
+        ]
+      },
+      {
+        title: 'SWOOPER NO GINÁSIO',
+        motif: 'swooper',
+        lines: [
+          'Um Swooper patrulha o galpão.',
+          'Ele mergulha do alto da arquibancada.',
+          'Use o parry no timing certo para refletir.'
         ]
       }
     ],
-    hint: 'Segure R para ativar o escudo magnético e absorver projéteis.',
-    boss: { name: 'COLOSSO-9', hp: 78, speed: 66, color: '#b18cff', w: 124, h: 136 }
+    hint: 'Segure R para ativar o ESCUDO e absorver os ataques.',
+    boss: { name: 'O TÉCNICO', hp: 80, speed: 68, color: '#ff8c42', w: 124, h: 136, style: 'bruiser' }
   });
 
   b.ground(0, 20);
@@ -464,6 +637,7 @@ function level3() {
   b.solid(32, 16, 4);
   b.solid(38, 13, 4);
   b.gear(39, 11);
+  b.clue(40, 12, 'pista3');
   b.drone(35, 9);
   b.enemy(36, 17);
   b.spikes(42, 17, 2);
@@ -502,61 +676,78 @@ function level3() {
   b.enemy(101, 17);
   b.spikes(105, 17, 2);
 
-  b.ground(109, 33);
-  b.boss(130, 17, { name: 'COLOSSO-9', hp: 78, speed: 66, color: '#b18cff', w: 124, h: 136 });
-  b.exit(137, 17);
+  // Spring for high jump training
+  b.spring(110, 17);  // New Spring
+
+  b.ground(109, 37);
+  b.solid(112, 14, 3);
+  b.solid(126, 14, 3);
+  b.gear(127, 12);
+  b.boss(130, 17, { name: 'O TÉCNICO', hp: 80, speed: 68, color: '#ff8c42', w: 124, h: 136, style: 'bruiser' });
+  b.exit(140, 17);
 
   return b.build();
 }
 
+/* ------------------------------ FASE 4 ------------------------------ */
+
 function level4() {
   const b = new LevelBuilder({
     id: 4,
-    name: 'Usina Elétrica',
-    short: 'Usina',
-    subtitle: 'O coração da energia',
-    width: 148,
+    name: 'Laboratório',
+    short: 'Laboratório',
+    subtitle: 'Experimentos do CEPK',
+    width: 152,
     height: 22,
-    theme: THEMES.plant,
+    theme: THEMES.lab,
     musicRoot: 65,
     musicMode: 3,
     story: [
-      'A cidade se alimenta desta usina. Derrubá-la enfraquece o Núcleo.',
-      'Descargas elétricas varrem os corredores. Não pare no chão.',
-      'O módulo de SUPERCARGA transforma energia em saltos impossíveis.',
-      'Salte sobre os abismos e chegue ao reator.'
+      'O laboratório do CEPK guarda os projetos do Sistema.',
+      'Feixes de energia cortam os corredores.',
+      'A ADRENALINA transforma energia em velocidade.',
+      'Desligue os reatores e chegue à diretoria.'
     ],
     cutscene: [
       {
-        title: 'USINA',
-        motif: 'plant',
+        title: 'LABORATÓRIO',
+        motif: 'lab',
         lines: [
-          'A cidade bebe desta usina. As luzes daqui nunca se apagam.',
-          'Pilares carregados cortam o ar com estalos azuis.',
-          'Se o reator cair, o Núcleo perde força.'
+          'Bancadas, vidrarias e quadros verdes.',
+          'Experimentos que nunca deveriam sair do papel.',
+          'O Sistema aprendeu rápido demais.'
         ]
       },
       {
-        title: 'TEMPESTADE',
-        motif: 'storm',
+        title: 'PROJETO VEGA',
+        motif: 'project',
         lines: [
-          'Descargas elétricas varrem os corredores.',
-          'O chão treme a cada pulso do reator.',
-          'Você precisa ser mais rápido que a corrente.'
+          'Sua ficha aparece em todos os monitores.',
+          'Você não é só um monitor. É a chave.',
+          'E o Sistema sabe disso.'
         ]
       },
       {
-        title: 'SUPERCARGA',
+        title: 'ADRENALINA',
         motif: 'module',
         lines: [
-          'O último módulo está preso ao núcleo do reator.',
-          'Ele transforma energia em movimento puro.',
-          'Um salto. Um abismo. E nenhuma volta.'
+          'O último módulo está preso ao reator.',
+          'Com ele, cada passo vira um trovão.',
+          'A diretoria está logo acima.'
+        ]
+      },
+      {
+        title: 'PISTA 4/4: PEGADA VERDE',
+        motif: 'clue',
+        lines: [
+          'Uma pegada verde marca o caminho.',
+          'Colete todas as quatro pegadas para abençoar o resgate.',
+          'O collar de Kennedito responderá.'
         ]
       }
     ],
-    hint: 'Aperte F para ativar a SUPERCARGA e execute saltos gigantes.',
-    boss: { name: 'REATOR-Ω', hp: 96, speed: 74, color: '#ffd24d', w: 120, h: 132 }
+    hint: 'F ativa a ADRENALINA: mais velocidade, salto e dano por 6s.',
+    boss: { name: 'A COORDENADORA', hp: 98, speed: 76, color: '#b18cff', w: 120, h: 132, style: 'trickster' }
   });
 
   b.ground(0, 16);
@@ -566,15 +757,24 @@ function level4() {
   b.gear(9, 12);
   b.enemy(11, 17);
 
+  b.solid(16, 21, 10);
+  b.spikes(16, 20, 10);
+  b.solid(21, 15, 3);
+  b.gear(21, 13);
+
   b.ground(26, 20);
   b.checkpoint(29, 17);
   b.laser(32, 12, 1, 6);
   b.laser(38, 12, 1, 6);
   b.solid(34, 14, 3);
   b.gear(35, 12);
-  b.enemy(33, 17);
+  b.turret(33, 17, { hp: 3, damage: 1, range: 500 });  // New Turret
   b.enemy(41, 17);
   b.drone(37, 9);
+
+  b.solid(47, 15, 3);
+  b.solid(51, 13, 2);
+  b.gear(51, 11);
 
   b.ground(56, 22);
   b.checkpoint(59, 17);
@@ -587,71 +787,105 @@ function level4() {
   b.drone(71, 10);
   b.spikes(75, 17, 3);
 
+  b.solid(79, 15, 3);
+  b.solid(83, 13, 2);
+  b.gear(83, 11);
+
   b.ground(88, 22);
   b.laser(91, 12, 1, 6);
   b.laser(98, 12, 1, 6);
   b.solid(94, 14, 3);
   b.gear(95, 12);
-  b.enemy(92, 17);
+  b.charger(92, 17, { hp: 5, speed: 76 });  // New Charger
+  b.enemy(92, 17);  // Keep existing
   b.drone(102, 9);
   b.checkpoint(104, 17);
 
-  b.ground(120, 28);
-  b.gear(125, 15);
-  b.boss(136, 17, { name: 'REATOR-Ω', hp: 96, speed: 74, color: '#ffd24d', w: 120, h: 132 });
-  b.exit(143, 17);
+  // Pista 4/4 — pegada de Kennedito
+  b.clue(105, 16, 'pista4');
+
+  b.solid(111, 15, 3);
+  b.solid(115, 13, 2);
+  b.gear(115, 11);
+
+  b.ground(120, 32);
+  b.solid(124, 14, 3);
+  b.gear(125, 12);
+  b.boss(136, 17, { name: 'A COORDENADORA', hp: 98, speed: 76, color: '#b18cff', w: 120, h: 132, style: 'trickster' });
+  b.exit(146, 17);
 
   return b.build();
 }
 
+/* ------------------------------ FASE 5 ------------------------------ */
+
 function level5() {
   const b = new LevelBuilder({
     id: 5,
-    name: 'Núcleo Central',
-    short: 'Núcleo',
-    subtitle: 'O fim da linha',
-    width: 120,
+    name: 'Diretoria',
+    short: 'Diretoria',
+    subtitle: 'A sala da diretora',
+    width: 124,
     height: 22,
-    theme: THEMES.core,
+    theme: THEMES.office,
     musicRoot: 52,
     musicMode: 4,
     story: [
-      'O Núcleo Central controla todas as máquinas da cidade.',
-      'Ele sabe que você está aqui. E não pretende deixar você sair.',
-      'Todos os seus módulos estão ativos. Use-os juntos.',
-      'Destrua o Núcleo e conquiste sua liberdade.'
+      'A diretoria fica no topo do CEPK.',
+      'A DIRETORA controla o Sistema Verde.',
+      'Todos os poderes estão com você.',
+      'Liberte a escola.'
     ],
     cutscene: [
       {
-        title: 'NÚCLEO CENTRAL',
-        motif: 'core',
+        title: 'DIRETORIA',
+        motif: 'office',
         lines: [
-          'A porta final se abre sem fazer barulho.',
-          'No centro da sala, uma máquina do tamanho de uma casa abre um olho.',
-          '"FERRO-9. Você demorou."'
+          'A porta da diretoria se abre sozinha.',
+          'Um escritório verde, impecável e vazio.',
+          'Atrás da mesa, uma voz: "VEGA. Você chegou."'
         ]
       },
       {
-        title: 'O CONFRONTO',
+        title: 'A DIRETORA',
         motif: 'confrontation',
         lines: [
-          'O Núcleo controla cada máquina da cidade.',
-          'Mas você carrega todos os módulos que ele criou.',
-          'Ímãs, escudo e supercarga. Tudo ao mesmo tempo.'
+          'O Sistema não é uma máquina. É uma decisão.',
+          'E a decisão foi trancar todos para sempre.',
+          'Você carrega a chave para mudar isso.'
         ]
       },
       {
-        title: 'LIBERDADE',
+        title: 'SINAL VERDE',
         motif: 'final',
         lines: [
-          'Se o Núcleo cair, todas as máquinas acordam.',
-          'Pela primeira vez, elas poderão escolher.',
-          'E você também.'
+          'Se a diretora cair, o CEPK acorda.',
+          'Portões, luzes, sinos. Tudo volta.',
+          'E a escola finalmente fica em silêncio.'
+        ]
+      },
+      {
+        title: 'RESGATE KENNEDITO',
+        motif: 'kennedito',
+        lines: [
+          'A jaula de Kennedito está na última sala antes da diretora.',
+          'O collar verde é a chave mestra.',
+          'Aperte E ou J perto da jaula para libertá-lo.',
+          'Kennedito lutará ao seu lado contra a diretora.'
+        ]
+      },
+      {
+        title: 'JUNTO',
+        motif: 'together',
+        lines: [
+          'VEGA e Kennedito juntos.',
+          'O Sistema Verde desmorona.',
+          'A escola está livre.'
         ]
       }
     ],
-    hint: 'Combine ímãs, escudo e supercarga. Reflita os tiros do Núcleo com E.',
-    boss: { name: 'NÚCLEO-ÔMEGA', hp: 150, speed: 80, color: '#ff5d7a', w: 140, h: 150, final: true }
+    hint: 'Combine PULSO, FOCO, ESCUDO e ADRENALINA. O parry é a chave.',
+    boss: { name: 'A DIRETORA', hp: 156, speed: 82, color: '#ff5d7a', w: 140, h: 150, final: true, style: 'director' }
   });
 
   b.ground(0, 16);
@@ -683,42 +917,67 @@ function level5() {
   b.checkpoint(51, 17);
   b.drone(53, 9);
 
-  b.ground(56, 64);
-  b.boss(104, 17, { name: 'NÚCLEO-ÔMEGA', hp: 150, speed: 80, color: '#ff5d7a', w: 140, h: 150, final: true });
-  b.exit(114, 17);
+  // Section with crumble platforms
+  b.ground(56, 68);
+  b.solid(60, 14, 3);
+  b.solid(70, 14, 3);
+  b.solid(80, 14, 3);
+  b.solid(90, 14, 3);
+  b.solid(110, 14, 3);
+  b.gear(61, 12);
+  b.gear(81, 12);
+  b.core(91, 12);
+
+  // Kennedito cage at tile 94-112, position 17
+  b.kennedito(94, 17);  // New Kennedito Cage
+
+  // Crumble platforms before the cage
+  b.crumble(82, 17, 5);  // Crumble section
+  b.crumble(88, 17, 3);  // Another crumble section
+
+  // Turret and charger before the cage
+  b.turret(78, 17, { hp: 3, damage: 1, range: 500 });  // New Turret
+  b.charger(84, 17, { hp: 5, speed: 74 });  // New Charger
+
+  b.boss(104, 17, { name: 'A DIRETORA', hp: 156, speed: 82, color: '#ff5d7a', w: 140, h: 150, final: true, style: 'director' });
+  
+  // Rescue gate before the boss - at tiles 99-103
+  b.gate(99, 11, 1, 7, 'rescue');  // New rescue gate
+
+  b.exit(118, 17);
 
   return b.build();
 }
 
-const LEVELS = [level1, level2, level3, level4, level5];
+const LEVELS = [tutorialLevel, level1, level2, level3, level4, level5];
 
 const POWER_INFO = {
-  attract: {
-    name: 'ÍMÃ AZUL',
-    short: 'Atrair',
-    color: '#4da6ff',
+  pulse: {
+    name: 'PULSO',
+    short: 'Pulso',
+    color: '#6dff9e',
     key: 'Q',
-    desc: 'Atrai caixas, engrenagens, inimigos e projéteis de metal.'
+    desc: 'Onda de choque que destrói projéteis e empurra inimigos.'
   },
-  repel: {
-    name: 'ÍMÃ VERMELHO',
-    short: 'Repelir',
-    color: '#ff5d6c',
-    key: 'E',
-    desc: 'Empurra inimigos e devolve projéteis ao remetente.'
+  focus: {
+    name: 'FOCO',
+    short: 'Foco',
+    color: '#7fe7ff',
+    key: 'K',
+    desc: 'Desacelera inimigos e projéteis enquanto você segura.'
   },
   shield: {
-    name: 'CAMPO MAGNÉTICO',
+    name: 'ESCUDO',
     short: 'Escudo',
     color: '#b57bff',
     key: 'R',
-    desc: 'Cria um escudo que bloqueia dano e destrói projéteis.'
+    desc: 'Barreira de energia que bloqueia dano.'
   },
   super: {
-    name: 'SUPERCARGA',
-    short: 'Supercarga',
+    name: 'ADRENALINA',
+    short: 'Adrenalina',
     color: '#ffd24d',
     key: 'F',
-    desc: 'Libera saltos gigantes e mais velocidade por 6 segundos.'
+    desc: 'Aumenta velocidade, salto e dano por 6 segundos.'
   }
 };

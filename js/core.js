@@ -1,13 +1,17 @@
 'use strict';
 
 /* ============================================================
-   FERRO-9 — núcleo: constantes, utilidades, input, áudio e FX
+   CÓDIGO VERDE — núcleo: constantes, utilidades, input, áudio e FX
    ============================================================ */
 
 const VIEW_W = 1280;
 const VIEW_H = 720;
 const TILE = 32;
 const TAU = Math.PI * 2;
+
+const GAME_NAME = 'CÓDIGO VERDE';
+const GAME_SUBTITLE = 'COLÉGIO PRESIDENTE KENNEDY';
+const POWER_IDS = ['pulse', 'focus', 'shield', 'super'];
 
 /* ------------------------------ DIFICULDADE ------------------------------ */
 
@@ -71,6 +75,54 @@ const DIFFICULTIES = [
     energyRegen: 0.8,
     burst: 5,
     aggression: 1.3
+  }
+];
+
+/* ------------------------------ ARMAS ------------------------------ */
+
+const WEAPONS = [
+  {
+    id: 'bastao',
+    name: 'BASTÃO',
+    short: 'Bastão',
+    color: '#7fe7ff',
+    melee: true,
+    damage: 2,
+    bossDamage: 4,
+    cd: 0.30,
+    range: 56,
+    comboMax: 3,
+    energy: 0,
+    desc: 'Combo rápido de três golpes. Equilibrado e seguro.'
+  },
+  {
+    id: 'estilingue',
+    name: 'ESTILINGUE',
+    short: 'Estilingue',
+    color: '#ffd24d',
+    melee: false,
+    damage: 2,
+    bossDamage: 4,
+    cd: 0.36,
+    range: 0,
+    comboMax: 1,
+    energy: 6,
+    speed: 820,
+    desc: 'Ataque à distância. Gasta energia, mas acerta de longe.'
+  },
+  {
+    id: 'martelo',
+    name: 'MARTELO',
+    short: 'Martelo',
+    color: '#ff8c42',
+    melee: true,
+    damage: 5,
+    bossDamage: 9,
+    cd: 0.62,
+    range: 74,
+    comboMax: 2,
+    energy: 0,
+    desc: 'Lento e pesado. Quebra a guarda e arremessa inimigos.'
   }
 ];
 
@@ -458,28 +510,38 @@ function moveBody(body, level, dt) {
 
   body.x += body.vx * dt;
   resolveAxis(body, level, 'x');
+  body.x = clamp(body.x, 0, Math.max(0, level.widthPx - body.w));
 
   body.y += body.vy * dt;
   resolveAxis(body, level, 'y');
+
+  // Teto invisível: ninguém sai do mapa pelo topo.
+  if (body.y < 0) {
+    body.y = 0;
+    if (body.vy < 0) body.vy = 0;
+  }
 }
 
 /* ------------------------------ SAVE ------------------------------ */
 
-const SAVE_KEY = 'ferro9_save_v1';
+const SAVE_KEY = 'codigo_verde_save_v1';
+const LEGACY_SAVE_KEY = 'ferro9_save_v1';
 
 function loadSave() {
   try {
-    const raw = localStorage.getItem(SAVE_KEY);
+    const raw = localStorage.getItem(SAVE_KEY) || localStorage.getItem(LEGACY_SAVE_KEY);
     if (!raw) return null;
     const data = JSON.parse(raw);
     if (!data || typeof data !== 'object') return null;
     const diffValue = Number(data.difficulty);
     return {
       unlocked: clamp(Number(data.unlocked) || 1, 1, 5),
-      powers: Array.isArray(data.powers) ? data.powers : [],
+      powers: Array.isArray(data.powers) ? data.powers.filter((p) => POWER_IDS.includes(p)) : [],
       gears: data.gears || {},
       cores: data.cores || {},
+      clues: data.clues && typeof data.clues === 'object' ? data.clues : {},
       completed: Array.isArray(data.completed) ? data.completed : [],
+      tutorialDone: !!data.tutorialDone,
       difficulty: Number.isFinite(diffValue) ? clamp(diffValue, 0, DIFFICULTIES.length - 1) : 1
     };
   } catch (err) {
@@ -498,6 +560,7 @@ function writeSave(data) {
 function clearSave() {
   try {
     localStorage.removeItem(SAVE_KEY);
+    localStorage.removeItem(LEGACY_SAVE_KEY);
   } catch (err) {
     /* ignora */
   }

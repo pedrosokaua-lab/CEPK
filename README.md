@@ -1,16 +1,16 @@
-# FERRO-9 — Fuga da Fábrica
+# CÓDIGO VERDE
 
-Um jogo de **plataforma, ação e puzzle magnético** feito em HTML5 Canvas, sem bibliotecas e sem assets externos.
+**Um platformer de ação no Colégio Presidente Kennedy.**
 
-Você é **FERRO-9**, um pequeno robô de manutenção que acorda em uma fábrica abandonada. Recupere seus módulos magnéticos, atravesse cinco setores e destrua o Núcleo Central para conquistar sua liberdade.
+Você é **VEGA**, monitor de segurança do CEPK. Na madrugada em que o Sistema Verde assumiu a escola, portões se trancaram, câmeras começaram a caçar e todos os corredores viraram uma armadilha. Atravesse o pátio, os corredores, o ginásio, o laboratório e a diretoria para libertar o colégio.
 
-![gênero](https://img.shields.io/badge/g%C3%AAnero-plataforma%20%C2%B7%20a%C3%A7%C3%A3o%20%C2%B7%20puzzle-ff8c42)
-![canvas](https://img.shields.io/badge/HTML5-Canvas-4da6ff)
-![sem dependências](https://img.shields.io/badge/depend%C3%AAncias-0-4fffe6)
+![gênero](https://img.shields.io/badge/g%C3%AAnero-plataforma%20%C2%B7%20a%C3%A7%C3%A3o-6dff9e)
+![canvas](https://img.shields.io/badge/HTML5-Canvas-7fe7ff)
+![sem dependências](https://img.shields.io/badge/depend%C3%AAncias-0-b6ff9a)
 
 ## Como jogar
 
-Abra o arquivo `index.html` no navegador ou sirva a pasta com qualquer servidor estático:
+Abra `index.html` no navegador ou sirva a pasta com qualquer servidor estático:
 
 ```bash
 # com Python
@@ -22,105 +22,122 @@ npx serve .
 
 Depois acesse `http://localhost:8123`.
 
-> Não é necessário instalar nada. O jogo funciona 100% offline.
+> O jogo funciona 100% offline, sem bibliotecas, sem imagens externas e sem áudio pré-gravado. Toda a arte e a trilha são geradas em tempo real pelo Canvas e pela Web Audio API.
 
 ## Controles
 
 | Tecla | Ação |
 | --- | --- |
 | `A` / `D` ou `←` / `→` | Andar |
-| `Shift` | Correr |
-| `Espaço` / `W` / `↑` | Pular (segure para pular mais alto) |
-| `J` ou clique esquerdo | **Golpe magnético** — combo de 3 acertos, empurra caixas e rebate projéteis |
-| `K` ou clique direito | **Raio de energia** — tiro à distância (custa 8 de energia) |
-| `Q` ou `1` | **Ímã azul** — atrai metal (segure) |
-| `E` ou `2` | **Ímã vermelho** — repele e reflete projéteis (segure) |
-| `R` ou `3` | **Campo magnético** — escudo (segure) |
-| `F` ou `4` | **Supercarga** — saltos gigantes por 6s |
-| `M` | Liga/desliga o som |
+| `Shift` | Segurar para correr; tocar para **dash** (impulso) |
+| `Espaço` / `W` / `↑` | Pular; aperte de novo no ar para **pulo duplo** |
+| `L` | **Dash alternativo** (impulso no ar) |
+| `J` ou clique esquerdo | Atacar com a arma equipada (8 direções) |
+| `E` | **Parry** — aparar ataques verdes e projéteis (janela perfeita de 0.14s) |
+| `K` | **Foco** (segure; desacelera inimigos e projéteis) |
+| `1` / `2` / `3` | Trocar de arma |
+| `Q` | **Pulso** (após desbloquear) |
+| `R` | **Escudo** (segure; após desbloquear) |
+| `F` | **Adrenalina** (após desbloquear) |
+| `M` | Ligar / desligar som |
 | `Esc` / `P` | Pausar |
-| `Enter` / `Espaço` | Avançar diálogo / cutscene |
-| `Esc` | Pular a cutscene |
 
-## Poderes
+Armas:
+- **Bastão** — combo rápido de três golpes, com finalizador mais forte. Equilibrado e seguro.
+- **Estilingue** — distância. Gasta energia, mas acerta alvos fora do alcance do bastão.
+- **Martelo** — corpo a corpo. Lento e pesado. Quebra a guarda, arremessa inimigos e impulsiona caixas.
 
-- 🔵 **Ímã azul** — atrai caixas, engrenagens, inimigos e projéteis de metal. Use caixas para criar pontes sobre fossos.
-- 🔴 **Ímã vermelho** — empurra inimigos e devolve os tiros dos inimigos (inclusive contra chefes).
-- 🟣 **Campo magnético** — escudo que bloqueia dano e destrói projéteis inimigos.
-- 🟡 **Supercarga** — saltos gigantes e mais velocidade por 6 segundos.
+Poderes:
+- **PULSO (`Q`)** — onda de choque que destrói projéteis e empurra inimigos.
+- **FOCO (`K`)** — desacelera inimigos e projéteis enquanto você segura.
+- **ESCUDO (`R`)** — barreira de energia que absorve dano.
+- **ADRENALINA (`F`)** — mais velocidade, salto e dano por 6 segundos.
 
-A energia é limitada e se regenera com o tempo. Use os poderes com moderação.
+Nenhum poder magnético: o combate agora gira em torno de armas, posicionamento, dash, pulo duplo e parry.
 
-## Combate
+## Parry
 
-- ⚔️ **Golpe magnético** (`J` / clique esquerdo) — combo de três acertos com alcance curto, empurrão e knockback. Também empurra caixas e rebate projéteis inimigos.
-- ⚡ **Raio de energia** (`K` / clique direito) — dispara um projétil à distância por **8 de energia**. Causa dano dobrado nos chefes.
-- Os golpes encadeiam em um combo rápido: acerte no ritmo para manter o terceiro acerto, que é mais forte.
-- Inimigos agora têm **avisos de ataque**: o Andarilho patrulha, persegue e dá investidas; o Drone orbita, mira e dispara rajadas com aviso a laser.
-- Os chefes usam **ondas de choque**, **chuva de metal** e **rajadas radiais**, com avisos visuais antes de cada ataque.
+Aperte **E** pouco antes do impacto. Os primeiros instantes são um **PARRY PERFEITO**: reflete tudo em volta, atordoa mais e recarrega o dash. Projéteis **verdes** e ataques marcados podem ser aparados e voltam como arma; ataques **vermelhos** são imparáveis e exigem dash ou escudo. Um parry bem-sucedido também atordoa inimigos e chefes próximos e concede energia refundida + dash reset se for perfeito.
 
-## Dificuldades
+## Kennedito e a História
 
-Escolha o modo no menu principal em **DIFICULDADE**. A seleção é salva automaticamente e pode ser trocada a qualquer momento fora da fase.
+**Kennedito** é um lobo furry verde, mascote do CEPK e amigo de VEGA. Ele foi capturado pelo Sistema Verde e mantido em uma jaula na última fase antes da diretora. Resgatá-lo é uma missão real:
 
-| Modo | Vida | Dano recebido | Inimigos | Chefes | Energia |
-| --- | --- | --- | --- | --- | --- |
-| **FÁCIL** | 8 | 50% | 25% menos vida, 15% mais lentos | 25% menos vida | Regenera 35% mais rápido |
-| **NORMAL** | 5 | 100% | Padrão | Padrão | Padrão |
-| **DIFÍCIL** | 5 | 150% | 35% mais vida, 12% mais rápidos | 25% mais vida | Regenera 10% mais devagar |
-| **PESADELO** | 4 | 200% | 70% mais vida, 25% mais rápidos | 50% mais vida | Regenera 20% mais devagar |
+- Quatro **pistas/pegadas** estão espalhadas pelos níveis 1‑4. Coletar todas melhora o abençoamento do resgate.
+- No nível 5, antes do chefão, há uma **jaula** contendo Kennedito. Aperte **E** / **J** perto da jaula para iniciar o resgate.
+- O resgate concede **+1 HP máximo**; com as quatro pistas, a bênção sobe para **+2 HP máximo** e cura VEGA por completo.
+- O resgate também abre o **gate de resgate** que bloqueia a passagem para a diretora.
+- Após o resgate, Kennedito luta ao seu lado contra a diretora.
 
-Nas dificuldades maiores os inimigos também atiram mais rápido, fazem rajadas maiores e atacam com mais frequência.
+## História completa
 
-## Cutscenes e história
-
-Cada uma das cinco fases começa com uma **cutscene animada de três cenas**, desenhada proceduralmente no canvas, seguida por uma **tela de história** com o objetivo da fase.
-
-- `Enter` / `Espaço` / clique avançam o texto (o primeiro toque revela a cena inteira).
-- `Esc` pula a cutscene direto para a tela de história.
-- A cutscene é reproduzida ao iniciar uma nova partida, continuar um save ou avançar de fase. Ao escolher uma fase no **SELECIONAR FASE**, o jogo começa direto na ação.
+1. **Pátio Central** — O sinal de emergência dispara. VEGA acorda e deve atravessar o pátio, coletando o PULSO.
+2. **Corredores** — O FOCUS é encontrado; armários e câmeras patrulham o labirinto.
+3. **Ginásio** — O ESCUDO protege contra ataques pesados; o Swooper patrulha as arquibancadas.
+4. **Laboratório** — A ADRENALINA concede velocidade superior; há turrets e chargers novos; coleta de pistas.
+5. **Diretoria** — O confronto final. Kennedito está cativo; resgatá‑lo abre o gate de resgate antes da diretora. Derrotando a diretora, o Sistema Verde é desativado e a escola é libertada.
 
 ## Fases
 
-1. **Fábrica Abandonada** — onde tudo começou.
-2. **Laboratório Secreto** — experimentos proibidos.
-3. **Cidade Robótica** — as luzes nunca dormem.
-4. **Usina Elétrica** — o coração da energia.
-5. **Núcleo Central** — o fim da linha.
+1. **Pátio Central** — o começo do sinal e o primeiro poder.
+2. **Corredores** — armários, câmeras e o Foco.
+3. **Ginásio** — a arena de treino e o Escudo.
+4. **Laboratório** — reatores, lasers e a Adrenalina.
+5. **Diretoria** — o confronto final com o Sistema Verde e o resgate de Kennedito.
 
-Cada fase termina em uma arena com um **chefe mecânico**. Reflita os projéteis com o ímã vermelho, arremesse caixas de metal e acerte o núcleo para abrir a saída.
+Cada fase tem história, cutscene animada, checkpoints, colecionáveis, desafios de plataforma e um chefe próprio.
 
-## Recursos
+## Chefes
 
-- Tutorial interativo no início do jogo, incluindo os ataques.
-- 5 fases com temas e trilhas sonoras próprias.
-- Cutscene animada e mini-história para cada fase.
-- Combate corpo a corpo com combo e tiro de energia.
-- 4 dificuldades com escala de vida, dano, velocidade e agressividade.
-- 5 chefes com padrões de ataque e segunda fase.
-- Física de plataforma com coyote time, jump buffer e pulo variável.
-- Puzzles com caixas de metal dinâmicas.
-- Engrenagens e núcleos escondidos para colecionar.
-- Checkpoints, progresso salvo em `localStorage` e seleção de fases.
-- Áudio sintetizado via WebAudio (sem arquivos de som).
-- Efeitos de partículas, parallax e screen shake.
+- **O PORTEIRO** — guarda o pátio com investidas e ondas de choque.
+- **A INSPETORA** — caça à distância e corta o espaço com lâminas.
+- **O TÉCNICO** — salta, gira e usa o peso da quadra.
+- **A COORDENADORA** — clones, teleportes e padrões de projéteis.
+- **A DIRETORA** — três fases, feixes, invocações e um sinal vermelho.
 
-## Estrutura do projeto
+Os chefes telegrafam ataques, mudam de fase conforme perdem vida e podem ser atordoados com parry.
 
-```text
-index.html          ponto de entrada
-css/style.css       layout, moldura e efeito CRT
-js/core.js          utilidades, input, áudio e partículas
-js/level.js         construção e definição das 5 fases
-js/entities.js      jogador, caixas, inimigos, chefes, projéteis e itens
-js/game.js          loop, estados, progresso e regras
-js/render.js        cenário, HUD, tutorial e menus
-```
+## Dificuldade
+
+Quatro modos disponíveis no menu:
+
+- **Fácil** — mais vida, menos dano e inimigos mais lentos.
+- **Normal** — a experiência equilibrada.
+- **Difícil** — menos vida, inimigos agressivos e chefes resistentes.
+- **Pesadelo** — o CEPK no limite: pouca vida, dano alto e chefes implacáveis.
+
+A dificuldade pode ser alterada a qualquer momento pelo menu.
 
 ## Progresso
 
-O progresso é salvo automaticamente no navegador (`localStorage`, chave `ferro9_save_v1`): fases liberadas, poderes desbloqueados e coletáveis. Use **APAGAR PROGRESSO** no menu para recomeçar do zero.
+O jogo salva automaticamente no `localStorage`:
 
-## Licença
+- fases liberadas e concluídas;
+- poderes desbloqueados;
+- crachás e núcleos coletados;
+- pistas de Kennedito coletadas;
+- dificuldade escolhida.
 
-Este projeto está disponível para uso pessoal e educacional. Divirta-se!
+A chave nova é `codigo_verde_save_v1`. Saves antigos de `ferro9_save_v1` são lidos uma vez e migrados, mas poderes magnéticos antigos são descartados.
+
+## Tecnologia
+
+- HTML5 Canvas 2D com resolução interna de 1280×720.
+- Tiles de 32px e visual pixel-art desenhado por código.
+- Física própria de plataforma, colisão por eixos e limites de mundo.
+- Áudio procedural com Web Audio API.
+- Zero dependências, zero build, zero assets externos.
+
+## Estrutura
+
+```text
+index.html
+css/style.css
+js/core.js       — constantes, utilidades, input, áudio, partículas, save
+js/level.js      — construtor de fases, temas, tutorial, níveis e histórias
+js/entities.js   — VEGA, armas, parry, inimigos, chefes, projéteis e pickups
+js/game.js       — estados, fluxo de telas, tutorial, poderes e câmera
+js/render.js     — cenários, HUD, menus, cutscenes e telas de fim
+```
+
+Feito para o **Colégio Presidente Kennedy**.
