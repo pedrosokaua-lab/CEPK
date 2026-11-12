@@ -41,6 +41,9 @@ class Game {
     this.cutsceneTime = 0;
     this.cutsceneReveal = 0;
     this.cutsceneThenStory = false;
+    this.cutsceneThenBoss = false;
+    this.cutsceneMode = 'intro';
+    this.bossIntroDone = false;
 
     this.level = null;
     this.levelIndex = 0;
@@ -60,6 +63,9 @@ class Game {
     this.boss = null;
     this.bossDefeated = false;
     this.bossActive = false;
+    this.arena = null;
+    this.bossGate = null;
+    this.exitGate = null;
     this.cluesFound = new Set(
       this.save && this.save.clues ? Object.keys(this.save.clues).map(Number).filter((n) => n >= 1 && n <= 4) : []
     );
@@ -435,6 +441,12 @@ class Game {
     this.levelIndex = index;
     const level = LEVELS[index]();
     this.level = level;
+    this.arena = level.arena || null;
+    this.bossGate = level.gates.find((g) => g.station === 'boss_arena') || null;
+    this.exitGate = level.gates.find((g) => g.station === 'boss_exit') || null;
+    this.bossIntroDone = false;
+    this.cutsceneMode = 'intro';
+    this.cutsceneThenBoss = false;
 
     this.crates = [];
     this.enemies = [];
@@ -559,18 +571,22 @@ class Game {
 
   /* ------------------------------ CUTSCENE ------------------------------ */
 
-  startCutscene(index, thenStory) {
+  startCutscene(index, thenStory, mode = 'intro') {
     this.cutsceneIndex = 0;
     this.cutsceneTime = 0;
     this.cutsceneReveal = 0;
     this.cutsceneThenStory = !!thenStory;
+    this.cutsceneThenBoss = false;
+    this.cutsceneMode = mode;
     this.state = 'cutscene';
     Sfx.stopMusic();
     Sfx.tone(240, 0.2, { type: 'sine', vol: 0.06, slide: 180 });
   }
 
   cutsceneSlides() {
-    return (this.level && this.level.cutscene) || [];
+    if (!this.level) return [];
+    if (this.cutsceneMode === 'boss') return this.level.bossCutscene || [];
+    return this.level.cutscene || [];
   }
 
   cutsceneSlide() {
@@ -620,11 +636,44 @@ class Game {
   }
 
   finishCutscene() {
+    if (this.cutsceneThenBoss) {
+      this.cutsceneThenBoss = false;
+      this.beginBossFight();
+      return;
+    }
     if (this.cutsceneThenStory) {
       this.state = 'story';
     } else {
       this.startPlaying();
     }
+  }
+
+  startBossIntro() {
+    if (!this.boss || !this.level || !this.level.bossCutscene.length) {
+      this.beginBossFight();
+      return;
+    }
+    this.bossIntroDone = true;
+    this.startCutscene(0, false, 'boss');
+    this.cutsceneThenBoss = true;
+    this.shake(0.4);
+    Sfx.tone(110, 0.5, { type: 'sawtooth', vol: 0.16, slide: -40 });
+    Sfx.tone(220, 0.3, { type: 'square', vol: 0.07, delay: 0.18 });
+  }
+
+  beginBossFight() {
+    if (!this.boss || this.boss.dead) return;
+    this.state = 'playing';
+    this.bossActive = true;
+    this.boss.active = true;
+    this.boss.state = 'idle';
+    this.boss.timer = 0.9;
+    this.boss.vx = 0;
+    if (this.bossGate) this.level.closeGate(this.bossGate);
+    if (this.exitGate) this.level.closeGate(this.exitGate);
+    Sfx.startMusic(this.level.musicRoot + 5, this.level.musicMode);
+    this.shake(0.55);
+    this.toast(this.boss.cfg.name + ' — LUTE!', this.boss.color, 2.4);
   }
 
   /* ------------------------------ JOGO ------------------------------ */
@@ -639,6 +688,18 @@ class Game {
     this.stats.time += dt;
 
     const p = this.player;
+
+    // Gatilho da arena: cutscene do chefe na primeira entrada; depois, reinício direto.
+    if (this.arena && this.boss && !this.boss.dead && p.cx >= this.arena.trigger * TILE) {
+      if (!this.bossIntroDone) {
+        this.startBossIntro();
+        return;
+      }
+      if (!this.bossActive && !this.bossDefeated) {
+        this.beginBossFight();
+      }
+    }
+
     p.update(dt);
 
     this.updatePowers(dt);
@@ -1049,6 +1110,16 @@ class Game {
     p.parryChainTimer = 0;
     for (const cr of this.crumbles) cr.reset(this);
     this.projectiles = this.projectiles.filter((pr) => pr.owner === 'player');
+
+    // Se o chefe ainda está de pé, reinicia a luta sem repetir a cutscene.
+    if (this.boss && this.bossIntroDone && !this.bossDefeated) {
+      this.boss.reset(this);
+      this.bossActive = false;
+      if (this.bossGate) this.level.openGate(this.bossGate);
+      if (this.exitGate) this.level.closeGate(this.exitGate);
+      if (this.exit) this.exit.open = false;
+    }
+
     FX.burst(p.cx, p.cy, 18, { color: '#6dff9e', speedMax: 220, lifeMax: 0.7 });
     Sfx.tone(440, 0.2, { type: 'sine', vol: 0.1, slide: 200 });
     this.toast('REINICIANDO...', '#7fe7ff', 1.2);
@@ -1138,11 +1209,17 @@ class Game {
 
   onBossDefeated(boss) {
     this.bossDefeated = true;
+    this.bossActive = false;
+    if (this.bossGate) this.level.openGate(this.bossGate);
+    if (this.exitGate) this.level.openGate(this.exitGate);
     if (this.exit) this.exit.open = true;
     this.toast('SAÍDA LIBERADA', '#7fe7ff', 2.6);
     this.shake(1);
     FX.burst(boss.cx, boss.cy, 40, {
       color: boss.color, speedMax: 380, lifeMax: 1.1, sizeMax: 8, gravity: 300
+    });
+    FX.burst(boss.cx, boss.cy, 24, {
+      color: '#6dff9e', speedMax: 260, lifeMax: 1.4, sizeMax: 6, gravity: -60
     });
   }
 

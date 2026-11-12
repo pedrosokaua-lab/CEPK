@@ -85,17 +85,31 @@ Aperte **E** pouco antes do impacto. Os primeiros instantes são um **PARRY PERF
 4. **Laboratório** — reatores, lasers e a Adrenalina.
 5. **Diretoria** — o confronto final com o Sistema Verde e o resgate de Kennedito.
 
-Cada fase tem história, cutscene animada, checkpoints, colecionáveis, desafios de plataforma e um chefe próprio.
+Cada fase tem história, cutscene animada, checkpoints, colecionáveis, desafios de plataforma, **arena de chefe** e **sala de saída** próprias.
+
+## Arenas de chefe
+
+Ao entrar na área final de cada fase, a câmera trava em uma arena dedicada:
+
+- Um **gatilho** dispara a cutscene exclusiva do chefe (dois slides com arte própria).
+- O **portão de entrada** se fecha e o **portão de saída** permanece travado durante a luta.
+- A arena tem teto, colunas, refletores, faixas de perigo e o emblema do chefe.
+- Se VEGA cair, o chefe é resetado e a luta recomeça sem repetir a cutscene.
+- Ao derrotar o chefe, os dois portões se abrem e a **sala de saída** é liberada.
+
+## Sala de saída
+
+Depois de cada arena existe uma câmara de saída independente, com portal animado, moldura de metal, colunas laterais, anéis de energia, partículas, iluminação no piso e a placa **SAÍDA**. Enquanto o chefe estiver de pé, o portal aparece bloqueado com correntes e luz vermelha.
 
 ## Chefes
 
-- **O PORTEIRO** — guarda o pátio com investidas e ondas de choque.
-- **A INSPETORA** — caça à distância e corta o espaço com lâminas.
-- **O TÉCNICO** — salta, gira e usa o peso da quadra.
-- **A COORDENADORA** — clones, teleportes e padrões de projéteis.
-- **A DIRETORA** — três fases, feixes, invocações e um sinal vermelho.
+- **O PORTEIRO** — guarda o pátio com investidas e ondas de choque. Arena: Guarita do Pátio.
+- **A INSPETORA** — caça à distância e corta o espaço com lâminas. Arena: Corredor Sem Saída.
+- **O TÉCNICO** — salta, gira e usa o peso da quadra. Arena: Quadra Fechada.
+- **A COORDENADORA** — clones, teleportes e padrões de projéteis. Arena: Protocolo de Contenção.
+- **A DIRETORA** — três fases, feixes, invocações e um sinal vermelho. Arena: Sinal Vermelho.
 
-Os chefes telegrafam ataques, mudam de fase conforme perdem vida e podem ser atordoados com parry.
+Os chefes telegrafam ataques, mudam de fase conforme perdem vida e podem ser atordoados com parry. Cada um tem cutscene de entrada, arena temática e sala de saída própria.
 
 ## Dificuldade
 

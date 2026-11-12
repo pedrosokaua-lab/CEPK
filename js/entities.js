@@ -2412,6 +2412,8 @@ class Boss {
     this.style = cfg.style || 'guardian';
     this.w = cfg.w || 120;
     this.h = cfg.h || 132;
+    this.spawnX = x;
+    this.spawnY = y;
     this.x = x - this.w / 2;
     this.y = y - this.h;
     this.vx = 0;
@@ -2421,7 +2423,8 @@ class Boss {
     const diff = (game && game.diff) || DIFFICULTIES[1];
     this.maxHp = Math.max(1, Math.round(cfg.hp * diff.bossHp));
     this.hp = this.maxHp;
-    this.speed = (cfg.speed || 70) * diff.enemySpeed;
+    this.baseSpeed = (cfg.speed || 70) * diff.enemySpeed;
+    this.speed = this.baseSpeed;
     this.aggro = diff.aggression;
     this.color = cfg.color || '#6dff9e';
     this.state = 'dormant';
@@ -2446,6 +2449,36 @@ class Boss {
   get cx() { return this.x + this.w / 2; }
   get cy() { return this.y + this.h / 2; }
   get bottom() { return this.y + this.h; }
+
+  reset(game) {
+    const diff = (game && game.diff) || DIFFICULTIES[1];
+    this.maxHp = Math.max(1, Math.round(this.cfg.hp * diff.bossHp));
+    this.hp = this.maxHp;
+    this.speed = (this.cfg.speed || 70) * diff.enemySpeed;
+    this.x = this.spawnX - this.w / 2;
+    this.y = this.spawnY - this.h;
+    this.vx = 0;
+    this.vy = 0;
+    this.onGround = false;
+    this.hitWall = 0;
+    this.state = 'dormant';
+    this.attack = null;
+    this.lastAttack = null;
+    this.timer = 1.4;
+    this.phase = 1;
+    this.active = false;
+    this.dead = false;
+    this.deathTimer = 0;
+    this.flash = 0;
+    this.dir = 1;
+    this.anim = 0;
+    this.summoned = 0;
+    this.explosionTimer = 0;
+    this.attackCycle = 0;
+    this.staggerTimer = 0;
+    this.airborne = false;
+    this.parried = false;
+  }
 
   begin(state, timer) {
     this.state = state;
@@ -2509,7 +2542,7 @@ class Boss {
 
     const d = Math.abs(p.cx - this.cx);
     if (!this.active) {
-      if (d < 760) {
+      if (!game.arena && d < 760) {
         this.active = true;
         game.bossActive = true;
         game.toast(this.cfg.name + ' BLOQUEOU A SAÍDA', this.color, 2.8);
@@ -3706,8 +3739,8 @@ class Checkpoint {
 
 class Exit {
   constructor(x, y) {
-    this.w = 52;
-    this.h = 74;
+    this.w = 62;
+    this.h = 84;
     this.x = x - this.w / 2;
     this.y = y - this.h;
     this.open = false;
@@ -3725,49 +3758,141 @@ class Exit {
   render(ctx, cam) {
     const x = this.x - cam.x;
     const y = this.y - cam.y;
+    const cx = x + this.w / 2;
+    const pulse = 0.5 + Math.sin(this.phase * 1.7) * 0.5;
+    const accent = this.open ? '#6dff9e' : '#ff5d6c';
     ctx.save();
-    ctx.fillStyle = '#0a111c';
+
+    // Nicho escuro atrás do portal
+    ctx.fillStyle = '#050b12';
+    ctx.fillRect(x - 6, y - 8, this.w + 12, this.h + 8);
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
     ctx.fillRect(x, y, this.w, this.h);
-    ctx.strokeStyle = this.open ? '#6dff9e' : '#4a5568';
-    ctx.lineWidth = 3;
-    ctx.strokeRect(x, y, this.w, this.h);
 
     if (this.open) {
+      // Halo externo
+      const halo = ctx.createRadialGradient(cx, y + this.h * 0.55, 8, cx, y + this.h * 0.55, this.w * 0.95);
+      halo.addColorStop(0, `rgba(109,255,158,${0.22 + pulse * 0.14})`);
+      halo.addColorStop(1, 'rgba(109,255,158,0)');
+      ctx.fillStyle = halo;
+      ctx.fillRect(x - 40, y - 40, this.w + 80, this.h + 80);
+
+      // Portal em si
       const g = ctx.createLinearGradient(x, y, x, y + this.h);
-      g.addColorStop(0, 'rgba(109,255,158,0.35)');
-      g.addColorStop(1, 'rgba(109,255,158,0.05)');
+      g.addColorStop(0, 'rgba(214,255,225,0.72)');
+      g.addColorStop(0.35, 'rgba(109,255,158,0.5)');
+      g.addColorStop(1, 'rgba(20,120,70,0.28)');
       ctx.fillStyle = g;
-      ctx.fillRect(x + 5, y + 5, this.w - 10, this.h - 10);
-      ctx.fillStyle = '#6dff9e';
-      ctx.shadowColor = '#6dff9e';
-      ctx.shadowBlur = 18;
+      ctx.fillRect(x + 6, y + 6, this.w - 12, this.h - 12);
+
+      // Feixes verticais
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(x + 6, y + 6, this.w - 12, this.h - 12);
+      ctx.clip();
+      for (let i = 0; i < 5; i++) {
+        const bx = x + 10 + i * 11 + Math.sin(this.phase * 0.8 + i) * 2;
+        ctx.fillStyle = `rgba(220,255,232,${0.1 + (i % 2) * 0.07})`;
+        ctx.fillRect(bx, y + 6, 3, this.h - 12);
+      }
+
+      // Anéis giratórios
+      ctx.strokeStyle = 'rgba(230,255,238,0.75)';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 3; i++) {
+        const ry = y + 24 + i * 20 + Math.sin(this.phase + i * 2.1) * 3;
+        ctx.beginPath();
+        ctx.ellipse(cx, ry, this.w * 0.34, 7 + i * 2, 0, 0, TAU);
+        ctx.stroke();
+      }
+
+      // Partículas subindo
+      for (let i = 0; i < 8; i++) {
+        const a = this.phase * 1.4 + i * 1.9;
+        const px = cx + Math.sin(a) * (this.w * 0.32);
+        const py = y + this.h - ((this.phase * 26 + i * 17) % (this.h - 10));
+        ctx.fillStyle = i % 2 ? '#eafff0' : '#9dffbd';
+        ctx.globalAlpha = 0.5 + Math.sin(a * 2) * 0.35;
+        ctx.fillRect(px, py, i % 3 === 0 ? 4 : 2, i % 3 === 0 ? 4 : 2);
+      }
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    } else {
+      // Portal bloqueado: energia vermelha contida
+      const g = ctx.createLinearGradient(x, y, x, y + this.h);
+      g.addColorStop(0, 'rgba(255,93,108,0.14)');
+      g.addColorStop(1, 'rgba(80,10,20,0.35)');
+      ctx.fillStyle = g;
+      ctx.fillRect(x + 6, y + 6, this.w - 12, this.h - 12);
+
+      // Correntes cruzadas
+      ctx.strokeStyle = 'rgba(255,120,130,0.6)';
+      ctx.lineWidth = 3;
+      for (let i = 0; i < 3; i++) {
+        const yy = y + 22 + i * 20;
+        ctx.beginPath();
+        ctx.moveTo(x + 8, yy);
+        ctx.lineTo(x + this.w - 8, yy + 10);
+        ctx.stroke();
+      }
+      ctx.fillStyle = '#ff5d6c';
+      ctx.shadowColor = '#ff5d6c';
+      ctx.shadowBlur = 10 + pulse * 8;
       ctx.font = 'bold 13px "Consolas", monospace';
       ctx.textAlign = 'center';
-      ctx.fillText('PORTAL', x + this.w / 2, y + this.h / 2 + 4);
+      ctx.fillText('BLOQUEADA', cx, y + this.h * 0.55);
       ctx.shadowBlur = 0;
-      // folhas subindo
-      for (let i = 0; i < 4; i++) {
-        const a = this.phase + i * 1.6;
-        const px = x + this.w / 2 + Math.sin(a) * 14;
-        const py = y + this.h - ((this.phase * 18 + i * 20) % this.h);
-        ctx.fillStyle = '#b6ff9a';
-        ctx.fillRect(px, py, 4, 4);
-      }
-    } else {
-      ctx.strokeStyle = '#ff5d6c';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(x + this.w / 2, y + this.h / 2, 9, 0, TAU);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(x + this.w / 2, y + this.h / 2 - 9);
-      ctx.lineTo(x + this.w / 2, y + this.h / 2 + 9);
-      ctx.stroke();
-      ctx.fillStyle = '#ff5d6c';
-      ctx.font = '11px "Consolas", monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText('BLOQUEADA', x + this.w / 2, y + this.h + 16);
     }
+
+    // Moldura de metal com rebites
+    ctx.strokeStyle = this.open ? '#8dffb4' : '#7c8798';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(x, y, this.w, this.h);
+    ctx.strokeStyle = this.open ? 'rgba(109,255,158,0.35)' : 'rgba(0,0,0,0.5)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x + 5, y + 5, this.w - 10, this.h - 10);
+    ctx.fillStyle = this.open ? '#c9ffd9' : '#95a0b0';
+    for (let i = 0; i < 6; i++) {
+      const rx = x + (i % 2 ? this.w - 7 : 7);
+      const ry = y + 10 + Math.floor(i / 2) * (this.h - 20) / 2;
+      ctx.fillRect(rx - 1.5, ry - 1.5, 3, 3);
+    }
+
+    // Placa "SAÍDA"
+    const signW = 54;
+    const signY = y - 26;
+    ctx.fillStyle = 'rgba(4,16,10,0.92)';
+    roundRect(ctx, cx - signW / 2, signY, signW, 18, 4);
+    ctx.fill();
+    ctx.strokeStyle = this.open ? '#6dff9e' : '#ff5d6c';
+    ctx.lineWidth = 1.5;
+    roundRect(ctx, cx - signW / 2, signY, signW, 18, 4);
+    ctx.stroke();
+    ctx.fillStyle = this.open ? '#c9ffd9' : '#ff9aa4';
+    ctx.font = 'bold 11px "Consolas", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('SAÍDA', cx, signY + 13);
+
+    // Colunas laterais decorativas
+    for (const side of [-1, 1]) {
+      const colX = cx + side * (this.w / 2 + 9) - 5;
+      ctx.fillStyle = '#1a2634';
+      ctx.fillRect(colX, y - 4, 10, this.h + 8);
+      ctx.fillStyle = '#2d4054';
+      ctx.fillRect(colX + 2, y - 4, 3, this.h + 8);
+      ctx.fillStyle = this.open ? '#3f7a57' : '#4a3540';
+      ctx.fillRect(colX - 2, y - 8, 14, 6);
+      ctx.fillRect(colX - 2, y + this.h + 2, 14, 6);
+    }
+
+    // Luz de estado no chão
+    ctx.fillStyle = this.open
+      ? `rgba(109,255,158,${0.18 + pulse * 0.16})`
+      : 'rgba(255,93,108,0.12)';
+    ctx.beginPath();
+    ctx.ellipse(cx, y + this.h + 6, this.w * 0.8, 9, 0, 0, TAU);
+    ctx.fill();
+
     ctx.restore();
   }
 }

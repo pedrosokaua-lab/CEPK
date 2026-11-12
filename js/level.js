@@ -68,9 +68,9 @@ class LevelBuilder {
   power(tx, ty, power) { return this.add('power', tx, ty, { power }); }
   boss(tx, ty, cfg) { return this.add('boss', tx, ty, { boss: cfg }); }
   exit(tx, ty) { return this.add('exit', tx, ty); }
-  gate(tx, ty, w, h, station = null) {
-    this.solid(tx, ty, w, h);
-    return this.add('gate', tx, ty, { w, h, station });
+  gate(tx, ty, w, h, station = null, closed = true) {
+    if (closed) this.solid(tx, ty, w, h);
+    return this.add('gate', tx, ty, { w, h, station, open: !closed });
   }
 
   build() {
@@ -88,6 +88,8 @@ class Level {
     this.theme = cfg.theme;
     this.story = cfg.story || [];
     this.cutscene = cfg.cutscene || [];
+    this.bossCutscene = cfg.bossCutscene || [];
+    this.arena = cfg.arena || null;
     this.hint = cfg.hint || '';
     this.bossCfg = cfg.boss || null;
     this.musicRoot = cfg.musicRoot || 55;
@@ -171,6 +173,20 @@ class Level {
         const ty = gate.ty + y;
         if (tx >= 0 && tx < this.w && ty >= 0 && ty < this.h) {
           this.tiles[ty * this.w + tx] = TILE_EMPTY;
+        }
+      }
+    }
+  }
+
+  closeGate(gate) {
+    if (!gate.open) return;
+    gate.open = false;
+    for (let y = 0; y < gate.h; y++) {
+      for (let x = 0; x < gate.w; x++) {
+        const tx = gate.tx + x;
+        const ty = gate.ty + y;
+        if (tx >= 0 && tx < this.w && ty >= 0 && ty < this.h) {
+          this.tiles[ty * this.w + tx] = TILE_SOLID;
         }
       }
     }
@@ -320,7 +336,7 @@ function level1() {
     name: 'Pátio Central',
     short: 'Pátio',
     subtitle: 'Onde o sinal começou',
-    width: 126,
+    width: 142,
     height: 22,
     theme: THEMES.school,
     musicRoot: 55,
@@ -369,8 +385,31 @@ function level1() {
         ]
       }
     ],
+    bossCutscene: [
+      {
+        title: 'O PORTEIRO',
+        tag: 'CHEFE 1/5',
+        motif: 'bossGuardian',
+        lines: [
+          'O portão se fecha atrás de você.',
+          'A sombra do pátio se ergue do chão.',
+          'O PORTEIRO finalmente saiu da guarita.'
+        ]
+      },
+      {
+        title: 'GUARDIÃO DO PÁTIO',
+        tag: 'ARENA DE COMBATE',
+        motif: 'bossArena',
+        lines: [
+          'Investidas, ondas de choque e punhos de concreto.',
+          'Apare os golpes marcados e devolva o impacto.',
+          'A saída só abre quando ele cair.'
+        ]
+      }
+    ],
     hint: 'Q libera o PULSO: destrói projéteis e empurra inimigos.',
-    boss: { name: 'O PORTEIRO', hp: 48, speed: 62, color: '#6dff9e', w: 116, h: 122, style: 'guardian' }
+    boss: { name: 'O PORTEIRO', hp: 48, speed: 62, color: '#6dff9e', w: 116, h: 122, style: 'guardian' },
+    arena: { left: 107, right: 127, trigger: 109, exit: 135 }
   });
 
   b.ground(0, 20);
@@ -425,11 +464,23 @@ function level1() {
   // Pulo duplo com spring
   b.spring(90, 17);  // New Spring for double jump training
 
-  b.ground(101, 25);
+  b.ground(101, 41);
   b.solid(104, 14, 3);
   b.gear(105, 12);
-  b.boss(112, 17, { name: 'O PORTEIRO', hp: 48, speed: 62, color: '#6dff9e', w: 116, h: 122, style: 'guardian' });
-  b.exit(120, 17);
+  b.checkpoint(104, 17);
+
+  // Arena do chefe + sala de saída
+  b.gate(107, 11, 1, 7, 'boss_arena', false);
+  b.gate(127, 11, 1, 7, 'boss_exit', true);
+  b.solid(107, 10, 35, 1);
+  b.solid(141, 10, 1, 8);
+  b.solid(111, 14, 3);
+  b.solid(120, 14, 3);
+  b.solid(130, 12, 1, 6);
+  b.solid(139, 12, 1, 6);
+  b.gear(121, 12);
+  b.boss(117, 17, { name: 'O PORTEIRO', hp: 48, speed: 62, color: '#6dff9e', w: 116, h: 122, style: 'guardian' });
+  b.exit(135, 17);
 
   return b.build();
 }
@@ -442,7 +493,7 @@ function level2() {
     name: 'Corredores',
     short: 'Corredores',
     subtitle: 'Depois do último sinal',
-    width: 136,
+    width: 152,
     height: 22,
     theme: THEMES.hall,
     musicRoot: 58,
@@ -491,8 +542,31 @@ function level2() {
         ]
       }
     ],
+    bossCutscene: [
+      {
+        title: 'A INSPETORA',
+        tag: 'CHEFE 2/5',
+        motif: 'bossHunter',
+        lines: [
+          'As luzes do corredor morrem uma a uma.',
+          'Uma silhueta alta se destaca no fim do hall.',
+          'A INSPETORA já leu todos os seus movimentos.'
+        ]
+      },
+      {
+        title: 'CORREDOR SEM SAÍDA',
+        tag: 'ARENA DE COMBATE',
+        motif: 'bossArena',
+        lines: [
+          'Leques de lâminas, investidas e chuva de projéteis.',
+          'Use o FOCO para ler o padrão e o parry para refletir.',
+          'O corredor é dela. A saída é sua.'
+        ]
+      }
+    ],
     hint: 'Segure K para ativar o FOCO e desacelerar inimigos e projéteis.',
-    boss: { name: 'A INSPETORA', hp: 64, speed: 72, color: '#ffd24d', w: 112, h: 126, style: 'hunter' }
+    boss: { name: 'A INSPETORA', hp: 64, speed: 72, color: '#ffd24d', w: 112, h: 126, style: 'hunter' },
+    arena: { left: 114, right: 134, trigger: 116, exit: 143 }
   });
 
   b.ground(0, 17);
@@ -549,13 +623,23 @@ function level2() {
   b.laser(101, 13, 1, 5);
   b.checkpoint(103, 17);
 
-  b.ground(107, 29);
+  b.ground(107, 45);
   b.solid(110, 14, 3);
-  b.solid(124, 14, 3);
-  b.gear(125, 12);
-  b.turret(118, 17, { hp: 3, damage: 1, range: 550 });  // New Turret
-  b.boss(120, 17, { name: 'A INSPETORA', hp: 64, speed: 72, color: '#ffd24d', w: 112, h: 126, style: 'hunter' });
-  b.exit(130, 17);
+  b.turret(109, 17, { hp: 3, damage: 1, range: 550 });
+  b.checkpoint(112, 17);
+
+  // Arena do chefe + sala de saída
+  b.gate(114, 11, 1, 7, 'boss_arena', false);
+  b.gate(134, 11, 1, 7, 'boss_exit', true);
+  b.solid(114, 10, 38, 1);
+  b.solid(151, 10, 1, 8);
+  b.solid(118, 14, 3);
+  b.solid(128, 14, 3);
+  b.solid(137, 12, 1, 6);
+  b.solid(149, 12, 1, 6);
+  b.gear(129, 12);
+  b.boss(124, 17, { name: 'A INSPETORA', hp: 64, speed: 72, color: '#ffd24d', w: 112, h: 126, style: 'hunter' });
+  b.exit(143, 17);
 
   return b.build();
 }
@@ -568,7 +652,7 @@ function level3() {
     name: 'Ginásio',
     short: 'Ginásio',
     subtitle: 'Jogo decisivo',
-    width: 146,
+    width: 162,
     height: 22,
     theme: THEMES.gym,
     musicRoot: 62,
@@ -617,8 +701,31 @@ function level3() {
         ]
       }
     ],
+    bossCutscene: [
+      {
+        title: 'O TÉCNICO',
+        tag: 'CHEFE 3/5',
+        motif: 'bossBruiser',
+        lines: [
+          'O placar trava em 00:00.',
+          'A arquibancada inteira prende a respiração.',
+          'O TÉCNICO apita e entra na quadra.'
+        ]
+      },
+      {
+        title: 'QUADRA FECHADA',
+        tag: 'ARENA DE COMBATE',
+        motif: 'bossArena',
+        lines: [
+          'Saltos, rochas e ondas de impacto sacodem o ginásio.',
+          'O ESCUDO segura o primeiro golpe. O dash abre espaço.',
+          'Vença a partida e libere a ala técnica.'
+        ]
+      }
+    ],
     hint: 'Segure R para ativar o ESCUDO e absorver os ataques.',
-    boss: { name: 'O TÉCNICO', hp: 80, speed: 68, color: '#ff8c42', w: 124, h: 136, style: 'bruiser' }
+    boss: { name: 'O TÉCNICO', hp: 80, speed: 68, color: '#ff8c42', w: 124, h: 136, style: 'bruiser' },
+    arena: { left: 122, right: 142, trigger: 124, exit: 152 }
   });
 
   b.ground(0, 20);
@@ -679,12 +786,22 @@ function level3() {
   // Spring for high jump training
   b.spring(110, 17);  // New Spring
 
-  b.ground(109, 37);
+  b.ground(109, 53);
   b.solid(112, 14, 3);
-  b.solid(126, 14, 3);
-  b.gear(127, 12);
-  b.boss(130, 17, { name: 'O TÉCNICO', hp: 80, speed: 68, color: '#ff8c42', w: 124, h: 136, style: 'bruiser' });
-  b.exit(140, 17);
+  b.checkpoint(119, 17);
+
+  // Arena do chefe + sala de saída
+  b.gate(122, 11, 1, 7, 'boss_arena', false);
+  b.gate(142, 11, 1, 7, 'boss_exit', true);
+  b.solid(122, 10, 40, 1);
+  b.solid(161, 10, 1, 8);
+  b.solid(125, 14, 3);
+  b.solid(137, 14, 3);
+  b.solid(146, 12, 1, 6);
+  b.solid(158, 12, 1, 6);
+  b.gear(138, 12);
+  b.boss(132, 17, { name: 'O TÉCNICO', hp: 80, speed: 68, color: '#ff8c42', w: 124, h: 136, style: 'bruiser' });
+  b.exit(152, 17);
 
   return b.build();
 }
@@ -697,7 +814,7 @@ function level4() {
     name: 'Laboratório',
     short: 'Laboratório',
     subtitle: 'Experimentos do CEPK',
-    width: 152,
+    width: 168,
     height: 22,
     theme: THEMES.lab,
     musicRoot: 65,
@@ -746,8 +863,31 @@ function level4() {
         ]
       }
     ],
+    bossCutscene: [
+      {
+        title: 'A COORDENADORA',
+        tag: 'CHEFE 4/5',
+        motif: 'bossTrickster',
+        lines: [
+          'Os reatores param. O laboratório fica em silêncio.',
+          'Uma voz sai de todos os alto-falantes ao mesmo tempo.',
+          'A COORDENADORA nunca esteve sozinha.'
+        ]
+      },
+      {
+        title: 'PROTOCOLO DE CONTENÇÃO',
+        tag: 'ARENA DE COMBATE',
+        motif: 'bossArena',
+        lines: [
+          'Clones, anéis de energia e chuva de detritos.',
+          'Ache a coordenadora real. O parry revela a diferença.',
+          'Desligue o protocolo para chegar à diretoria.'
+        ]
+      }
+    ],
     hint: 'F ativa a ADRENALINA: mais velocidade, salto e dano por 6s.',
-    boss: { name: 'A COORDENADORA', hp: 98, speed: 76, color: '#b18cff', w: 120, h: 132, style: 'trickster' }
+    boss: { name: 'A COORDENADORA', hp: 98, speed: 76, color: '#b18cff', w: 120, h: 132, style: 'trickster' },
+    arena: { left: 128, right: 148, trigger: 130, exit: 158 }
   });
 
   b.ground(0, 16);
@@ -808,11 +948,23 @@ function level4() {
   b.solid(115, 13, 2);
   b.gear(115, 11);
 
-  b.ground(120, 32);
+  b.ground(120, 48);
   b.solid(124, 14, 3);
   b.gear(125, 12);
-  b.boss(136, 17, { name: 'A COORDENADORA', hp: 98, speed: 76, color: '#b18cff', w: 120, h: 132, style: 'trickster' });
-  b.exit(146, 17);
+  b.checkpoint(126, 17);
+
+  // Arena do chefe + sala de saída
+  b.gate(128, 11, 1, 7, 'boss_arena', false);
+  b.gate(148, 11, 1, 7, 'boss_exit', true);
+  b.solid(128, 10, 40, 1);
+  b.solid(167, 10, 1, 8);
+  b.solid(132, 14, 3);
+  b.solid(143, 14, 3);
+  b.solid(152, 12, 1, 6);
+  b.solid(164, 12, 1, 6);
+  b.gear(144, 12);
+  b.boss(138, 17, { name: 'A COORDENADORA', hp: 98, speed: 76, color: '#b18cff', w: 120, h: 132, style: 'trickster' });
+  b.exit(158, 17);
 
   return b.build();
 }
@@ -825,7 +977,7 @@ function level5() {
     name: 'Diretoria',
     short: 'Diretoria',
     subtitle: 'A sala da diretora',
-    width: 124,
+    width: 140,
     height: 22,
     theme: THEMES.office,
     musicRoot: 52,
@@ -884,8 +1036,31 @@ function level5() {
         ]
       }
     ],
+    bossCutscene: [
+      {
+        title: 'A DIRETORA',
+        tag: 'CHEFE FINAL',
+        motif: 'bossDirector',
+        lines: [
+          'A cadeira da diretoria gira devagar.',
+          'O Sistema Verde inteiro cabe em um único olhar.',
+          'A DIRETORA se levanta. A escola prende a respiração.'
+        ]
+      },
+      {
+        title: 'SINAL VERMELHO',
+        tag: 'ARENA FINAL',
+        motif: 'bossArenaFinal',
+        lines: [
+          'Três fases. Nenhuma piedade. Nenhuma saída.',
+          'Use tudo o que aprendeu. Kennedito está com você.',
+          'Esta é a última porta do CEPK.'
+        ]
+      }
+    ],
     hint: 'Combine PULSO, FOCO, ESCUDO e ADRENALINA. O parry é a chave.',
-    boss: { name: 'A DIRETORA', hp: 156, speed: 82, color: '#ff5d7a', w: 140, h: 150, final: true, style: 'director' }
+    boss: { name: 'A DIRETORA', hp: 156, speed: 82, color: '#ff5d7a', w: 140, h: 150, final: true, style: 'director' },
+    arena: { left: 102, right: 122, trigger: 104, exit: 131 }
   });
 
   b.ground(0, 16);
@@ -918,12 +1093,11 @@ function level5() {
   b.drone(53, 9);
 
   // Section with crumble platforms
-  b.ground(56, 68);
+  b.ground(56, 84);
   b.solid(60, 14, 3);
   b.solid(70, 14, 3);
   b.solid(80, 14, 3);
   b.solid(90, 14, 3);
-  b.solid(110, 14, 3);
   b.gear(61, 12);
   b.gear(81, 12);
   b.core(91, 12);
@@ -939,12 +1113,22 @@ function level5() {
   b.turret(78, 17, { hp: 3, damage: 1, range: 500 });  // New Turret
   b.charger(84, 17, { hp: 5, speed: 74 });  // New Charger
 
-  b.boss(104, 17, { name: 'A DIRETORA', hp: 156, speed: 82, color: '#ff5d7a', w: 140, h: 150, final: true, style: 'director' });
-  
-  // Rescue gate before the boss - at tiles 99-103
-  b.gate(99, 11, 1, 7, 'rescue');  // New rescue gate
+  // Portão de resgate: só abre depois de libertar Kennedito.
+  b.gate(99, 11, 1, 7, 'rescue');
+  b.checkpoint(101, 17);
 
-  b.exit(118, 17);
+  // Arena final + sala de saída
+  b.gate(102, 11, 1, 7, 'boss_arena', false);
+  b.gate(122, 11, 1, 7, 'boss_exit', true);
+  b.solid(102, 10, 38, 1);
+  b.solid(139, 10, 1, 8);
+  b.solid(106, 14, 3);
+  b.solid(116, 14, 3);
+  b.solid(125, 12, 1, 6);
+  b.solid(137, 12, 1, 6);
+  b.gear(117, 12);
+  b.boss(112, 17, { name: 'A DIRETORA', hp: 156, speed: 82, color: '#ff5d7a', w: 140, h: 150, final: true, style: 'director' });
+  b.exit(131, 17);
 
   return b.build();
 }
