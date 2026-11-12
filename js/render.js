@@ -338,6 +338,9 @@ Game.prototype.drawBackground = function (ctx, cam) {
       ctx.fillRect(x + 8, 130, 3, 430);
     }
 
+    // vinheta sutil
+    ctx.fillStyle = 'rgba(2,8,5,0.25)';
+    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
     // rodapé / faixa
     ctx.fillStyle = withAlpha(th.near, 0.9);
     ctx.fillRect(0, 566, VIEW_W, 22);
@@ -514,6 +517,27 @@ Game.prototype.drawBackground = function (ctx, cam) {
   // chão
   ctx.fillStyle = th.bg;
   ctx.fillRect(0, baseY, VIEW_W, VIEW_H - baseY);
+
+  // grade de fundo paralax
+  ctx.fillStyle = withAlpha(th.edge, 0.3);
+  for (let x = -((cam.x * 0.12 % 64) + 64); x < VIEW_W + 64; x += 64) {
+    ctx.fillRect(x, baseY - 20, 32, 20);
+  }
+
+  // iluminação ambiente / névoa
+  const fogAlpha = 0.04 + 0.02 * Math.abs(Math.sin(t * 0.3));
+  ctx.fillStyle = 'rgba(8,14,10,' + fogAlpha + ')';
+  ctx.fillRect(0, baseY, VIEW_W, VIEW_H - baseY);
+
+  // partículas finas (poeira/luz)
+  for (let i = 0; i < 30; i++) {
+    const px = (i * 137 + Math.floor(t * 20)) % VIEW_W;
+    const py = baseY + ((i * 71 + Math.floor(t * 15)) % (VIEW_H - baseY));
+    ctx.globalAlpha = 0.15;
+    ctx.fillStyle = th.glow;
+    ctx.fillRect(px, py, 1, 1);
+  }
+  ctx.globalAlpha = 1;
 
   // folhas
   for (let i = 0; i < 20; i++) {
