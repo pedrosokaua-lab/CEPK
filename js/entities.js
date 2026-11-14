@@ -1469,9 +1469,15 @@ class Walker {
     ctx.fillStyle = dark;
     ctx.fillRect(x + 7, y + 28, 8, 10);
     ctx.fillRect(x + 23, y + 28, 8, 10);
+    ctx.fillStyle = '#1c5c32';
+    ctx.fillRect(x + 6, y + 27, 10, 3);
+    ctx.fillRect(x + 22, y + 27, 10, 3);
     ctx.fillStyle = '#0f2618';
     ctx.fillRect(x + 5, y + 36, 12, 3);
     ctx.fillRect(x + 21, y + 36, 12, 3);
+    ctx.fillStyle = '#0a1810';
+    ctx.fillRect(x + 4, y + 38, 14, 2);
+    ctx.fillRect(x + 20, y + 38, 14, 2);
 
     // corpo
     ctx.fillStyle = body;
@@ -1480,6 +1486,30 @@ class Walker {
     ctx.fillRect(x + 4, y + 26 + bob, 30, 4);
     ctx.fillStyle = '#8fe0a0';
     ctx.fillRect(x + 7, y + 11 + bob, 24, 2);
+    // cinto e fivela
+    ctx.fillStyle = '#0f2618';
+    ctx.fillRect(x + 4, y + 22 + bob, 30, 4);
+    ctx.fillStyle = '#ffd24d';
+    ctx.fillRect(x + 17, y + 22 + bob, 5, 4);
+    // alças e coldre
+    ctx.fillStyle = '#1c5c32';
+    ctx.fillRect(x + 9, y + 11 + bob, 3, 12);
+    ctx.fillRect(x + 26, y + 11 + bob, 3, 12);
+    // emblema CEPK
+    ctx.fillStyle = '#ffd24d';
+    ctx.fillRect(x + 6, y + 13 + bob, 4, 4);
+    // placas de ombro
+    ctx.fillStyle = '#173d26';
+    ctx.fillRect(x + 1, y + 10 + bob, 6, 5);
+    ctx.fillRect(x + 31, y + 10 + bob, 6, 5);
+    // rádio no ombro com antena
+    ctx.fillStyle = '#0f2618';
+    ctx.fillRect(x + 30, y + 6 + bob, 6, 7);
+    ctx.fillStyle = '#6dff9e';
+    ctx.fillRect(x + 32, y + 4 + bob, 2, 4);
+    // costuras do chassi
+    ctx.fillStyle = 'rgba(10,30,18,0.6)';
+    ctx.fillRect(x + 4, y + 18 + bob, 30, 1);
 
     // braços
     ctx.fillStyle = dark;
@@ -1723,11 +1753,42 @@ class Drone {
     ctx.lineTo(x + 30, y + 6 + bob);
     ctx.stroke();
 
+    // braços do rotor
+    ctx.strokeStyle = '#0b262b';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x + 8, y + 11 + bob);
+    ctx.lineTo(x + 4, y + 4 + bob);
+    ctx.moveTo(x + 28, y + 11 + bob);
+    ctx.lineTo(x + 32, y + 4 + bob);
+    ctx.stroke();
+
     ctx.fillStyle = this.flash > 0 ? '#ffffff' : this.parryTrainer ? '#7a6a20' : '#2f5f66';
     ctx.fillRect(x + 3, y + 7 + bob, 30, 15);
     ctx.strokeStyle = '#123a40';
     ctx.lineWidth = 2;
     ctx.strokeRect(x + 3, y + 7 + bob, 30, 15);
+
+    // placas laterais
+    ctx.fillStyle = '#173a40';
+    ctx.fillRect(x + 1, y + 12 + bob, 3, 6);
+    ctx.fillRect(x + 32, y + 12 + bob, 3, 6);
+    // luzes de navegação
+    const blink = Math.sin(this.phase * 4) > 0.4;
+    ctx.fillStyle = blink ? '#ff5a6e' : '#4a1418';
+    ctx.fillRect(x + 1, y + 19 + bob, 3, 2);
+    ctx.fillStyle = blink ? '#4a1418' : '#6dff9e';
+    ctx.fillRect(x + 32, y + 19 + bob, 3, 2);
+    // lente da câmera
+    ctx.fillStyle = '#08181c';
+    ctx.fillRect(x + 15, y + 22 + bob, 6, 4);
+    ctx.fillStyle = '#7ffff0';
+    ctx.fillRect(x + 17, y + 23 + bob, 2, 2);
+    // antena
+    ctx.fillStyle = '#2f5f66';
+    ctx.fillRect(x + 26, y - 2 + bob, 1, 4);
+    ctx.fillStyle = '#ffd24d';
+    ctx.fillRect(x + 25, y - 3 + bob, 3, 2);
 
     ctx.fillStyle = eye;
     ctx.shadowColor = eye;
@@ -1929,6 +1990,18 @@ class Turret {
     ctx.fillRect(x + 6, y + this.h - 20, this.w - 12, 8);
     ctx.fillStyle = withAlpha(this.color, 0.35);
     ctx.fillRect(x + 10, y + this.h - 18, this.w - 20, 2);
+    // pés estabilizadores
+    ctx.fillStyle = '#0f1f16';
+    ctx.fillRect(x - 2, y + this.h - 6, 8, 6);
+    ctx.fillRect(x + this.w - 6, y + this.h - 6, 8, 6);
+    ctx.fillStyle = withAlpha(this.color, 0.35);
+    ctx.fillRect(x + 1, y + this.h - 4, 4, 2);
+    ctx.fillRect(x + this.w - 5, y + this.h - 4, 4, 2);
+    // faixa de alerta
+    for (let i = 0; i < 5; i++) {
+      ctx.fillStyle = i % 2 ? withAlpha(this.color, 0.45) : 'rgba(8,18,12,0.8)';
+      ctx.fillRect(x + 6 + i * 6, y + this.h - 12, 5, 4);
+    }
 
     // corpo
     ctx.fillStyle = this.flash > 0 ? '#ffffff' : '#254434';
@@ -1937,6 +2010,22 @@ class Turret {
     ctx.fillRect(x + 12, y + 12, this.w - 24, 16);
     ctx.fillStyle = withAlpha(this.color, 0.9);
     ctx.fillRect(x + 16, y + 17, 10, 6);
+    // cúpula e antena
+    ctx.fillStyle = '#315b42';
+    ctx.fillRect(x + 13, y + 5, this.w - 26, 4);
+    ctx.fillStyle = '#0f1f16';
+    ctx.fillRect(x + 20, y + 1, 2, 5);
+    ctx.fillStyle = this.charge > 0 ? this.color : '#6dff9e';
+    ctx.fillRect(x + 19, y - 1, 4, 2);
+    // tambor lateral
+    ctx.fillStyle = '#18291f';
+    ctx.fillRect(x + this.w - 8, y + 18, 5, 12);
+    ctx.fillStyle = withAlpha(this.color, 0.5);
+    ctx.fillRect(x + this.w - 7, y + 20, 3, 2);
+    ctx.fillRect(x + this.w - 7, y + 25, 3, 2);
+    // luz de status
+    ctx.fillStyle = this.charge > 0 ? '#ff5d6c' : '#6dff9e';
+    ctx.fillRect(x + 4, y + 10, 2, 2);
 
     // cano
     ctx.save();
@@ -1946,6 +2035,11 @@ class Turret {
     ctx.fillRect(0, -6, 26, 12);
     ctx.fillStyle = this.flash > 0 ? '#ffffff' : '#3e6e50';
     ctx.fillRect(2, -4, 22, 8);
+    ctx.fillStyle = '#0d1a12';
+    ctx.fillRect(8, -5, 3, 10);
+    ctx.fillRect(13, -5, 3, 10);
+    ctx.fillStyle = withAlpha(this.color, 0.5);
+    ctx.fillRect(21, -5, 2, 10);
     ctx.fillStyle = this.color;
     ctx.fillRect(20, -3, 8, 6);
     if (this.charge > 0) {
@@ -2144,6 +2238,33 @@ class Charger {
     ctx.fillRect(x + 8, y + 9, this.w - 16, 4);
     ctx.fillStyle = '#20140e';
     ctx.fillRect(x + 10, y + 15, this.w - 20, 8);
+    // ariete frontal
+    ctx.fillStyle = '#1a100a';
+    ctx.fillRect(this.dir > 0 ? x + this.w - 4 : x - 4, y + 12, 8, 14);
+    ctx.fillStyle = withAlpha('#ff8c42', 0.8);
+    ctx.fillRect(this.dir > 0 ? x + this.w - 3 : x - 3, y + 14, 6, 2);
+    ctx.fillRect(this.dir > 0 ? x + this.w - 3 : x - 3, y + 20, 6, 2);
+    // saia blindada
+    ctx.fillStyle = '#20140e';
+    ctx.fillRect(x + 6, y + this.h - 12, this.w - 12, 3);
+    ctx.fillStyle = withAlpha('#ff8c42', 0.35);
+    ctx.fillRect(x + 10, y + this.h - 11, 8, 1);
+    ctx.fillRect(x + this.w - 18, y + this.h - 11, 8, 1);
+    // escapamentos
+    const rear = this.dir > 0 ? x + 7 : x + this.w - 11;
+    ctx.fillStyle = '#18231a';
+    ctx.fillRect(rear, y + 2, 4, 7);
+    ctx.fillStyle = withAlpha('#ff8c42', 0.6);
+    ctx.fillRect(rear + 1, y + 1, 2, 2);
+    // núcleo central
+    ctx.fillStyle = withAlpha('#ff8c42', 0.85);
+    ctx.fillRect(x + this.w / 2 - 4, y + 18, 8, 4);
+    ctx.fillStyle = '#ffe0b0';
+    ctx.fillRect(x + this.w / 2 - 1, y + 19, 2, 2);
+    // rebites
+    ctx.fillStyle = 'rgba(255,210,150,0.35)';
+    ctx.fillRect(x + 6, y + 7, 2, 2);
+    ctx.fillRect(x + this.w - 8, y + 7, 2, 2);
 
     // visor
     ctx.fillStyle = stun ? '#7a5a20' : windup ? '#ffd24d' : '#ff5d4a';
@@ -2338,6 +2459,19 @@ class Swooper {
     ctx.lineTo(x + this.w - 10, y + 20);
     ctx.closePath();
     ctx.fill();
+    // nervuras das asas
+    ctx.strokeStyle = 'rgba(255,180,120,0.35)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x + 6, y + 12);
+    ctx.lineTo(x - 8, y + 5 + wing);
+    ctx.moveTo(x + 6, y + 12);
+    ctx.lineTo(x - 2, y + 16 + wing * 0.4);
+    ctx.moveTo(x + this.w - 6, y + 12);
+    ctx.lineTo(x + this.w + 8, y + 5 - wing);
+    ctx.moveTo(x + this.w - 6, y + 12);
+    ctx.lineTo(x + this.w + 2, y + 16 - wing * 0.4);
+    ctx.stroke();
 
     // corpo
     ctx.fillStyle = this.flash > 0 ? '#ffffff' : '#3b2a1e';
@@ -2346,6 +2480,34 @@ class Swooper {
     ctx.fillRect(x + 12, y + 11, this.w - 24, 3);
     ctx.fillStyle = '#1a110a';
     ctx.fillRect(x + 13, y + 16, this.w - 26, 6);
+    // placas de blindagem
+    ctx.fillStyle = '#241811';
+    ctx.fillRect(x + 10, y + 9, 6, 16);
+    ctx.fillRect(x + this.w - 16, y + 9, 6, 16);
+    ctx.fillStyle = 'rgba(255,180,120,0.3)';
+    ctx.fillRect(x + 11, y + 10, 4, 2);
+    ctx.fillRect(x + this.w - 15, y + 10, 4, 2);
+    // garras
+    ctx.fillStyle = '#1a110a';
+    ctx.fillRect(x + 12, y + 26, 3, 4);
+    ctx.fillRect(x + this.w - 15, y + 26, 3, 4);
+    // cauda
+    ctx.fillStyle = '#241811';
+    ctx.beginPath();
+    ctx.moveTo(cx - 5, y + 26);
+    ctx.lineTo(cx, y + 32);
+    ctx.lineTo(cx + 5, y + 26);
+    ctx.closePath();
+    ctx.fill();
+    // propulsor
+    const thrust = diving ? 1 : 0.55;
+    ctx.fillStyle = withAlpha('#ff8c42', thrust * 0.7);
+    ctx.fillRect(cx - 3, y + 25, 6, 3 + (diving ? 3 : 0));
+    // antena
+    ctx.fillStyle = '#3b2a1e';
+    ctx.fillRect(cx + 10, y + 2, 2, 6);
+    ctx.fillStyle = diving ? '#ff3355' : '#ffd24d';
+    ctx.fillRect(cx + 9, y, 4, 2);
 
     // olho
     ctx.fillStyle = diving ? '#ff3355' : windup ? '#ffd24d' : '#7ffff0';
@@ -2888,6 +3050,7 @@ class Boss {
     const alpha = this.dead ? clamp(this.deathTimer / 2.4, 0, 1) : 1;
     const flash = this.flash > 0;
     const bob = Math.sin(this.anim * 2.4) * 2;
+    const cx = x + this.w / 2;
     const body = flash ? '#ffffff' : this.color;
     const dark = flash ? '#ffffff' : hexShade(this.color, -80);
     const light = flash ? '#ffffff' : hexShade(this.color, 40);
@@ -2916,10 +3079,41 @@ class Boss {
     ctx.fillStyle = light;
     ctx.fillRect(x + this.w * 0.18, y + 30 + bob, this.w * 0.64, 3);
 
+    // placa de peito e núcleo
+    const pulse = 0.5 + Math.sin(this.anim * 3.2) * 0.5;
+    ctx.fillStyle = dark;
+    ctx.fillRect(x + this.w * 0.24, y + 38 + bob, this.w * 0.52, 26);
+    ctx.strokeStyle = withAlpha(light, 0.5);
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x + this.w * 0.24, y + 38 + bob, this.w * 0.52, 26);
+    ctx.fillStyle = withAlpha('#ffffff', 0.16);
+    ctx.fillRect(x + this.w * 0.24, y + 38 + bob, this.w * 0.52, 2);
+    const coreY = y + 51 + bob;
+    ctx.fillStyle = withAlpha(this.color, 0.16);
+    ctx.beginPath(); ctx.arc(cx, coreY, 19 + pulse * 5, 0, TAU); ctx.fill();
+    ctx.strokeStyle = withAlpha(this.color, 0.65);
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(cx, coreY, 11 + pulse * 2, 0, TAU); ctx.stroke();
+    ctx.fillStyle = light;
+    ctx.beginPath(); ctx.arc(cx, coreY, 4.5, 0, TAU); ctx.fill();
+    // parafusos do torso
+    ctx.fillStyle = withAlpha('#ffffff', 0.22);
+    ctx.fillRect(x + this.w * 0.17, y + 36 + bob, 3, 3);
+    ctx.fillRect(x + this.w * 0.81, y + 36 + bob, 3, 3);
+    ctx.fillRect(x + this.w * 0.17, y + this.h - 52 + bob, 3, 3);
+    ctx.fillRect(x + this.w * 0.81, y + this.h - 52 + bob, 3, 3);
+
     // braços
     ctx.fillStyle = dark;
     ctx.fillRect(x + 2, y + 36 + bob, this.w * 0.13, this.h * 0.34);
     ctx.fillRect(x + this.w - 2 - this.w * 0.13, y + 36 + bob, this.w * 0.13, this.h * 0.34);
+    // ombreiras
+    ctx.fillStyle = withAlpha(dark, 0.95);
+    roundRect(ctx, x, y + 30 + bob, 22, 16, 5); ctx.fill();
+    roundRect(ctx, x + this.w - 22, y + 30 + bob, 22, 16, 5); ctx.fill();
+    ctx.fillStyle = withAlpha(light, 0.35);
+    ctx.fillRect(x + 3, y + 32 + bob, 16, 2);
+    ctx.fillRect(x + this.w - 19, y + 32 + bob, 16, 2);
 
     // cabeça
     ctx.fillStyle = flash ? '#ffffff' : '#e8b07a';

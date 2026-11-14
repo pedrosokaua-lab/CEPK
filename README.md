@@ -101,6 +101,13 @@ Ao entrar na área final de cada fase, a câmera trava em uma arena dedicada:
 
 Depois de cada arena existe uma câmara de saída independente, com portal animado, moldura de metal, colunas laterais, anéis de energia, partículas, iluminação no piso e a placa **SAÍDA**. Enquanto o chefe estiver de pé, o portal aparece bloqueado com correntes e luz vermelha.
 
+## Direção de arte
+
+- **Cenários** com parallax, iluminação ambiente, poeira suspensa, bolhas de laboratório, chuva na diretoria, nuvens e holofotes no pátio.
+- **Cutscenes encenadas**: VEGA aparece em primeiro plano, com aura, rim light e arma; a câmera tem leve deriva cinematográfica, holofotes e partículas de brasas nos alertas de chefe.
+- **Inimigos detalhados**: Walkers com cinto, emblema, rádio e joelheiras; drones com braços de rotor, luzes de navegação e lente; torretas com pés estabilizadores, tambor e ventilação; Chargers com ariete, escapamentos e núcleo; Swoopers com nervuras nas asas, cauda e propulsor.
+- **Chefes** com placas de armadura, rebites, ombreiras e núcleo pulsante, além de silhuetas próprias em cada arena.
+
 ## Chefes
 
 - **O PORTEIRO** — guarda o pátio com investidas e ondas de choque. Arena: Guarita do Pátio.

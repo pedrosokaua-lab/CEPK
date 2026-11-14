@@ -398,12 +398,24 @@ Game.prototype.drawBackground = function (ctx, cam) {
         ctx.fillRect(x + 20, 200 + 220 * (1 - fill), 88, 220 * fill);
         ctx.fillStyle = withAlpha(th.glow, 0.5);
         ctx.fillRect(x + 26, 208, 3, 204);
+        // bolhas subindo no tanque
+        for (let b = 0; b < 5; b++) {
+          const by = 400 - ((t * (20 + b * 6) + b * 41 + x) % 190);
+          const bx = x + 30 + ((b * 19 + x) % 60);
+          ctx.fillStyle = withAlpha(th.glow, 0.22);
+          ctx.fillRect(bx, by, 2 + (b % 2), 2 + (b % 2));
+        }
         // monitores
         ctx.fillStyle = 'rgba(2,14,10,0.9)';
         ctx.fillRect(x + 34, 444, 60, 34);
         ctx.fillStyle = withAlpha(th.accent, 0.5);
         ctx.fillRect(x + 39, 449, 50, 2);
         ctx.fillRect(x + 39, 455, 34, 2);
+        // scanlines do monitor
+        ctx.fillStyle = withAlpha(th.accent, 0.08);
+        for (let sy = 0; sy < 5; sy++) {
+          ctx.fillRect(x + 36, 448 + sy * 6, 56, 1);
+        }
       }
       // tubos no teto
       ctx.fillStyle = withAlpha(th.tileDark, 0.9);
@@ -438,7 +450,39 @@ Game.prototype.drawBackground = function (ctx, cam) {
         ctx.fillRect(x + 43, 100, 4, 100);
         ctx.fillRect(x, 146, 90, 4);
       }
+      // chuva batendo nas janelas
+      for (let x = 180; x < VIEW_W; x += 320) {
+        for (let i = 0; i < 12; i++) {
+          const rx = x + 6 + ((i * 17 + t * 40) % 78);
+          const ry = 104 + ((i * 29 + t * 120) % 92);
+          ctx.strokeStyle = 'rgba(180,230,255,0.20)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(rx, ry);
+          ctx.lineTo(rx - 3, ry + 9);
+          ctx.stroke();
+        }
+      }
+      // relâmpago ocasional
+      if (Math.sin(t * 1.7) > 0.994) {
+        ctx.fillStyle = 'rgba(180,230,255,0.09)';
+        ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+      }
     }
+
+    // poeira suspensa e brilho suave no piso
+    for (let i = 0; i < 24; i++) {
+      const px = (i * 157 + t * (6 + (i % 5) * 3)) % (VIEW_W + 20) - 10;
+      const py = 120 + ((i * 83 + Math.sin(t * 0.4 + i) * 30) % 420);
+      ctx.fillStyle = withAlpha(th.glow, 0.03 + (i % 4) * 0.012);
+      ctx.fillRect(px, py, 2, 2);
+    }
+    const floorGlow = ctx.createLinearGradient(0, 560, 0, VIEW_H);
+    floorGlow.addColorStop(0, withAlpha(th.accent, 0.10));
+    floorGlow.addColorStop(1, withAlpha(th.accent, 0));
+    ctx.fillStyle = floorGlow;
+    ctx.fillRect(0, 560, VIEW_W, VIEW_H - 560);
+
     return;
   }
 
@@ -473,6 +517,17 @@ Game.prototype.drawBackground = function (ctx, cam) {
   }
   ctx.globalAlpha = 1;
 
+  // nuvens em parallax
+  for (let i = 0; i < 5; i++) {
+    const clx = ((i * 317 - cam.x * 0.05 + t * (4 + i)) % (VIEW_W + 320)) - 160;
+    const cly = 70 + (i % 3) * 44;
+    ctx.fillStyle = withAlpha(th.far, 0.30);
+    ctx.beginPath();
+    ctx.ellipse(clx, cly, 120 + i * 18, 18 + (i % 2) * 6, 0, 0, TAU);
+    ctx.ellipse(clx + 70, cly + 6, 90, 14, 0, 0, TAU);
+    ctx.fill();
+  }
+
   // prédio escolar com parallax
   const off = cam.x * 0.22;
   const baseY = 570;
@@ -491,6 +546,23 @@ Game.prototype.drawBackground = function (ctx, cam) {
       ctx.fillStyle = withAlpha(th.tileDark, 0.8);
       ctx.fillRect(wx + 20, wy, 2, 32);
     }
+  }
+
+  // holofotes de segurança varrendo o pátio
+  for (let i = 0; i < 2; i++) {
+    const bx = 260 + i * 760;
+    const sway = Math.sin(t * 0.5 + i * 2.1) * 90;
+    const beam = ctx.createLinearGradient(bx, 300, bx + sway, baseY);
+    beam.addColorStop(0, withAlpha(th.glow, 0.10));
+    beam.addColorStop(1, withAlpha(th.glow, 0));
+    ctx.fillStyle = beam;
+    ctx.beginPath();
+    ctx.moveTo(bx - 10, 300);
+    ctx.lineTo(bx + 10, 300);
+    ctx.lineTo(bx + sway + 90, baseY);
+    ctx.lineTo(bx + sway - 90, baseY);
+    ctx.closePath();
+    ctx.fill();
   }
 
   // árvores em parallax
@@ -2025,26 +2097,112 @@ function drawCutsceneBoss(ctx, style, color, cx, baseY, t) {
   ctx.shadowBlur = 18 + pulse * 14;
 
   if (style === 'guardian') {
+    // pernas blindadas
     ctx.fillStyle = dark;
-    ctx.fillRect(-52, -120, 42, 120);
-    ctx.fillRect(10, -120, 42, 120);
-    ctx.fillStyle = mid;
-    roundRect(ctx, -74, -292, 148, 190, 18); ctx.fill();
+    ctx.fillRect(-56, -128, 46, 128);
+    ctx.fillRect(10, -128, 46, 128);
+    ctx.fillStyle = withAlpha(color, 0.22);
+    ctx.fillRect(-52, -114, 38, 10);
+    ctx.fillRect(14, -114, 38, 10);
+    ctx.fillRect(-52, -86, 38, 6);
+    ctx.fillRect(14, -86, 38, 6);
+    // joelhos
+    ctx.fillStyle = withAlpha(color, 0.42);
+    roundRect(ctx, -62, -136, 58, 26, 8); ctx.fill();
+    roundRect(ctx, 4, -136, 58, 26, 8); ctx.fill();
+    // botas com travas
+    ctx.fillStyle = dark;
+    roundRect(ctx, -70, -24, 62, 24, 6); ctx.fill();
+    roundRect(ctx, 8, -24, 62, 24, 6); ctx.fill();
     ctx.fillStyle = withAlpha(color, 0.55);
-    roundRect(ctx, -58, -276, 116, 76, 10); ctx.fill();
-    ctx.fillStyle = dark;
-    roundRect(ctx, -122, -300, 52, 92, 12); ctx.fill();
-    roundRect(ctx, 70, -300, 52, 92, 12); ctx.fill();
+    ctx.fillRect(-66, -21, 54, 3);
+    ctx.fillRect(12, -21, 54, 3);
+    ctx.fillStyle = withAlpha(color, 0.3);
+    ctx.fillRect(-64, -14, 8, 8);
+    ctx.fillRect(14, -14, 8, 8);
+
+    // torso blindado
     ctx.fillStyle = mid;
-    roundRect(ctx, -134, -218, 54, 96, 14); ctx.fill();
-    roundRect(ctx, 80, -218, 54, 96, 14); ctx.fill();
+    roundRect(ctx, -82, -300, 164, 186, 20); ctx.fill();
+    // placas de peito
     ctx.fillStyle = dark;
-    roundRect(ctx, -46, -372, 92, 78, 14); ctx.fill();
-    ctx.fillStyle = color;
-    ctx.fillRect(-32, -344, 24, 7);
-    ctx.fillRect(8, -344, 24, 7);
+    roundRect(ctx, -66, -286, 132, 80, 10); ctx.fill();
+    ctx.strokeStyle = withAlpha(color, 0.65);
+    ctx.lineWidth = 2;
+    ctx.strokeRect(-62, -282, 124, 72);
+    // faixas de alerta
+    for (let i = 0; i < 6; i++) {
+      ctx.fillStyle = i % 2 ? withAlpha(color, 0.5) : 'rgba(8,18,12,0.8)';
+      ctx.fillRect(-60 + i * 20, -270, 12, 8);
+    }
+    // parafusos
+    ctx.fillStyle = withAlpha('#eafff0', 0.35);
+    for (const [rx, ry] of [[-58, -278], [58, -278], [-58, -214], [58, -214]]) {
+      ctx.fillRect(rx, ry, 4, 4);
+    }
+    // núcleo com anéis
+    ctx.fillStyle = withAlpha(color, 0.18);
+    ctx.beginPath(); ctx.arc(0, -238, 30 + pulse * 6, 0, TAU); ctx.fill();
+    ctx.strokeStyle = withAlpha(color, 0.7);
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(0, -238, 20 + pulse * 3, 0, TAU); ctx.stroke();
     ctx.fillStyle = '#eafff0';
-    ctx.beginPath(); ctx.arc(0, -238, 13 + pulse * 3, 0, TAU); ctx.fill();
+    ctx.beginPath(); ctx.arc(0, -238, 11 + pulse * 2, 0, TAU); ctx.fill();
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.arc(0, -238, 6, 0, TAU); ctx.fill();
+
+    // ombreiras
+    ctx.fillStyle = dark;
+    roundRect(ctx, -132, -306, 58, 96, 14); ctx.fill();
+    roundRect(ctx, 74, -306, 58, 96, 14); ctx.fill();
+    ctx.fillStyle = withAlpha(color, 0.5);
+    ctx.fillRect(-126, -296, 46, 5);
+    ctx.fillRect(80, -296, 46, 5);
+    ctx.fillStyle = withAlpha(color, 0.3);
+    ctx.fillRect(-124, -262, 10, 10);
+    ctx.fillRect(114, -262, 10, 10);
+
+    // braços e punhos
+    ctx.fillStyle = mid;
+    roundRect(ctx, -140, -220, 54, 98, 14); ctx.fill();
+    roundRect(ctx, 86, -220, 54, 98, 14); ctx.fill();
+    ctx.fillStyle = dark;
+    roundRect(ctx, -148, -132, 62, 40, 10); ctx.fill();
+    roundRect(ctx, 86, -132, 62, 40, 10); ctx.fill();
+    ctx.fillStyle = withAlpha(color, 0.55);
+    ctx.fillRect(-142, -124, 50, 4);
+    ctx.fillRect(92, -124, 50, 4);
+    // cabos de energia
+    ctx.strokeStyle = withAlpha(color, 0.35);
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(-96, -276); ctx.quadraticCurveTo(-118, -244, -112, -206);
+    ctx.moveTo(96, -276); ctx.quadraticCurveTo(118, -244, 112, -206);
+    ctx.stroke();
+
+    // cabeça / capacete
+    ctx.fillStyle = dark;
+    roundRect(ctx, -52, -380, 104, 84, 16); ctx.fill();
+    ctx.fillStyle = withAlpha(color, 0.3);
+    roundRect(ctx, -44, -370, 88, 22, 8); ctx.fill();
+    // antena
+    ctx.fillStyle = withAlpha(color, 0.6);
+    ctx.fillRect(-2, -404, 4, 26);
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.arc(0, -406, 5 + pulse * 2, 0, TAU); ctx.fill();
+    // visor
+    ctx.fillStyle = color;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 16 + pulse * 10;
+    ctx.fillRect(-34, -350, 26, 8);
+    ctx.fillRect(8, -350, 26, 8);
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#eafff0';
+    ctx.fillRect(-30, -348, 10, 3);
+    ctx.fillRect(12, -348, 10, 3);
+    // grade de ventilação
+    ctx.fillStyle = withAlpha(color, 0.25);
+    for (let i = 0; i < 4; i++) ctx.fillRect(-18, -322 + i * 6, 36, 2);
   } else if (style === 'hunter') {
     ctx.fillStyle = dark;
     ctx.fillRect(-40, -130, 26, 130);
@@ -2162,6 +2320,100 @@ function drawCutsceneBoss(ctx, style, color, cx, baseY, t) {
     ctx.fillStyle = withAlpha('#ffd24d', 0.8);
     ctx.fillRect(24, -290, 18, 12);
   }
+  ctx.restore();
+}
+
+function drawCutsceneHero(ctx, x, groundY, t, color) {
+  const accent = color || '#6dff9e';
+  const bob = Math.sin(t * 1.6) * 2;
+  ctx.save();
+
+  // sombra no chão
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.beginPath();
+  ctx.ellipse(x, groundY + 4, 52, 9, 0, 0, TAU);
+  ctx.fill();
+
+  // aura / contraluz
+  const halo = ctx.createRadialGradient(x, groundY - 90, 10, x, groundY - 90, 130);
+  halo.addColorStop(0, withAlpha(accent, 0.16));
+  halo.addColorStop(1, withAlpha(accent, 0));
+  ctx.fillStyle = halo;
+  ctx.fillRect(x - 140, groundY - 240, 280, 260);
+
+  // pernas e botas
+  ctx.fillStyle = '#0b1710';
+  ctx.fillRect(x - 20, groundY - 62, 16, 62);
+  ctx.fillRect(x + 4, groundY - 62, 16, 62);
+  ctx.fillStyle = '#132a1b';
+  ctx.fillRect(x - 24, groundY - 9, 24, 9);
+  ctx.fillRect(x + 2, groundY - 9, 24, 9);
+  ctx.fillStyle = withAlpha(accent, 0.35);
+  ctx.fillRect(x - 20, groundY - 58, 16, 2);
+  ctx.fillRect(x + 4, groundY - 58, 16, 2);
+
+  // jaqueta / torso
+  ctx.fillStyle = '#10241a';
+  roundRect(ctx, x - 28, groundY - 132 + bob, 56, 76, 8);
+  ctx.fill();
+  // mochila
+  ctx.fillStyle = '#0a1811';
+  roundRect(ctx, x - 42, groundY - 126 + bob, 16, 54, 5);
+  ctx.fill();
+  ctx.fillStyle = withAlpha(accent, 0.18);
+  ctx.fillRect(x - 40, groundY - 120 + bob, 3, 40);
+  // detalhes da jaqueta
+  ctx.fillStyle = withAlpha(accent, 0.30);
+  ctx.fillRect(x - 22, groundY - 118 + bob, 44, 3);
+  ctx.fillRect(x - 2, groundY - 112 + bob, 3, 50);
+  ctx.fillStyle = '#0a1811';
+  ctx.fillRect(x - 26, groundY - 78 + bob, 52, 5);
+
+  // braços
+  ctx.fillStyle = '#0d1f16';
+  ctx.fillRect(x - 38, groundY - 124 + bob, 12, 56);
+  ctx.fillRect(x + 26, groundY - 124 + bob, 12, 56);
+  ctx.fillStyle = '#163020';
+  ctx.fillRect(x - 40, groundY - 70 + bob, 14, 10);
+  ctx.fillRect(x + 26, groundY - 70 + bob, 14, 10);
+
+  // cabeça / capuz
+  ctx.fillStyle = '#163020';
+  roundRect(ctx, x - 18, groundY - 170 + bob, 36, 42, 11);
+  ctx.fill();
+  ctx.fillStyle = '#08120c';
+  roundRect(ctx, x - 21, groundY - 174 + bob, 42, 18, 8);
+  ctx.fill();
+  // visor brilhante
+  ctx.fillStyle = accent;
+  ctx.shadowColor = accent;
+  ctx.shadowBlur = 16;
+  ctx.fillRect(x - 11, groundY - 155 + bob, 22, 5);
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#eafff0';
+  ctx.fillRect(x - 8, groundY - 154 + bob, 6, 3);
+
+  // bastão / arma
+  ctx.save();
+  ctx.translate(x + 34, groundY - 96 + bob);
+  ctx.rotate(0.32 + Math.sin(t * 1.2) * 0.05);
+  ctx.fillStyle = '#2a4a36';
+  ctx.fillRect(-3, 0, 6, 64);
+  ctx.fillStyle = withAlpha(accent, 0.85);
+  ctx.fillRect(-2, 0, 4, 12);
+  ctx.fillStyle = '#0a1811';
+  ctx.fillRect(-5, 52, 10, 8);
+  ctx.restore();
+
+  // rim light
+  ctx.strokeStyle = withAlpha(accent, 0.38);
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x + 27, groundY - 164 + bob);
+  ctx.lineTo(x + 30, groundY - 122 + bob);
+  ctx.lineTo(x + 24, groundY - 70 + bob);
+  ctx.stroke();
+
   ctx.restore();
 }
 
@@ -2929,8 +3181,54 @@ Game.prototype.renderCutscene = function (ctx) {
   if (boss) {
     ctx.fillStyle = 'rgba(52,0,12,0.22)';
     ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+    // holofotes de alerta
+    for (let i = 0; i < 2; i++) {
+      const bx = 400 + i * 480;
+      const sway = Math.sin(t * 0.7 + i * 2.1) * 30;
+      const beam = ctx.createLinearGradient(bx, 0, bx + sway, 600);
+      beam.addColorStop(0, 'rgba(255,93,122,0.16)');
+      beam.addColorStop(1, 'rgba(255,93,122,0)');
+      ctx.fillStyle = beam;
+      ctx.beginPath();
+      ctx.moveTo(bx - 14, 0);
+      ctx.lineTo(bx + 14, 0);
+      ctx.lineTo(bx + sway + 110, 600);
+      ctx.lineTo(bx + sway - 110, 600);
+      ctx.closePath();
+      ctx.fill();
+    }
   }
+
+  // câmera cinematográfica: leve deriva
+  const driftX = Math.sin(t * 0.35) * 8;
+  const driftY = Math.cos(t * 0.28) * 4;
+  ctx.save();
+  ctx.translate(driftX, driftY);
   this.drawCutsceneMotif(ctx, slide.motif, t);
+  ctx.restore();
+
+  // VEGA em primeiro plano
+  ctx.save();
+  ctx.translate(VIEW_W - 208, 566);
+  ctx.scale(1.24, 1.24);
+  drawCutsceneHero(ctx, 0, 0, t, boss ? '#ff8fa3' : '#6dff9e');
+  ctx.restore();
+
+  // partículas cinematográficas
+  ctx.save();
+  const pcount = boss ? 36 : 22;
+  for (let i = 0; i < pcount; i++) {
+    const seed = i * 131.7;
+    const px = ((seed + Math.sin(t * 0.6 + i) * 40) % VIEW_W + VIEW_W) % VIEW_W;
+    const py = 620 - ((t * (boss ? 34 : 14) + seed) % 460);
+    const a = boss
+      ? 0.25 + 0.45 * Math.abs(Math.sin(t * 2 + i))
+      : 0.08 + 0.12 * Math.abs(Math.sin(t + i));
+    ctx.fillStyle = withAlpha(boss ? (i % 3 ? '#ff8a5c' : '#ffd24d') : '#9dffbd', a);
+    const s = boss ? 2 + (i % 3) : 2;
+    ctx.fillRect(px, py, s, s);
+  }
+  ctx.restore();
 
   // vinheta
   const vg = ctx.createRadialGradient(VIEW_W / 2, VIEW_H / 2, 240, VIEW_W / 2, VIEW_H / 2, 760);
