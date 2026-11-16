@@ -198,51 +198,69 @@ class Level {
 const THEMES = {
   training: {
     kind: 'training',
-    skyTop: '#061a10', skyBottom: '#0f4a28',
-    far: '#0b2c19', mid: '#13502c', near: '#1d6b3a',
-    tileTop: '#9bffb0', tile: '#2f8a4c', tileDark: '#15502a',
-    edge: '#b8ffd0', accent: '#6dff9e', hazard: '#ff5a6c', glow: '#c8ffda',
-    bg: '#071c10'
+    skyTop: '#080d1c', skyBottom: '#1a2a4a', bg: '#0a101d',
+    far: '#0e1729', mid: '#18243c', near: '#283a56',
+    tileTop: '#56667c', tile: '#242e3d', tileDark: '#121925', edge: '#93a3b8',
+    floor: '#3c4759', floorLight: '#66788e', floorJoint: '#1d2634',
+    wall: '#283344', wallLight: '#3d4d63', wallDark: '#141c28',
+    accent: '#6dff9e', glow: '#dbe8ff', hazard: '#ff5a6c',
+    warm: '#ffbf6b', cool: '#8fb8ff', metal: '#7589a3', wood: '#7a5a3a',
+    shadow: '#060a12'
   },
   school: {
     kind: 'courtyard',
-    skyTop: '#07160d', skyBottom: '#1c4d2a',
-    far: '#0d2b18', mid: '#17482a', near: '#236b3c',
-    tileTop: '#7ddf88', tile: '#347347', tileDark: '#183d24',
-    edge: '#a8f0b0', accent: '#6dff9e', hazard: '#ff5a5a', glow: '#c4ffd2',
-    bg: '#081a0e'
+    skyTop: '#060a18', skyBottom: '#18214a', bg: '#090f20',
+    far: '#0d152b', mid: '#18213d', near: '#283454',
+    tileTop: '#5b6a82', tile: '#272e3e', tileDark: '#151b28', edge: '#8d9db5',
+    floor: '#394356', floorLight: '#607089', floorJoint: '#1e2635',
+    wall: '#293147', wallLight: '#3f4c68', wallDark: '#151b2a',
+    accent: '#6dff9e', glow: '#dbe8ff', hazard: '#ff5a5a',
+    warm: '#ffb45e', cool: '#93b4ff', metal: '#7286a2', wood: '#7a5a3a',
+    shadow: '#060a14'
   },
   hall: {
     kind: 'hall',
-    skyTop: '#06130e', skyBottom: '#123d2c',
-    far: '#0a261d', mid: '#114434', near: '#1b5e48',
-    tileTop: '#65d68b', tile: '#276b52', tileDark: '#12382a',
-    edge: '#9df7bb', accent: '#5dffb0', hazard: '#ff6b4a', glow: '#bfffd8',
-    bg: '#06170f'
+    skyTop: '#071219', skyBottom: '#12303a', bg: '#081117',
+    far: '#0c1f27', mid: '#16333d', near: '#224c58',
+    tileTop: '#918b78', tile: '#3c3f3a', tileDark: '#20231f', edge: '#bcb39d',
+    floor: '#52534a', floorLight: '#8f8977', floorJoint: '#2b2e29',
+    wall: '#1f3c45', wallLight: '#32606b', wallDark: '#102329',
+    accent: '#5dffb0', glow: '#d8f4f0', hazard: '#ff6b4a',
+    warm: '#ffcf87', cool: '#8fe0e8', metal: '#7a9299', wood: '#7a5636',
+    shadow: '#050c10'
   },
   gym: {
     kind: 'gym',
-    skyTop: '#0a1706', skyBottom: '#2b4a12',
-    far: '#13270a', mid: '#234312', near: '#35631c',
-    tileTop: '#c6f06a', tile: '#5c8a28', tileDark: '#2d4a12',
-    edge: '#e4ff9a', accent: '#b6ff5d', hazard: '#ff7a3c', glow: '#e8ffb0',
-    bg: '#0b1c08'
+    skyTop: '#100b12', skyBottom: '#261a18', bg: '#130e0e',
+    far: '#1e1512', mid: '#33231e', near: '#4a3329',
+    tileTop: '#b07c46', tile: '#4a3424', tileDark: '#2a1c12', edge: '#e0b075',
+    floor: '#8a5f36', floorLight: '#c08a50', floorJoint: '#5b3c22',
+    wall: '#3a2f28', wallLight: '#5c4b3d', wallDark: '#211a16',
+    accent: '#6dff9e', glow: '#ffe9c0', hazard: '#ff7a3c',
+    warm: '#ffd27a', cool: '#9fd4ff', metal: '#8a8f96', wood: '#8a5f36',
+    maroon: '#5a2430', gold: '#ffcf6d', shadow: '#0a0706'
   },
   lab: {
     kind: 'lab',
-    skyTop: '#04140f', skyBottom: '#0b3a32',
-    far: '#08251f', mid: '#0d3f36', near: '#155a4c',
-    tileTop: '#5ef2c8', tile: '#1f7765', tileDark: '#0d3a31',
-    edge: '#9dffe2', accent: '#4fffd0', hazard: '#ff5d7a', glow: '#c0fff0',
-    bg: '#061b16'
+    skyTop: '#050b14', skyBottom: '#0b2033', bg: '#06101a',
+    far: '#0a1826', mid: '#102a40', near: '#183c58',
+    tileTop: '#6f879c', tile: '#2b3947', tileDark: '#16202a', edge: '#a4bed2',
+    floor: '#394756', floorLight: '#64798c', floorJoint: '#202a35',
+    wall: '#12304a', wallLight: '#1d4a6b', wallDark: '#081a2b',
+    accent: '#4fffd0', glow: '#c8f4ff', hazard: '#ff5d7a',
+    warm: '#ffb066', cool: '#8fe4ff', metal: '#7d94a8', wood: '#6a4a30',
+    shadow: '#040a10'
   },
   office: {
     kind: 'office',
-    skyTop: '#0b1207', skyBottom: '#26330f',
-    far: '#141d0a', mid: '#233312', near: '#35491a',
-    tileTop: '#d7d98a', tile: '#6c7030', tileDark: '#363a18',
-    edge: '#f2f2b0', accent: '#d9ff6d', hazard: '#ff5d6c', glow: '#f4ffb0',
-    bg: '#0d1508'
+    skyTop: '#140a10', skyBottom: '#2a141c', bg: '#150b11',
+    far: '#200e14', mid: '#351720', near: '#4e2230',
+    tileTop: '#7c5a4a', tile: '#3b242a', tileDark: '#1f1114', edge: '#b08a6a',
+    floor: '#4a2a2c', floorLight: '#7a4a42', floorJoint: '#2a1417',
+    wall: '#341b24', wallLight: '#552b37', wallDark: '#1c0e13',
+    accent: '#6dff9e', glow: '#ffe0b0', hazard: '#ff5d6c',
+    warm: '#ffcf87', cool: '#b48cff', metal: '#9a7b63', wood: '#6a3a2c',
+    gold: '#ffcf6d', shadow: '#0d0609'
   }
 };
 

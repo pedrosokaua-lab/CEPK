@@ -181,540 +181,1680 @@ function drawScanlines(ctx, alpha = 0.12) {
 
 /* ------------------------------ CENÁRIO ------------------------------ */
 
-function drawSchoolBackdrop(ctx, theme, time, menu = false) {
+const wrapMod = (v, m) => ((v % m) + m) % m;
+
+function drawFacadeWindow(ctx, x, y, w, h, n, th, time, seed) {
+  // moldura e vão
+  ctx.fillStyle = withAlpha(th.wallDark, 0.9);
+  ctx.fillRect(x - 3, y - 3, w + 6, h + 6);
+
+  if (n < 0.30) {
+    // sala acesa: luz âmbar, cortina e silhuetas
+    ctx.fillStyle = withAlpha(th.warm, 0.52);
+    ctx.fillRect(x, y, w, h);
+    const wg = ctx.createLinearGradient(0, y, 0, y + h);
+    wg.addColorStop(0, withAlpha(th.warm, 0.4));
+    wg.addColorStop(1, withAlpha('#ff7a3c', 0.12));
+    ctx.fillStyle = wg;
+    ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = withAlpha(th.mid, 0.55);
+    ctx.fillRect(x, y, 7, h);
+    ctx.fillRect(x + w - 7, y, 7, h);
+    // mesa e abajur
+    if (seed % 3 === 0) {
+      ctx.fillStyle = withAlpha(th.shadow, 0.55);
+      ctx.fillRect(x + 10, y + h - 9, w - 20, 4);
+      ctx.fillRect(x + 14, y + h - 16, 2, 8);
+      ctx.fillStyle = withAlpha(th.warm, 0.95);
+      ctx.fillRect(x + 11, y + h - 19, 8, 4);
+    } else if (seed % 3 === 1) {
+      // planta na janela
+      ctx.fillStyle = withAlpha(th.shadow, 0.5);
+      ctx.fillRect(x + 10, y + h - 12, 7, 7);
+      ctx.fillRect(x + 8, y + h - 18, 4, 8);
+      ctx.fillRect(x + 15, y + h - 16, 4, 6);
+    }
+    // brilho da janela na fachada
+    ctx.fillStyle = withAlpha(th.warm, 0.06);
+    ctx.fillRect(x - 6, y + h + 5, w + 12, 14);
+  } else if (n < 0.52) {
+    // sala apagada, reflexo frio
+    ctx.fillStyle = 'rgba(10,16,30,0.9)';
+    ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = withAlpha(th.cool, 0.12);
+    ctx.fillRect(x + 4, y + 4, w - 8, 10);
+    ctx.fillStyle = withAlpha(th.cool, 0.05);
+    ctx.fillRect(x + 4, y + 18, w - 8, h - 22);
+  } else if (n < 0.74) {
+    // janela escura
+    ctx.fillStyle = 'rgba(7,11,22,0.94)';
+    ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = withAlpha(th.cool, 0.05);
+    ctx.fillRect(x + 5, y + 5, 2, h - 10);
+  } else if (n < 0.86) {
+    // janela quebrada
+    ctx.fillStyle = 'rgba(6,10,20,0.96)';
+    ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = withAlpha(th.cool, 0.3);
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x + 7, y + 2);
+    ctx.lineTo(x + 15, y + 12);
+    ctx.lineTo(x + 11, y + 20);
+    ctx.lineTo(x + 21, y + 29);
+    ctx.moveTo(x + 15, y + 12);
+    ctx.lineTo(x + 27, y + 8);
+    ctx.moveTo(x + w - 8, y + h - 2);
+    ctx.lineTo(x + w - 17, y + h - 14);
+    ctx.stroke();
+    ctx.fillStyle = withAlpha(th.cool, 0.14);
+    ctx.beginPath();
+    ctx.moveTo(x + 31, y + 3);
+    ctx.lineTo(x + 42, y + 3);
+    ctx.lineTo(x + 37, y + 14);
+    ctx.closePath();
+    ctx.fill();
+  } else {
+    // janela tapada com madeira
+    ctx.fillStyle = withAlpha(th.wood, 0.55);
+    ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = withAlpha(th.shadow, 0.45);
+    ctx.fillRect(x, y + 8, w, 2);
+    ctx.fillRect(x, y + 22, w, 2);
+    ctx.fillStyle = withAlpha(th.wood, 0.8);
+    ctx.fillRect(x + 4, y + 1, 5, h - 2);
+    ctx.fillRect(x + w - 9, y + 1, 5, h - 2);
+  }
+
+  // caixilho
+  ctx.fillStyle = withAlpha(th.wallDark, 0.95);
+  ctx.fillRect(x + w / 2 - 1, y, 2, h);
+  ctx.fillRect(x, y + h / 2 - 1, w, 2);
+  ctx.fillStyle = withAlpha(th.wallLight, 0.28);
+  ctx.fillRect(x - 4, y + h + 3, w + 8, 3);
+}
+
+function drawSchoolBackdrop(ctx, theme, time, menu = false, camX = 0) {
   const th = theme || THEMES.school;
-  const sky = ctx.createLinearGradient(0, 0, 0, VIEW_H);
+  const t = time;
+  const off = camX;
+  const baseY = menu ? 592 : 576;
+
+  // céu em três camadas
+  const sky = ctx.createLinearGradient(0, 0, 0, baseY + 80);
   sky.addColorStop(0, th.skyTop);
-  sky.addColorStop(0.65, th.skyBottom);
+  sky.addColorStop(0.56, th.skyBottom);
   sky.addColorStop(1, th.bg);
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, VIEW_W, VIEW_H);
 
-  // lua / sinal verde
-  const moonX = menu ? 1060 : 1030;
-  const moonY = menu ? 118 : 108;
-  const halo = ctx.createRadialGradient(moonX, moonY, 8, moonX, moonY, 120);
-  halo.addColorStop(0, withAlpha(th.glow, 0.28));
-  halo.addColorStop(1, withAlpha(th.glow, 0));
-  ctx.fillStyle = halo;
-  ctx.fillRect(moonX - 130, moonY - 130, 260, 260);
-  ctx.fillStyle = withAlpha(th.glow, 0.85);
-  ctx.beginPath();
-  ctx.arc(moonX, moonY, 30, 0, TAU);
-  ctx.fill();
-  ctx.fillStyle = withAlpha(th.tileDark, 0.55);
-  ctx.beginPath();
-  ctx.arc(moonX - 9, moonY - 5, 7, 0, TAU);
-  ctx.arc(moonX + 10, moonY + 8, 5, 0, TAU);
-  ctx.fill();
+  const horizon = ctx.createLinearGradient(0, baseY - 300, 0, baseY + 20);
+  horizon.addColorStop(0, withAlpha(th.cool, 0));
+  horizon.addColorStop(0.72, withAlpha(th.cool, 0.10));
+  horizon.addColorStop(1, withAlpha(th.warm, 0.055));
+  ctx.fillStyle = horizon;
+  ctx.fillRect(0, baseY - 300, VIEW_W, 320);
 
-  // estrelas pixeladas
-  for (let i = 0; i < 46; i++) {
-    const sx = (i * 137 + 53) % VIEW_W;
-    const sy = (i * 71 + 23) % 300;
-    const tw = 0.25 + 0.75 * Math.abs(Math.sin(time * 0.7 + i));
-    ctx.globalAlpha = tw * 0.7;
-    ctx.fillStyle = th.glow;
-    ctx.fillRect(sx, sy, 2, 2);
+  // estrelas com parallax mínimo
+  for (let i = 0; i < 72; i++) {
+    const sx = wrapMod(i * 173 + 37 - off * 0.02, VIEW_W + 40) - 20;
+    const sy = 16 + ((i * 71 + 23) % 288);
+    const tw = 0.22 + 0.78 * Math.abs(Math.sin(t * 0.7 + i * 1.7));
+    ctx.globalAlpha = tw * (i % 9 === 0 ? 0.9 : 0.55);
+    ctx.fillStyle = i % 11 === 0 ? th.cool : th.glow;
+    ctx.fillRect(sx, sy, i % 13 === 0 ? 3 : 2, i % 13 === 0 ? 3 : 2);
+    if (i % 17 === 0) {
+      ctx.globalAlpha *= 0.5;
+      ctx.fillRect(sx - 3, sy + 1, 8, 1);
+      ctx.fillRect(sx + 1, sy - 3, 1, 8);
+    }
   }
   ctx.globalAlpha = 1;
 
-  // prédio escolar ao fundo
-  const baseY = 596;
-  const bx = 86;
-  const bw = VIEW_W - 172;
-  const bh = menu ? 250 : 230;
-  ctx.fillStyle = withAlpha(th.far, 0.9);
-  ctx.fillRect(bx, baseY - bh, bw, bh);
-  ctx.fillStyle = withAlpha(th.mid, 0.9);
-  ctx.fillRect(bx + 22, baseY - bh + 18, bw - 44, bh - 18);
+  // lua fria com halo e crateras
+  const moonX = 1032 - off * 0.012;
+  const moonY = menu ? 116 : 106;
+  const halo = ctx.createRadialGradient(moonX, moonY, 10, moonX, moonY, 150);
+  halo.addColorStop(0, withAlpha(th.cool, 0.30));
+  halo.addColorStop(0.5, withAlpha(th.cool, 0.10));
+  halo.addColorStop(1, withAlpha(th.cool, 0));
+  ctx.fillStyle = halo;
+  ctx.fillRect(moonX - 160, moonY - 160, 320, 320);
+  ctx.fillStyle = withAlpha('#e8eeff', 0.92);
+  ctx.beginPath();
+  ctx.arc(moonX, moonY, 28, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = withAlpha('#b9c6e8', 0.55);
+  ctx.beginPath();
+  ctx.arc(moonX - 10, moonY - 6, 6, 0, TAU);
+  ctx.arc(moonX + 9, moonY + 7, 5, 0, TAU);
+  ctx.arc(moonX + 2, moonY - 13, 3, 0, TAU);
+  ctx.fill();
 
-  // telhado
-  ctx.fillStyle = withAlpha(th.near, 0.95);
-  ctx.fillRect(bx - 18, baseY - bh - 16, bw + 36, 20);
-  ctx.fillStyle = withAlpha(th.accent, 0.22);
-  ctx.fillRect(bx - 18, baseY - bh - 16, bw + 36, 3);
-
-  // janelas acesas
-  for (let row = 0; row < 3; row++) {
-    for (let col = 0; col < 13; col++) {
-      const wx = bx + 44 + col * 72;
-      const wy = baseY - bh + 42 + row * 54;
-      if (wx + 42 > bx + bw - 20) continue;
-      const lit = ((row * 13 + col * 7) % 5) !== 0;
-      ctx.fillStyle = lit ? withAlpha(th.glow, 0.62) : 'rgba(3,16,9,0.72)';
-      ctx.fillRect(wx, wy, 38, 30);
-      ctx.fillStyle = lit ? withAlpha(th.accent, 0.24) : 'rgba(255,255,255,0.05)';
-      ctx.fillRect(wx + 3, wy + 3, 32, 3);
-      ctx.fillStyle = withAlpha(th.tileDark, 0.8);
-      ctx.fillRect(wx + 18, wy, 2, 30);
-    }
+  // nuvens escuras em parallax
+  for (let i = 0; i < 7; i++) {
+    const cw = 150 + (i % 3) * 90;
+    const cx = wrapMod(i * 263 + t * (3 + i * 0.7) - off * 0.035, VIEW_W + 420) - 210;
+    const cy = 54 + (i * 47) % 210;
+    ctx.fillStyle = withAlpha(i % 2 ? th.far : th.mid, 0.42);
+    ctx.fillRect(cx, cy, cw, 11);
+    ctx.fillRect(cx + 24, cy - 8, cw * 0.58, 10);
+    ctx.fillRect(cx + cw * 0.55, cy - 5, cw * 0.3, 9);
+    ctx.fillStyle = withAlpha(th.cool, 0.05);
+    ctx.fillRect(cx + 10, cy, cw * 0.7, 2);
   }
 
-  // porta central e letreiro CEPK
-  const doorW = 104;
-  const doorX = VIEW_W / 2 - doorW / 2;
-  ctx.fillStyle = 'rgba(2,12,7,0.9)';
-  ctx.fillRect(doorX, baseY - 108, doorW, 108);
-  ctx.fillStyle = withAlpha(th.accent, 0.55);
-  ctx.fillRect(doorX + 8, baseY - 98, doorW - 16, 3);
-  drawText(ctx, 'CEPK', VIEW_W / 2, baseY - 126, {
-    size: 24, align: 'center', color: withAlpha(th.glow, 0.8), font: 'Consolas, monospace'
-  });
-
-  // árvores laterais
-  for (const side of [-1, 1]) {
-    const tx = side < 0 ? 58 : VIEW_W - 58;
-    ctx.fillStyle = '#1a3b24';
-    ctx.fillRect(tx - 7, baseY - 118, 14, 118);
-    ctx.fillStyle = withAlpha(th.near, 0.95);
-    for (let i = 0; i < 5; i++) {
-      const ox = Math.sin(i * 1.7 + time * 0.4) * 10;
-      ctx.fillRect(tx - 54 + i * 8 + ox, baseY - 170 - i * 17, 62 - i * 8, 30);
+  // skyline distante
+  const dOff = off * 0.07;
+  for (let i = 0; i < 15; i++) {
+    const bw = 76 + (i % 4) * 26;
+    const bh = 66 + ((i * 53) % 7) * 19;
+    const bx = wrapMod(i * 128 - dOff, VIEW_W + 260) - 130;
+    const by = baseY - 26 - bh;
+    ctx.fillStyle = withAlpha(th.far, 0.88);
+    ctx.fillRect(bx, by, bw, bh);
+    if (i % 4 === 1) {
+      ctx.fillRect(bx + bw * 0.4, by - 20, 5, 20);
+      ctx.fillStyle = withAlpha(th.cool, 0.55);
+      ctx.fillRect(bx + bw * 0.4 - 2, by - 23, 3, 3);
     }
-    ctx.fillStyle = withAlpha(th.accent, 0.18);
-    ctx.fillRect(tx - 46, baseY - 168, 36, 4);
+    for (let wy = by + 10; wy < by + bh - 8; wy += 16) {
+      for (let wx = bx + 8; wx < bx + bw - 8; wx += 14) {
+        if (tileNoise(i, Math.floor(wx / 14) + wy, 3) > 0.62) {
+          ctx.fillStyle = withAlpha(th.warm, 0.24);
+          ctx.fillRect(wx, wy, 3, 4);
+        }
+      }
+    }
+  }
+  // torre d'água distante
+  const wtX = wrapMod(560 - dOff * 1.4, VIEW_W + 300) - 150;
+  ctx.fillStyle = withAlpha(th.far, 0.95);
+  ctx.fillRect(wtX - 3, baseY - 180, 6, 120);
+  ctx.fillRect(wtX - 24, baseY - 180, 3, 26);
+  ctx.fillRect(wtX + 21, baseY - 180, 3, 26);
+  ctx.fillRect(wtX - 28, baseY - 188, 56, 14);
+  ctx.fillRect(wtX - 22, baseY - 205, 44, 20);
+  ctx.beginPath();
+  ctx.moveTo(wtX - 26, baseY - 205);
+  ctx.lineTo(wtX, baseY - 220);
+  ctx.lineTo(wtX + 26, baseY - 205);
+  ctx.closePath();
+  ctx.fill();
+
+  // ---------- prédio principal: fachada contínua em segmentos ----------
+  const pOff = off * 0.22;
+  const seg = 1600;
+  const topY = baseY - 262;
+  const facadeH = 226;
+  const segStart = -(wrapMod(pOff, seg) + seg);
+
+  for (let s = segStart; s < VIEW_W + seg; s += seg) {
+    const k = Math.round((s + pOff) / seg);
+
+    // corpo de concreto
+    ctx.fillStyle = withAlpha(th.mid, 0.98);
+    ctx.fillRect(s - 20, topY, seg + 40, facadeH);
+    ctx.fillStyle = withAlpha(th.wall, 0.45);
+    ctx.fillRect(s - 20, topY + 26, seg + 40, facadeH - 26);
+
+    // pilastras e faixas de andar
+    ctx.fillStyle = withAlpha(th.wallDark, 0.42);
+    for (let px = 0; px < seg; px += 336) {
+      ctx.fillRect(s + px, topY, 4, facadeH);
+      ctx.fillStyle = withAlpha(th.wallLight, 0.10);
+      ctx.fillRect(s + px + 4, topY, 2, facadeH);
+      ctx.fillStyle = withAlpha(th.wallDark, 0.42);
+    }
+    ctx.fillStyle = withAlpha(th.far, 0.55);
+    for (let row = 0; row < 3; row++) {
+      ctx.fillRect(s - 20, topY + 30 + row * 60 + 40, seg + 40, 3);
+    }
+
+    // janelas: estados determinísticos por coluna/andar
+    for (let row = 0; row < 3; row++) {
+      for (let col = 0; col < 19; col++) {
+        const wx = s + 18 + col * 84;
+        const wy = topY + 32 + row * 60;
+        const n = tileNoise(k * 31 + col, row, 11);
+        drawFacadeWindow(ctx, wx, wy, 46, 36, n, th, t, k * 19 + col + row * 97);
+        if (n > 0.55 && n < 0.68 && row < 2) {
+          // ar-condicionado com mancha de infiltração
+          ctx.fillStyle = withAlpha(th.metal, 0.5);
+          ctx.fillRect(wx + 8, wy + 40, 28, 13);
+          ctx.fillStyle = withAlpha(th.wallDark, 0.55);
+          ctx.fillRect(wx + 12, wy + 43, 8, 7);
+          ctx.fillRect(wx + 25, wy + 43, 5, 7);
+          ctx.fillStyle = withAlpha(th.shadow, 0.16);
+          ctx.fillRect(wx + 12, wy + 53, 2, 18);
+        }
+      }
+    }
+
+    // calhas e manchas
+    for (const dx of [104, 944, 1460]) {
+      const px = s + dx;
+      ctx.fillStyle = withAlpha(th.metal, 0.42);
+      ctx.fillRect(px, topY + 8, 5, facadeH - 8);
+      ctx.fillStyle = withAlpha(th.wallLight, 0.18);
+      ctx.fillRect(px + 1, topY + 8, 1, facadeH - 8);
+      for (let by = topY + 28; by < baseY - 54; by += 52) {
+        ctx.fillStyle = withAlpha(th.wallDark, 0.6);
+        ctx.fillRect(px - 1, by, 7, 3);
+      }
+      ctx.fillStyle = withAlpha(th.shadow, 0.16);
+      ctx.fillRect(px + 5, topY + 30, 7, facadeH - 30);
+    }
+
+    // entrada com transom iluminado
+    const ex = s + 690;
+    ctx.fillStyle = withAlpha(th.wallDark, 0.95);
+    ctx.fillRect(ex, topY + 166, 120, 60);
+    ctx.fillStyle = withAlpha(th.warm, 0.30);
+    ctx.fillRect(ex + 10, topY + 170, 100, 14);
+    ctx.fillStyle = withAlpha(th.metal, 0.55);
+    ctx.fillRect(ex + 58, topY + 166, 4, 60);
+    ctx.fillStyle = withAlpha(th.warm, 0.10);
+    ctx.fillRect(ex - 8, topY + 180, 136, 40);
+    drawText(ctx, 'CEPK', ex + 60, topY + 178, {
+      size: 11, align: 'center', color: withAlpha(th.warm, 0.85)
+    });
+
+    // parapeito
+    ctx.fillStyle = withAlpha(th.near, 0.98);
+    ctx.fillRect(s - 28, topY - 15, seg + 56, 19);
+    ctx.fillStyle = withAlpha(th.wallLight, 0.28);
+    ctx.fillRect(s - 28, topY - 15, seg + 56, 3);
+    ctx.fillStyle = withAlpha(th.shadow, 0.35);
+    ctx.fillRect(s - 28, topY + 3, seg + 56, 4);
+
+    // caixas de ar no telhado
+    for (const [dx, dw] of [[420, 74], [1270, 58]]) {
+      const ax = s + dx;
+      ctx.fillStyle = withAlpha(th.metal, 0.65);
+      ctx.fillRect(ax, topY - 46, dw, 31);
+      ctx.fillStyle = withAlpha(th.wallDark, 0.8);
+      ctx.fillRect(ax + 8, topY - 40, dw - 16, 18);
+      ctx.strokeStyle = withAlpha(th.wallLight, 0.28);
+      ctx.lineWidth = 1;
+      ctx.strokeRect(ax + 8, topY - 40, dw - 16, 18);
+      ctx.fillStyle = withAlpha(th.shadow, 0.3);
+      ctx.fillRect(ax + 4, topY - 15, dw - 8, 3);
+    }
+
+    // caixa d'água
+    const twx = s + 206;
+    ctx.fillStyle = withAlpha(th.metal, 0.55);
+    ctx.fillRect(twx - 32, topY - 96, 64, 50);
+    ctx.fillRect(twx - 28, topY - 104, 56, 10);
+    ctx.fillStyle = withAlpha(th.wallLight, 0.22);
+    ctx.fillRect(twx - 28, topY - 92, 4, 40);
+    ctx.fillStyle = withAlpha(th.wallDark, 0.7);
+    for (let lx = 0; lx < 3; lx++) {
+      ctx.fillRect(twx - 24 + lx * 22, topY - 46, 4, 46);
+    }
+    ctx.fillStyle = withAlpha(th.shadow, 0.3);
+    ctx.fillRect(twx - 36, topY - 46, 72, 3);
+
+    // antena com luz de sinal
+    const anx = s + 1180;
+    ctx.fillStyle = withAlpha(th.metal, 0.7);
+    ctx.fillRect(anx, topY - 120, 3, 120);
+    ctx.fillRect(anx - 18, topY - 96, 39, 2);
+    ctx.fillRect(anx - 12, topY - 72, 27, 2);
+    const blink = 0.45 + 0.55 * Math.abs(Math.sin(t * 2.4 + k));
+    ctx.fillStyle = withAlpha(th.hazard, 0.8 * blink);
+    ctx.fillRect(anx - 1, topY - 124, 5, 5);
+    ctx.fillStyle = withAlpha(th.hazard, 0.18 * blink);
+    ctx.fillRect(anx - 7, topY - 130, 17, 17);
+
+    // relógio no parapeito
+    const clx = s + 1010;
+    ctx.fillStyle = withAlpha(th.wallDark, 0.9);
+    ctx.fillRect(clx - 20, topY - 48, 40, 40);
+    ctx.fillStyle = withAlpha('#d9dfd2', 0.8);
+    ctx.beginPath();
+    ctx.arc(clx, topY - 28, 15, 0, TAU);
+    ctx.fill();
+    ctx.strokeStyle = withAlpha(th.wallDark, 0.8);
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(clx, topY - 28);
+    ctx.lineTo(clx, topY - 38);
+    ctx.moveTo(clx, topY - 28);
+    ctx.lineTo(clx + 7, topY - 24);
+    ctx.stroke();
   }
 
-  // cerca / muro
-  ctx.fillStyle = withAlpha(th.tileDark, 0.95);
-  ctx.fillRect(0, baseY - 36, VIEW_W, 36);
-  ctx.fillStyle = withAlpha(th.tile, 0.7);
-  for (let x = 0; x < VIEW_W; x += 64) ctx.fillRect(x + 6, baseY - 32, 3, 26);
-  ctx.fillStyle = withAlpha(th.accent, 0.20);
-  ctx.fillRect(0, baseY - 38, VIEW_W, 3);
+  // árvores silhueta atrás da cerca
+  for (let i = 0; i < 5; i++) {
+    const tx = wrapMod(i * 372 + 96 - off * 0.34, VIEW_W + 460) - 230;
+    const th2 = 84 + (i % 3) * 20;
+    ctx.fillStyle = withAlpha(th.wood, 0.45);
+    ctx.fillRect(tx - 6, baseY - th2, 12, th2);
+    ctx.fillStyle = withAlpha(th.near, 0.88);
+    for (let j = 0; j < 5; j++) {
+      const sway = Math.sin(t * 0.45 + i * 2 + j) * 5;
+      ctx.fillRect(tx - 54 + j * 9 + sway, baseY - th2 - 52 - j * 13, 66 - j * 8, 24);
+    }
+    ctx.fillStyle = withAlpha(th.wallLight, 0.10);
+    ctx.fillRect(tx - 40, baseY - th2 - 56, 30, 4);
+  }
 
-  // chão
+  // cerca metálica com pilares de alvenaria
+  const fTop = baseY - 54;
+  const fOff = off * 0.35;
+  ctx.fillStyle = withAlpha(th.metal, 0.42);
+  ctx.fillRect(0, fTop + 8, VIEW_W, 3);
+  ctx.fillRect(0, fTop + 38, VIEW_W, 4);
+  for (let x = -wrapMod(fOff, 14); x < VIEW_W; x += 14) {
+    ctx.fillStyle = withAlpha(th.metal, 0.38);
+    ctx.fillRect(x, fTop + 2, 2, 50);
+  }
+  for (let x = -wrapMod(fOff, 224); x < VIEW_W; x += 224) {
+    ctx.fillStyle = withAlpha(th.wallDark, 0.96);
+    ctx.fillRect(x - 5, fTop - 10, 12, 64);
+    ctx.fillStyle = withAlpha(th.wallLight, 0.24);
+    ctx.fillRect(x - 5, fTop - 10, 2, 64);
+    ctx.fillStyle = withAlpha(th.near, 0.9);
+    ctx.fillRect(x - 7, fTop - 13, 16, 4);
+  }
+
+  // calçada do pátio (fica atrás dos tiles no gameplay)
   ctx.fillStyle = th.bg;
   ctx.fillRect(0, baseY, VIEW_W, VIEW_H - baseY);
-  ctx.fillStyle = withAlpha(th.tileDark, 0.9);
-  for (let x = 0; x < VIEW_W; x += 32) {
-    ctx.fillRect(x, baseY, 30, 8);
+  const walk = ctx.createLinearGradient(0, baseY, 0, VIEW_H);
+  walk.addColorStop(0, withAlpha(th.floor, 0.62));
+  walk.addColorStop(0.45, withAlpha(th.floor, 0.35));
+  walk.addColorStop(1, withAlpha(th.shadow, 0.55));
+  ctx.fillStyle = walk;
+  ctx.fillRect(0, baseY, VIEW_W, VIEW_H - baseY);
+
+  // lajes contínuas da calçada
+  for (let row = 0; row < 4; row++) {
+    const y = baseY + row * 40;
+    for (let col = -1; col < 14; col++) {
+      const x = col * 96 + (row % 2) * 48 - (off * 0.22 % 96);
+      const tone = tileNoise(col + row * 13, row, 5);
+      ctx.fillStyle = withAlpha(tone > 0.5 ? th.floorLight : th.tileDark, 0.05 + tone * 0.04);
+      ctx.fillRect(x + 1, y + 1, 94, 38);
+      ctx.fillStyle = withAlpha(th.floorJoint, 0.55);
+      ctx.fillRect(x, y, 1, 40);
+    }
+    ctx.fillStyle = withAlpha(th.floorJoint, 0.45);
+    ctx.fillRect(0, y, VIEW_W, 1);
+  }
+  ctx.fillStyle = withAlpha(th.floorLight, 0.22);
+  ctx.fillRect(0, baseY, VIEW_W, 2);
+
+  // poças refletindo as janelas
+  for (let i = 0; i < 6; i++) {
+    const px = wrapMod(i * 247 + 90 - off * 0.22, VIEW_W + 120) - 60;
+    const py = baseY + 20 + (i % 3) * 34;
+    ctx.fillStyle = withAlpha(th.cool, 0.13);
+    ctx.beginPath();
+    ctx.ellipse(px, py, 34 + (i % 3) * 12, 5 + (i % 2) * 2, 0, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = withAlpha(th.warm, 0.16);
+    ctx.fillRect(px - 18, py - 1, 14 + (i % 3) * 5, 2);
+    ctx.fillStyle = withAlpha(th.cool, 0.24);
+    ctx.fillRect(px + 6, py - 3, 10, 1);
+  }
+  // ralos
+  for (let i = 0; i < 3; i++) {
+    const px = wrapMod(i * 430 + 260 - off * 0.22, VIEW_W + 100) - 50;
+    const py = baseY + 16;
+    ctx.fillStyle = withAlpha(th.metal, 0.45);
+    ctx.fillRect(px, py, 22, 9);
+    ctx.fillStyle = withAlpha(th.shadow, 0.7);
+    for (let b = 0; b < 4; b++) ctx.fillRect(px + 3 + b * 5, py + 2, 2, 5);
   }
 
-  // folhas flutuantes
-  for (let i = 0; i < 26; i++) {
-    const lx = (i * 191 + time * (18 + (i % 5) * 7)) % (VIEW_W + 80) - 40;
-    const ly = 120 + ((i * 83 + Math.sin(time * 0.8 + i) * 50) % 470);
-    drawLeaf(ctx, lx, ly, 5 + (i % 3) * 2, time * (0.4 + i * 0.03) + i, th.accent, 0.16 + (i % 4) * 0.05);
+  // postes de luz com cone quente
+  for (let i = 0; i < 4; i++) {
+    const lx = wrapMod(i * 388 + 120 - off * 0.30, VIEW_W + 300) - 150;
+    ctx.fillStyle = withAlpha(th.metal, 0.62);
+    ctx.fillRect(lx - 2, baseY - 132, 5, 132);
+    ctx.fillRect(lx - 24, baseY - 132, 26, 4);
+    ctx.fillStyle = withAlpha(th.wallDark, 0.8);
+    ctx.fillRect(lx - 30, baseY - 142, 18, 11);
+    const flicker = 0.86 + 0.14 * Math.sin(t * 6.3 + i * 4);
+    ctx.fillStyle = withAlpha(th.warm, 0.9 * flicker);
+    ctx.fillRect(lx - 27, baseY - 139, 12, 4);
+    const lg = ctx.createRadialGradient(lx - 21, baseY - 138, 4, lx - 21, baseY - 138, 76);
+    lg.addColorStop(0, withAlpha(th.warm, 0.22 * flicker));
+    lg.addColorStop(1, withAlpha(th.warm, 0));
+    ctx.fillStyle = lg;
+    ctx.fillRect(lx - 100, baseY - 218, 160, 160);
+    const cone = ctx.createLinearGradient(lx - 21, baseY - 138, lx - 21, baseY);
+    cone.addColorStop(0, withAlpha(th.warm, 0.10 * flicker));
+    cone.addColorStop(1, withAlpha(th.warm, 0));
+    ctx.fillStyle = cone;
+    ctx.beginPath();
+    ctx.moveTo(lx - 27, baseY - 138);
+    ctx.lineTo(lx - 15, baseY - 138);
+    ctx.lineTo(lx + 44, baseY);
+    ctx.lineTo(lx - 86, baseY);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = withAlpha(th.warm, 0.10 * flicker);
+    ctx.beginPath();
+    ctx.ellipse(lx - 21, baseY + 4, 70, 8, 0, 0, TAU);
+    ctx.fill();
   }
+
+  // folhas secas e poeira
+  for (let i = 0; i < 24; i++) {
+    const lx = wrapMod(i * 191 + t * (14 + (i % 5) * 6) - off * 0.12, VIEW_W + 80) - 40;
+    const ly = 120 + ((i * 83 + Math.sin(t * 0.8 + i) * 50) % 460);
+    drawLeaf(ctx, lx, ly, 4 + (i % 3) * 2, t * (0.4 + i * 0.03) + i, i % 3 === 0 ? th.wood : th.warm, 0.10 + (i % 4) * 0.04);
+  }
+  for (let i = 0; i < 26; i++) {
+    const px = wrapMod(i * 149 + t * (5 + i % 4) - off * 0.08, VIEW_W + 30) - 15;
+    const py = 130 + ((i * 71 + Math.sin(t * 0.35 + i) * 24) % 400);
+    ctx.fillStyle = withAlpha(th.cool, 0.06 + (i % 4) * 0.015);
+    ctx.fillRect(px, py, 2, 2);
+  }
+
+  // névoa e vinheta
+  const fog = ctx.createLinearGradient(0, baseY - 90, 0, baseY + 60);
+  fog.addColorStop(0, withAlpha(th.cool, 0));
+  fog.addColorStop(1, withAlpha(th.cool, 0.055));
+  ctx.fillStyle = fog;
+  ctx.fillRect(0, baseY - 90, VIEW_W, 150);
 
   if (menu) {
-    const vg = ctx.createRadialGradient(VIEW_W / 2, 330, 160, VIEW_W / 2, 330, 760);
+    const vg = ctx.createRadialGradient(VIEW_W / 2, 330, 180, VIEW_W / 2, 330, 760);
     vg.addColorStop(0, 'rgba(0,0,0,0)');
-    vg.addColorStop(1, 'rgba(0,0,0,0.55)');
+    vg.addColorStop(1, 'rgba(0,0,0,0.58)');
     ctx.fillStyle = vg;
     ctx.fillRect(0, 0, VIEW_W, VIEW_H);
   }
 }
 
 Game.prototype.drawMenuBackground = function (ctx, theme) {
-  drawSchoolBackdrop(ctx, theme || THEMES.school, this.menuTime, true);
+  drawSchoolBackdrop(ctx, theme || THEMES.school, this.menuTime, true, this.menuTime * 9);
   drawScanlines(ctx, 0.08);
 };
+
+/* ------------------------------ FUNDOS INTERNOS ------------------------------ */
+
+function drawHallBackdrop(ctx, th, t, camX) {
+  const baseY = 576;
+  const g = ctx.createLinearGradient(0, 0, 0, VIEW_H);
+  g.addColorStop(0, th.skyTop);
+  g.addColorStop(0.55, th.skyBottom);
+  g.addColorStop(1, th.bg);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+
+  // teto técnico
+  ctx.fillStyle = withAlpha(th.wallDark, 0.96);
+  ctx.fillRect(0, 0, VIEW_W, 78);
+  ctx.fillStyle = withAlpha(th.wall, 0.9);
+  ctx.fillRect(0, 62, VIEW_W, 16);
+  ctx.fillStyle = withAlpha(th.metal, 0.35);
+  for (let x = 0; x < VIEW_W; x += 96) ctx.fillRect(x, 0, 3, 62);
+  ctx.fillStyle = withAlpha(th.metal, 0.45);
+  ctx.fillRect(0, 30, VIEW_W, 6);
+  ctx.fillRect(0, 40, VIEW_W, 3);
+  ctx.fillStyle = withAlpha(th.wallLight, 0.15);
+  ctx.fillRect(0, 30, VIEW_W, 1);
+
+  // parede
+  ctx.fillStyle = withAlpha(th.wall, 0.94);
+  ctx.fillRect(0, 78, VIEW_W, baseY - 78);
+  const wOff = camX * 0.12;
+  for (let x = -wrapMod(wOff, 148); x < VIEW_W + 148; x += 148) {
+    ctx.fillStyle = withAlpha(th.wallDark, 0.22);
+    ctx.fillRect(x, 80, 2, 300);
+    ctx.fillStyle = withAlpha(th.wallLight, 0.08);
+    ctx.fillRect(x + 2, 80, 2, 300);
+  }
+  ctx.fillStyle = withAlpha(th.wallLight, 0.16);
+  ctx.fillRect(0, 92, VIEW_W, 3);
+  ctx.fillStyle = withAlpha(th.wallDark, 0.85);
+  ctx.fillRect(0, 348, VIEW_W, baseY - 348);
+  ctx.fillStyle = withAlpha(th.wallLight, 0.2);
+  ctx.fillRect(0, 348, VIEW_W, 3);
+
+  // rodapé
+  ctx.fillStyle = withAlpha(th.wallDark, 0.95);
+  ctx.fillRect(0, baseY - 18, VIEW_W, 18);
+  ctx.fillStyle = withAlpha(th.glow, 0.05);
+  ctx.fillRect(0, baseY - 18, VIEW_W, 2);
+
+  // portas de sala
+  const dOff = camX * 0.2;
+  for (let x = -wrapMod(dOff, 560); x < VIEW_W + 560; x += 560) {
+    const dx = x + 250;
+    ctx.fillStyle = withAlpha(th.wallDark, 0.9);
+    ctx.fillRect(dx - 8, 218, 104, 330);
+    ctx.fillStyle = withAlpha(th.wood, 0.62);
+    ctx.fillRect(dx, 226, 88, 322);
+    ctx.fillStyle = withAlpha(th.wallDark, 0.55);
+    ctx.fillRect(dx + 8, 238, 72, 92);
+    ctx.fillStyle = withAlpha(th.cool, 0.08);
+    ctx.fillRect(dx + 12, 242, 64, 84);
+    ctx.fillStyle = withAlpha(th.metal, 0.7);
+    ctx.fillRect(dx + 74, 390, 7, 4);
+    drawText(ctx, String(101 + Math.floor((x + 10000) / 560) % 8), dx + 44, 352, {
+      size: 10, align: 'center', color: withAlpha(th.wallLight, 0.55)
+    });
+  }
+
+  // quadro de avisos
+  for (let x = -wrapMod(camX * 0.24, 820); x < VIEW_W + 820; x += 820) {
+    const bx = x + 130;
+    ctx.fillStyle = withAlpha(th.wood, 0.6);
+    ctx.fillRect(bx, 238, 230, 120);
+    ctx.fillStyle = 'rgba(107,90,62,0.55)';
+    ctx.fillRect(bx + 6, 244, 218, 108);
+    const papers = [
+      [14, 12, 34, 28], [54, 8, 40, 32], [102, 16, 30, 26], [142, 10, 52, 34],
+      [22, 54, 44, 30], [76, 50, 34, 40], [120, 56, 56, 28], [184, 14, 22, 30]
+    ];
+    papers.forEach((p, i) => {
+      const px = bx + p[0], py = 244 + p[1];
+      ctx.fillStyle = withAlpha(i % 3 === 0 ? th.wallLight : '#d8d2bd', 0.55);
+      ctx.fillRect(px, py, p[2], p[3]);
+      ctx.fillStyle = withAlpha(th.shadow, 0.25);
+      ctx.fillRect(px + 4, py + 6, p[2] - 8, 1);
+      ctx.fillRect(px + 4, py + 10, p[2] - 12, 1);
+      ctx.fillStyle = withAlpha(th.hazard, 0.6);
+      ctx.fillRect(px + p[2] / 2 - 2, py - 2, 4, 4);
+    });
+    ctx.fillStyle = withAlpha(th.wallLight, 0.15);
+    ctx.fillRect(bx, 238, 230, 3);
+  }
+
+  // armários metálicos
+  const lOff = camX * 0.34;
+  for (let x = -wrapMod(lOff, 68); x < VIEW_W + 68; x += 68) {
+    const ly = 300;
+    const lh = baseY - 18 - ly;
+    const tone = tileNoise(Math.floor((x + lOff) / 68), 2, 4);
+    ctx.fillStyle = withAlpha(tone > 0.5 ? th.near : th.mid, 0.96);
+    ctx.fillRect(x, ly, 62, lh);
+    ctx.strokeStyle = withAlpha(th.wallDark, 0.85);
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x + 1, ly + 1, 60, lh - 2);
+    ctx.fillStyle = withAlpha(th.wallLight, 0.22);
+    ctx.fillRect(x + 5, ly + 4, 52, 2);
+    ctx.fillStyle = withAlpha(th.wallDark, 0.5);
+    for (let v = 0; v < 4; v++) ctx.fillRect(x + 16, ly + 16 + v * 5, 30, 2);
+    ctx.fillStyle = withAlpha(th.metal, 0.8);
+    ctx.fillRect(x + 48, ly + 96, 5, 18);
+    ctx.fillStyle = withAlpha(th.shadow, 0.5);
+    ctx.fillRect(x + 52, ly + 98, 1, 14);
+    drawText(ctx, String((Math.floor((x + lOff) / 68) + 47) % 90 + 10), x + 31, ly + 70, {
+      size: 9, align: 'center', color: withAlpha(th.wallLight, 0.45)
+    });
+    if (tone > 0.8) {
+      ctx.fillStyle = withAlpha(th.shadow, 0.18);
+      ctx.fillRect(x + 8, ly + 150, 18, 5);
+      ctx.fillStyle = withAlpha(th.hazard, 0.35);
+      ctx.fillRect(x + 34, ly + 132, 12, 3);
+    }
+  }
+
+  // luminárias fluorescentes
+  for (let i = 0; i < 5; i++) {
+    const lx = 90 + i * 290;
+    const flicker = 0.82 + 0.18 * Math.sin(t * 7 + i * 3);
+    ctx.fillStyle = withAlpha(th.wallDark, 0.9);
+    ctx.fillRect(lx, 52, 154, 8);
+    ctx.fillStyle = withAlpha(th.glow, 0.85 * flicker);
+    ctx.fillRect(lx + 4, 54, 146, 4);
+    const lg = ctx.createLinearGradient(lx + 77, 58, lx + 77, 330);
+    lg.addColorStop(0, withAlpha(th.glow, 0.12 * flicker));
+    lg.addColorStop(1, withAlpha(th.glow, 0));
+    ctx.fillStyle = lg;
+    ctx.beginPath();
+    ctx.moveTo(lx + 18, 58);
+    ctx.lineTo(lx + 136, 58);
+    ctx.lineTo(lx + 210, 330);
+    ctx.lineTo(lx - 56, 330);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // câmera de segurança
+  const cx = VIEW_W - 150;
+  ctx.fillStyle = withAlpha(th.wallDark, 0.95);
+  ctx.fillRect(cx, 118, 58, 30);
+  ctx.fillRect(cx + 12, 108, 10, 12);
+  ctx.fillStyle = withAlpha(th.metal, 0.55);
+  ctx.fillRect(cx + 8, 122, 34, 20);
+  ctx.fillStyle = 'rgba(255,51,85,' + (0.5 + 0.5 * Math.sin(t * 4)) + ')';
+  ctx.fillRect(cx + 46, 124, 4, 4);
+
+  // planta
+  const px = 640 - camX * 0.1;
+  ctx.fillStyle = withAlpha(th.wood, 0.7);
+  ctx.fillRect(px, 508, 30, 26);
+  ctx.fillStyle = 'rgba(74,107,82,0.55)';
+  ctx.fillRect(px + 8, 480, 4, 30);
+  ctx.fillRect(px + 1, 470, 14, 14);
+  ctx.fillRect(px + 16, 462, 12, 18);
+  ctx.fillRect(px + 24, 478, 10, 12);
+
+  // poeira
+  for (let i = 0; i < 18; i++) {
+    const dx = wrapMod(i * 173 + t * (6 + i % 4), VIEW_W + 20) - 10;
+    const dy = 110 + ((i * 97 + Math.sin(t * 0.5 + i) * 30) % 430);
+    ctx.fillStyle = withAlpha(th.glow, 0.045 + (i % 3) * 0.02);
+    ctx.fillRect(dx, dy, 2, 2);
+  }
+
+  const floorGlow = ctx.createLinearGradient(0, baseY - 40, 0, baseY);
+  floorGlow.addColorStop(0, withAlpha(th.glow, 0.05));
+  floorGlow.addColorStop(1, withAlpha(th.glow, 0));
+  ctx.fillStyle = floorGlow;
+  ctx.fillRect(0, baseY - 40, VIEW_W, 40);
+}
+
+function drawLabBackdrop(ctx, th, t, camX) {
+  const baseY = 576;
+  const g = ctx.createLinearGradient(0, 0, 0, VIEW_H);
+  g.addColorStop(0, th.skyTop);
+  g.addColorStop(0.58, th.skyBottom);
+  g.addColorStop(1, th.bg);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+
+  // teto com eletrocalha
+  ctx.fillStyle = withAlpha(th.wallDark, 0.96);
+  ctx.fillRect(0, 0, VIEW_W, 76);
+  ctx.fillStyle = withAlpha(th.metal, 0.4);
+  ctx.fillRect(0, 36, VIEW_W, 8);
+  for (let x = 20; x < VIEW_W; x += 48) {
+    ctx.fillStyle = withAlpha(th.metal, 0.28);
+    ctx.fillRect(x, 20, 2, 18);
+  }
+  ctx.fillStyle = withAlpha(th.cool, 0.18);
+  ctx.fillRect(0, 46, VIEW_W, 2);
+
+  // parede de aço
+  ctx.fillStyle = withAlpha(th.wall, 0.95);
+  ctx.fillRect(0, 76, VIEW_W, baseY - 76);
+  const off = camX * 0.14;
+  for (let x = -wrapMod(off, 128); x < VIEW_W + 128; x += 128) {
+    ctx.fillStyle = withAlpha(th.wallDark, 0.35);
+    ctx.fillRect(x, 76, 2, baseY - 76);
+    ctx.fillStyle = withAlpha(th.wallLight, 0.12);
+    ctx.fillRect(x + 2, 76, 2, baseY - 76);
+    for (let y = 96; y < baseY; y += 96) {
+      ctx.fillStyle = withAlpha(th.metal, 0.35);
+      ctx.fillRect(x + 8, y, 3, 3);
+      ctx.fillRect(x + 116, y + 44, 3, 3);
+    }
+  }
+  for (let y = 96; y < baseY; y += 96) {
+    ctx.fillStyle = withAlpha(th.wallDark, 0.28);
+    ctx.fillRect(0, y, VIEW_W, 2);
+    ctx.fillStyle = withAlpha(th.wallLight, 0.07);
+    ctx.fillRect(0, y + 2, VIEW_W, 2);
+  }
+
+  // janelas de observação com tanques de líquido azul
+  const tOff = camX * 0.26;
+  for (let x = -wrapMod(tOff, 360); x < VIEW_W + 360; x += 360) {
+    const wx = x + 70;
+    const wy = 146;
+    const ww = 250;
+    const wh = 320;
+    ctx.fillStyle = withAlpha(th.wallDark, 0.9);
+    ctx.fillRect(wx - 10, wy - 10, ww + 20, wh + 20);
+    ctx.fillStyle = withAlpha(th.cool, 0.09);
+    ctx.fillRect(wx, wy, ww, wh);
+    // líquido
+    const level = 0.56 + Math.sin(t * 0.6 + x * 0.01) * 0.03;
+    const ly = wy + wh * (1 - level);
+    ctx.fillStyle = withAlpha(th.cool, 0.20);
+    ctx.fillRect(wx + 4, ly, ww - 8, wh - (ly - wy) - 4);
+    ctx.fillStyle = withAlpha(th.cool, 0.34);
+    ctx.fillRect(wx + 4, ly, ww - 8, 3);
+    for (let b = 0; b < 7; b++) {
+      const bx = wx + 20 + ((b * 37 + x) % (ww - 40));
+      const by = wy + wh - 12 - ((t * (14 + b * 4) + b * 43) % (wh * level - 24));
+      ctx.fillStyle = withAlpha(th.glow, 0.24);
+      ctx.fillRect(bx, by, 3 + (b % 2), 3 + (b % 2));
+    }
+    // vidro e moldura
+    ctx.strokeStyle = withAlpha(th.metal, 0.65);
+    ctx.lineWidth = 4;
+    ctx.strokeRect(wx, wy, ww, wh);
+    ctx.strokeStyle = withAlpha(th.glow, 0.2);
+    ctx.lineWidth = 1;
+    ctx.strokeRect(wx + 5, wy + 5, ww - 10, wh - 10);
+    ctx.fillStyle = withAlpha(th.glow, 0.35);
+    ctx.fillRect(wx + 9, wy + 12, 3, wh - 24);
+    // etiqueta de risco
+    ctx.fillStyle = withAlpha(th.warm, 0.55);
+    ctx.fillRect(wx + ww - 54, wy + 16, 38, 16);
+    ctx.fillStyle = withAlpha(th.shadow, 0.8);
+    ctx.fillRect(wx + ww - 48, wy + 21, 26, 2);
+    ctx.fillRect(wx + ww - 48, wy + 26, 18, 2);
+    // suportes
+    ctx.fillStyle = withAlpha(th.metal, 0.5);
+    ctx.fillRect(wx - 16, wy + 40, 16, 6);
+    ctx.fillRect(wx - 16, wy + wh - 46, 16, 6);
+  }
+
+  // racks de servidores em primeiro plano
+  const rOff = camX * 0.4;
+  for (let x = -wrapMod(rOff, 228); x < VIEW_W + 228; x += 228) {
+    const rx = x + 40;
+    const ry = 348;
+    ctx.fillStyle = withAlpha(th.wallDark, 0.95);
+    ctx.fillRect(rx, ry, 150, 210);
+    ctx.fillStyle = withAlpha(th.metal, 0.35);
+    ctx.fillRect(rx + 4, ry + 4, 142, 202);
+    for (let s = 0; s < 8; s++) {
+      const sy = ry + 12 + s * 24;
+      ctx.fillStyle = 'rgba(5,12,20,0.9)';
+      ctx.fillRect(rx + 10, sy, 130, 18);
+      ctx.fillStyle = withAlpha(th.wallLight, 0.12);
+      ctx.fillRect(rx + 14, sy + 3, 60, 2);
+      const blink = Math.sin(t * 3 + s * 1.7 + x) > 0;
+      ctx.fillStyle = withAlpha(blink ? th.accent : th.cool, blink ? 0.7 : 0.2);
+      ctx.fillRect(rx + 122, sy + 6, 4, 4);
+      ctx.fillStyle = withAlpha(th.warm, 0.35);
+      ctx.fillRect(rx + 112, sy + 6, 3, 4);
+    }
+    ctx.fillStyle = withAlpha(th.hazard, 0.45);
+    ctx.fillRect(rx + 10, ry + 204, 130, 3);
+  }
+
+  // faixa de perigo no rodapé
+  ctx.fillStyle = withAlpha(th.wallDark, 0.95);
+  ctx.fillRect(0, baseY - 26, VIEW_W, 26);
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0, baseY - 22, VIEW_W, 12);
+  ctx.clip();
+  for (let x = -40; x < VIEW_W + 40; x += 36) {
+    ctx.fillStyle = withAlpha(th.warm, 0.30);
+    ctx.beginPath();
+    ctx.moveTo(x, baseY - 10);
+    ctx.lineTo(x + 16, baseY - 22);
+    ctx.lineTo(x + 30, baseY - 22);
+    ctx.lineTo(x + 14, baseY - 10);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // luminárias frias
+  for (let i = 0; i < 4; i++) {
+    const lx = 130 + i * 330;
+    const flicker = 0.86 + 0.14 * Math.sin(t * 6 + i);
+    ctx.fillStyle = withAlpha(th.glow, 0.75 * flicker);
+    ctx.fillRect(lx, 58, 120, 5);
+    const lg = ctx.createLinearGradient(lx + 60, 62, lx + 60, 320);
+    lg.addColorStop(0, withAlpha(th.glow, 0.11 * flicker));
+    lg.addColorStop(1, withAlpha(th.glow, 0));
+    ctx.fillStyle = lg;
+    ctx.beginPath();
+    ctx.moveTo(lx + 12, 62);
+    ctx.lineTo(lx + 108, 62);
+    ctx.lineTo(lx + 170, 320);
+    ctx.lineTo(lx - 50, 320);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // vapor
+  for (let i = 0; i < 12; i++) {
+    const sx = wrapMod(i * 197 + t * (10 + i % 5), VIEW_W + 60) - 30;
+    const sy = 420 - ((t * 24 + i * 53) % 240);
+    ctx.fillStyle = withAlpha(th.cool, 0.05 + (i % 3) * 0.02);
+    ctx.beginPath();
+    ctx.ellipse(sx, sy, 16 + (i % 4) * 8, 5 + (i % 3) * 3, 0, 0, TAU);
+    ctx.fill();
+  }
+
+  // luz de emergência quente
+  const ex = VIEW_W - 120;
+  const pulse = 0.5 + 0.5 * Math.sin(t * 2.2);
+  ctx.fillStyle = withAlpha(th.hazard, 0.35 + pulse * 0.4);
+  ctx.fillRect(ex, 112, 10, 6);
+  ctx.fillStyle = withAlpha(th.hazard, 0.06 + pulse * 0.06);
+  ctx.fillRect(ex - 30, 112, 70, 70);
+}
+
+function drawOfficeBackdrop(ctx, th, t, camX) {
+  const baseY = 576;
+  const g = ctx.createLinearGradient(0, 0, 0, VIEW_H);
+  g.addColorStop(0, th.skyTop);
+  g.addColorStop(0.6, th.skyBottom);
+  g.addColorStop(1, th.bg);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+
+  // parede de vinho com rodapé de madeira
+  ctx.fillStyle = withAlpha(th.wall, 0.95);
+  ctx.fillRect(0, 0, VIEW_W, baseY);
+  const wOff = camX * 0.1;
+  for (let x = -wrapMod(wOff, 180); x < VIEW_W + 180; x += 180) {
+    ctx.fillStyle = withAlpha(th.wallLight, 0.07);
+    ctx.fillRect(x, 0, 2, 360);
+    ctx.fillStyle = withAlpha(th.wallDark, 0.25);
+    ctx.fillRect(x + 2, 0, 2, 360);
+  }
+  ctx.fillStyle = withAlpha(th.wallDark, 0.9);
+  ctx.fillRect(0, 360, VIEW_W, baseY - 360);
+  ctx.fillStyle = withAlpha(th.wood, 0.55);
+  ctx.fillRect(0, 372, VIEW_W, baseY - 372);
+  ctx.fillStyle = withAlpha(th.gold, 0.24);
+  ctx.fillRect(0, 368, VIEW_W, 3);
+  for (let x = -wrapMod(wOff, 120); x < VIEW_W + 120; x += 120) {
+    ctx.fillStyle = withAlpha(th.wallDark, 0.35);
+    ctx.fillRect(x, 372, 2, baseY - 372);
+  }
+  // rodapé
+  ctx.fillStyle = withAlpha(th.wallDark, 0.95);
+  ctx.fillRect(0, baseY - 16, VIEW_W, 16);
+  ctx.fillStyle = withAlpha(th.gold, 0.2);
+  ctx.fillRect(0, baseY - 16, VIEW_W, 2);
+
+  // janelas grandes com chuva
+  const winOff = camX * 0.16;
+  for (let x = -wrapMod(winOff, 880); x < VIEW_W + 880; x += 880) {
+    const wx = x + 120;
+    const wy = 74;
+    const ww = 390;
+    const wh = 280;
+    ctx.fillStyle = withAlpha(th.wallDark, 0.95);
+    ctx.fillRect(wx - 14, wy - 14, ww + 28, wh + 28);
+    ctx.fillStyle = 'rgba(8,14,30,0.95)';
+    ctx.fillRect(wx, wy, ww, wh);
+    // céu e cidade
+    const skyg = ctx.createLinearGradient(0, wy, 0, wy + wh);
+    skyg.addColorStop(0, withAlpha(th.skyTop, 0.95));
+    skyg.addColorStop(1, withAlpha(th.near, 0.5));
+    ctx.fillStyle = skyg;
+    ctx.fillRect(wx, wy, ww, wh);
+    // lua fria
+    ctx.fillStyle = withAlpha(th.cool, 0.7);
+    ctx.beginPath();
+    ctx.arc(wx + ww - 82, wy + 62, 24, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = withAlpha(th.shadow, 0.25);
+    ctx.beginPath();
+    ctx.arc(wx + ww - 90, wy + 56, 6, 0, TAU);
+    ctx.arc(wx + ww - 74, wy + 70, 4, 0, TAU);
+    ctx.fill();
+    // skyline
+    for (let b = 0; b < 9; b++) {
+      const bw = 30 + (b % 3) * 12;
+      const bh = 40 + (b * 17) % 70;
+      const bx = wx + 10 + b * 44;
+      const by = wy + wh - bh;
+      ctx.fillStyle = withAlpha(th.far, 0.95);
+      ctx.fillRect(bx, by, bw, bh);
+      for (let wy2 = by + 8; wy2 < by + bh - 6; wy2 += 14) {
+        for (let wx2 = bx + 5; wx2 < bx + bw - 5; wx2 += 10) {
+          if (tileNoise(b, Math.floor(wx2 / 10) + wy2, 9) > 0.55) {
+            ctx.fillStyle = withAlpha(th.warm, 0.3);
+            ctx.fillRect(wx2, wy2, 2, 3);
+          }
+        }
+      }
+    }
+    // chuva
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(wx, wy, ww, wh);
+    ctx.clip();
+    for (let i = 0; i < 46; i++) {
+      const rx = wx + ((i * 67 + t * 26) % ww);
+      const ry = wy + ((i * 91 + t * 180) % wh);
+      ctx.strokeStyle = 'rgba(190,220,255,0.16)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(rx, ry);
+      ctx.lineTo(rx - 4, ry + 13);
+      ctx.stroke();
+    }
+    ctx.restore();
+    // caixilho
+    ctx.fillStyle = withAlpha(th.wood, 0.9);
+    ctx.fillRect(wx + ww / 2 - 4, wy, 8, wh);
+    ctx.fillRect(wx, wy + wh / 2 - 4, ww, 8);
+    ctx.fillStyle = withAlpha(th.wallLight, 0.18);
+    ctx.fillRect(wx - 8, wy - 8, ww + 16, 3);
+    // cortinas
+    ctx.fillStyle = withAlpha(th.maroon || th.wallDark, 0.55);
+    ctx.fillRect(wx - 22, wy - 10, 24, wh + 20);
+    ctx.fillRect(wx + ww - 2, wy - 10, 24, wh + 20);
+  }
+
+  // estantes de livros
+  const bOff = camX * 0.3;
+  for (let x = -wrapMod(bOff, 390); x < VIEW_W + 390; x += 390) {
+    const bx = x + 700;
+    const by = 170;
+    const bh = 350;
+    ctx.fillStyle = withAlpha(th.wood, 0.7);
+    ctx.fillRect(bx, by, 300, bh);
+    ctx.fillStyle = withAlpha(th.wallDark, 0.7);
+    ctx.fillRect(bx + 8, by + 8, 284, bh - 16);
+    const bookColors = [th.maroon || '#5a2430', th.gold, th.wallLight, th.metal, th.near];
+    for (let r = 0; r < 4; r++) {
+      const sy = by + 28 + r * 78;
+      ctx.fillStyle = withAlpha(th.wood, 0.8);
+      ctx.fillRect(bx + 10, sy + 48, 280, 6);
+      for (let b = 0; b < 14; b++) {
+        const bw = 8 + (b % 3) * 4;
+        const bhh = 26 + (b % 4) * 6;
+        ctx.fillStyle = withAlpha(bookColors[(b + r) % bookColors.length], 0.55);
+        ctx.fillRect(bx + 16 + b * 19, sy + 48 - bhh, bw, bhh);
+        ctx.fillStyle = withAlpha(th.wallLight, 0.14);
+        ctx.fillRect(bx + 16 + b * 19, sy + 52 - bhh, bw, 2);
+      }
+    }
+    ctx.fillStyle = withAlpha(th.gold, 0.2);
+    ctx.fillRect(bx, by, 300, 3);
+  }
+
+  // mesa e abajur
+  const deskOff = camX * 0.24;
+  for (let x = -wrapMod(deskOff, 1180); x < VIEW_W + 1180; x += 1180) {
+    const dx = x + 270;
+    ctx.fillStyle = withAlpha(th.wood, 0.9);
+    ctx.fillRect(dx, 452, 400, 22);
+    ctx.fillRect(dx + 26, 474, 18, 86);
+    ctx.fillRect(dx + 356, 474, 18, 86);
+    ctx.fillStyle = withAlpha(th.gold, 0.18);
+    ctx.fillRect(dx, 452, 400, 3);
+    // poltrona
+    ctx.fillStyle = withAlpha(th.maroon || th.wallDark, 0.85);
+    ctx.fillRect(dx + 130, 390, 120, 86);
+    ctx.fillRect(dx + 112, 470, 156, 18);
+    ctx.fillStyle = withAlpha(th.wallDark, 0.6);
+    ctx.fillRect(dx + 146, 400, 88, 6);
+    // abajur
+    ctx.fillStyle = withAlpha(th.metal, 0.7);
+    ctx.fillRect(dx + 58, 410, 3, 42);
+    ctx.fillStyle = withAlpha(th.warm, 0.8);
+    ctx.beginPath();
+    ctx.moveTo(dx + 40, 414);
+    ctx.lineTo(dx + 82, 414);
+    ctx.lineTo(dx + 74, 394);
+    ctx.lineTo(dx + 48, 394);
+    ctx.closePath();
+    ctx.fill();
+    const lg = ctx.createRadialGradient(dx + 61, 410, 6, dx + 61, 410, 90);
+    lg.addColorStop(0, withAlpha(th.warm, 0.2));
+    lg.addColorStop(1, withAlpha(th.warm, 0));
+    ctx.fillStyle = lg;
+    ctx.fillRect(dx - 40, 310, 200, 200);
+    // papéis
+    ctx.fillStyle = withAlpha('#d8d2bd', 0.45);
+    ctx.fillRect(dx + 190, 438, 54, 14);
+    ctx.fillRect(dx + 248, 434, 44, 18);
+  }
+
+  // relógio de pé
+  const clx = VIEW_W - 130;
+  ctx.fillStyle = withAlpha(th.wood, 0.8);
+  ctx.fillRect(clx - 26, 292, 52, 268);
+  ctx.fillStyle = withAlpha(th.wallDark, 0.85);
+  ctx.fillRect(clx - 20, 300, 40, 250);
+  ctx.fillStyle = withAlpha('#d9dfd2', 0.7);
+  ctx.beginPath();
+  ctx.arc(clx, 326, 16, 0, TAU);
+  ctx.fill();
+  ctx.strokeStyle = withAlpha(th.wallDark, 0.8);
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(clx, 326);
+  ctx.lineTo(clx, 316);
+  ctx.moveTo(clx, 326);
+  ctx.lineTo(clx + 8, 330);
+  ctx.stroke();
+  ctx.fillStyle = withAlpha(th.gold, 0.3);
+  ctx.fillRect(clx - 28, 288, 56, 5);
+
+  // lustres
+  for (let i = 0; i < 3; i++) {
+    const lx = 210 + i * 430;
+    ctx.fillStyle = withAlpha(th.metal, 0.5);
+    ctx.fillRect(lx, 0, 2, 92);
+    ctx.fillStyle = withAlpha(th.gold, 0.5);
+    ctx.beginPath();
+    ctx.moveTo(lx - 34, 92);
+    ctx.lineTo(lx + 36, 92);
+    ctx.lineTo(lx + 20, 112);
+    ctx.lineTo(lx - 18, 112);
+    ctx.closePath();
+    ctx.fill();
+    const lg = ctx.createRadialGradient(lx + 1, 100, 6, lx + 1, 100, 160);
+    lg.addColorStop(0, withAlpha(th.warm, 0.16));
+    lg.addColorStop(1, withAlpha(th.warm, 0));
+    ctx.fillStyle = lg;
+    ctx.fillRect(lx - 170, 60, 340, 300);
+  }
+
+  // poeira quente
+  for (let i = 0; i < 18; i++) {
+    const dx = wrapMod(i * 173 + t * (5 + i % 4), VIEW_W + 20) - 10;
+    const dy = 100 + ((i * 97 + Math.sin(t * 0.45 + i) * 36) % 430);
+    ctx.fillStyle = withAlpha(th.warm, 0.05 + (i % 3) * 0.02);
+    ctx.fillRect(dx, dy, 2, 2);
+  }
+}
+
+function drawGymBackdrop(ctx, th, t, camX) {
+  const baseY = 576;
+  const g = ctx.createLinearGradient(0, 0, 0, VIEW_H);
+  g.addColorStop(0, th.skyTop);
+  g.addColorStop(0.6, th.skyBottom);
+  g.addColorStop(1, th.bg);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+
+  // teto e treliças
+  ctx.fillStyle = withAlpha(th.wallDark, 0.98);
+  ctx.fillRect(0, 0, VIEW_W, 108);
+  ctx.strokeStyle = withAlpha(th.metal, 0.35);
+  ctx.lineWidth = 3;
+  for (let x = -60; x < VIEW_W + 60; x += 160) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, 106);
+    ctx.moveTo(x, 18);
+    ctx.lineTo(x + 160, 88);
+    ctx.moveTo(x + 160, 18);
+    ctx.lineTo(x, 88);
+    ctx.stroke();
+  }
+  ctx.fillStyle = withAlpha(th.metal, 0.3);
+  ctx.fillRect(0, 104, VIEW_W, 5);
+
+  // parede de blocos
+  ctx.fillStyle = withAlpha(th.wall, 0.95);
+  ctx.fillRect(0, 109, VIEW_W, baseY - 109);
+  const wOff = camX * 0.14;
+  for (let y = 122; y < baseY; y += 28) {
+    ctx.fillStyle = withAlpha(th.wallDark, 0.16);
+    ctx.fillRect(0, y, VIEW_W, 1);
+    const stagger = (Math.floor(y / 28) % 2) * 32;
+    for (let x = -wrapMod(wOff + stagger, 64); x < VIEW_W + 64; x += 64) {
+      ctx.fillStyle = withAlpha(th.wallDark, 0.12);
+      ctx.fillRect(x, y, 1, 28);
+    }
+  }
+  // faixa vinho
+  ctx.fillStyle = withAlpha(th.maroon || th.wallDark, 0.9);
+  ctx.fillRect(0, 286, VIEW_W, 20);
+  ctx.fillStyle = withAlpha(th.gold, 0.35);
+  ctx.fillRect(0, 286, VIEW_W, 2);
+  ctx.fillRect(0, 304, VIEW_W, 2);
+
+  // arquibancadas
+  for (let row = 0; row < 6; row++) {
+    const y = 334 + row * 25;
+    ctx.fillStyle = withAlpha(row % 2 ? th.mid : th.near, 0.85);
+    ctx.fillRect(0, y, VIEW_W, 24);
+    ctx.fillStyle = withAlpha(th.wallDark, 0.5);
+    ctx.fillRect(0, y + 21, VIEW_W, 3);
+    for (let x = 10; x < VIEW_W; x += 34) {
+      const n = tileNoise(x, row, 8);
+      ctx.fillStyle = withAlpha(n > 0.72 ? th.gold : (n > 0.36 ? th.maroon || th.wallDark : th.metal), 0.45);
+      ctx.fillRect(x, y + 4, 20, 12);
+      ctx.fillStyle = withAlpha(th.shadow, 0.25);
+      ctx.fillRect(x + 2, y + 14, 16, 2);
+    }
+  }
+  // escadas de acesso
+  for (let x = 120; x < VIEW_W; x += 430) {
+    ctx.fillStyle = withAlpha(th.wallDark, 0.75);
+    ctx.fillRect(x, 334, 46, 150);
+    for (let s = 0; s < 6; s++) {
+      ctx.fillStyle = withAlpha(th.wallLight, 0.12);
+      ctx.fillRect(x + 4, 344 + s * 24, 38, 2);
+    }
+  }
+  // corrimão
+  ctx.strokeStyle = withAlpha(th.metal, 0.55);
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(0, 332);
+  ctx.lineTo(VIEW_W, 332);
+  ctx.stroke();
+
+  // faixas penduradas
+  for (let i = 0; i < 3; i++) {
+    const bx = 210 + i * 410;
+    ctx.fillStyle = withAlpha(th.maroon || th.wallDark, 0.85);
+    ctx.beginPath();
+    ctx.moveTo(bx - 55, 112);
+    ctx.lineTo(bx + 55, 112);
+    ctx.lineTo(bx + 44, 196);
+    ctx.lineTo(bx, 208);
+    ctx.lineTo(bx - 44, 196);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = withAlpha(th.gold, 0.35);
+    ctx.fillRect(bx - 48, 120, 96, 2);
+    drawText(ctx, 'CEPK', bx, 154, {
+      size: 17, align: 'center', color: withAlpha(th.gold, 0.6)
+    });
+  }
+
+  // placar
+  const sx = VIEW_W / 2 - 150;
+  ctx.fillStyle = withAlpha(th.wallDark, 0.96);
+  ctx.fillRect(sx - 8, 44, 316, 92);
+  ctx.fillStyle = 'rgba(8,12,18,0.95)';
+  ctx.fillRect(sx, 52, 300, 76);
+  ctx.strokeStyle = withAlpha(th.metal, 0.4);
+  ctx.lineWidth = 2;
+  ctx.strokeRect(sx, 52, 300, 76);
+  drawText(ctx, 'CEPK', sx + 52, 78, { size: 14, align: 'center', color: withAlpha(th.wallLight, 0.7) });
+  drawText(ctx, '00:00', sx + 202, 78, { size: 24, align: 'center', color: withAlpha(th.warm, 0.9), glow: th.warm, glowSize: 8 });
+  drawText(ctx, 'SISTEMA  0  ·  0  VISITANTE', sx + 150, 108, {
+    size: 9, align: 'center', color: withAlpha(th.wallLight, 0.45)
+  });
+
+  // cestas
+  for (const side of [-1, 1]) {
+    const hx = side < 0 ? 170 : VIEW_W - 170;
+    ctx.fillStyle = withAlpha(th.metal, 0.7);
+    ctx.fillRect(hx - 2, 196, 4, 250);
+    ctx.fillRect(hx - 70, 192, 140, 6);
+    ctx.fillStyle = withAlpha(th.wallLight, 0.35);
+    ctx.fillRect(hx - 62, 200, 124, 82);
+    ctx.strokeStyle = withAlpha(th.wallLight, 0.5);
+    ctx.lineWidth = 3;
+    ctx.strokeRect(hx - 62, 200, 124, 82);
+    ctx.strokeStyle = withAlpha(th.hazard, 0.9);
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(hx - 26, 296);
+    ctx.lineTo(hx + 26, 296);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(220,225,235,0.5)';
+    ctx.lineWidth = 1;
+    for (let n = 0; n < 6; n++) {
+      ctx.beginPath();
+      ctx.moveTo(hx - 24 + n * 8, 298);
+      ctx.lineTo(hx - 12 + n * 4, 318);
+      ctx.stroke();
+    }
+    ctx.fillStyle = withAlpha(th.hazard, 0.75);
+    ctx.beginPath();
+    ctx.arc(hx, 296, 13, 0, Math.PI);
+    ctx.stroke();
+  }
+
+  // luminárias suspensas
+  for (let i = 0; i < 4; i++) {
+    const lx = 170 + i * 320;
+    ctx.fillStyle = withAlpha(th.metal, 0.5);
+    ctx.fillRect(lx, 108, 2, 58);
+    ctx.fillStyle = withAlpha(th.wallDark, 0.95);
+    ctx.fillRect(lx - 42, 164, 86, 12);
+    const flicker = 0.88 + 0.12 * Math.sin(t * 5 + i);
+    ctx.fillStyle = withAlpha(th.warm, 0.85 * flicker);
+    ctx.fillRect(lx - 36, 168, 72, 4);
+    const lg = ctx.createLinearGradient(lx, 170, lx, 420);
+    lg.addColorStop(0, withAlpha(th.warm, 0.13 * flicker));
+    lg.addColorStop(1, withAlpha(th.warm, 0));
+    ctx.fillStyle = lg;
+    ctx.beginPath();
+    ctx.moveTo(lx - 40, 170);
+    ctx.lineTo(lx + 40, 170);
+    ctx.lineTo(lx + 130, 420);
+    ctx.lineTo(lx - 130, 420);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // piso de quadra em perspectiva
+  const floor = ctx.createLinearGradient(0, 474, 0, baseY);
+  floor.addColorStop(0, withAlpha(th.floor, 0.5));
+  floor.addColorStop(1, withAlpha(th.floorLight, 0.4));
+  ctx.fillStyle = floor;
+  ctx.fillRect(0, 474, VIEW_W, baseY - 474);
+  ctx.strokeStyle = withAlpha('#f0e3c4', 0.28);
+  ctx.lineWidth = 2;
+  for (let x = -200; x < VIEW_W + 200; x += 200) {
+    ctx.beginPath();
+    ctx.moveTo(x, 474);
+    ctx.lineTo(x + 300, baseY);
+    ctx.stroke();
+  }
+  for (let y = 486; y < baseY; y += 26) {
+    ctx.strokeStyle = withAlpha('#f0e3c4', 0.1);
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(VIEW_W, y);
+    ctx.stroke();
+  }
+  // linha central e círculo
+  const centerX = VIEW_W / 2 - wrapMod(camX * 0.55, 420) + 210;
+  ctx.strokeStyle = withAlpha('#f0e3c4', 0.35);
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.ellipse(centerX, 520, 64, 14, 0, 0, TAU);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(centerX, 474);
+  ctx.lineTo(centerX, baseY);
+  ctx.stroke();
+
+  // placa de saída
+  ctx.fillStyle = 'rgba(4,10,12,0.9)';
+  ctx.fillRect(VIEW_W - 108, 118, 72, 26);
+  ctx.fillStyle = withAlpha(th.accent, 0.6);
+  ctx.fillRect(VIEW_W - 102, 123, 60, 16);
+  drawText(ctx, 'SAÍDA', VIEW_W - 72, 132, { size: 9, align: 'center', color: '#04140c' });
+}
 
 Game.prototype.drawBackground = function (ctx, cam) {
   const th = this.level.theme;
   const kind = th.kind;
   const t = this.time;
 
-  if (kind === 'hall' || kind === 'lab' || kind === 'office') {
-    const g = ctx.createLinearGradient(0, 0, 0, VIEW_H);
-    g.addColorStop(0, th.skyTop);
-    g.addColorStop(1, th.bg);
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
-
-    // paredes com parallax
-    const off = cam.x * 0.18;
-    ctx.fillStyle = withAlpha(th.far, 0.95);
-    ctx.fillRect(0, 80, VIEW_W, 520);
-    for (let x = -((off % 96) + 96); x < VIEW_W + 96; x += 96) {
-      ctx.fillStyle = withAlpha(th.mid, 0.65);
-      ctx.fillRect(x, 110, 74, 470);
-      ctx.fillStyle = withAlpha(th.tileDark, 0.8);
-      ctx.fillRect(x + 4, 118, 66, 2);
-      ctx.fillStyle = withAlpha(th.accent, 0.10);
-      ctx.fillRect(x + 8, 130, 3, 430);
-    }
-
-    // vinheta sutil
-    ctx.fillStyle = 'rgba(2,8,5,0.25)';
-    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
-    // rodapé / faixa
-    ctx.fillStyle = withAlpha(th.near, 0.9);
-    ctx.fillRect(0, 566, VIEW_W, 22);
-    ctx.fillStyle = withAlpha(th.accent, 0.2);
-    ctx.fillRect(0, 566, VIEW_W, 3);
-
-    if (kind === 'hall') {
-      // armários
-      const off2 = cam.x * 0.34;
-      for (let x = -((off2 % 72) + 72); x < VIEW_W + 72; x += 72) {
-        ctx.fillStyle = withAlpha(th.near, 0.95);
-        ctx.fillRect(x, 210, 64, 300);
-        ctx.strokeStyle = withAlpha(th.tileDark, 0.9);
-        ctx.lineWidth = 2;
-        ctx.strokeRect(x + 1, 211, 62, 298);
-        ctx.fillStyle = withAlpha(th.tileTop, 0.45);
-        ctx.fillRect(x + 7, 220, 50, 3);
-        ctx.fillRect(x + 12, 250, 3, 22);
-        ctx.fillRect(x + 49, 250, 3, 22);
-        ctx.fillStyle = withAlpha(th.accent, 0.55);
-        ctx.fillRect(x + 30, 330, 4, 8);
-        // número
-        drawText(ctx, String((Math.floor((x + off2) / 72) + 40) % 100), x + 32, 238, {
-          size: 10, align: 'center', color: withAlpha(th.glow, 0.5)
-        });
-      }
-      // luzes do teto
-      for (let x = 90; x < VIEW_W; x += 260) {
-        const flicker = 0.5 + 0.5 * Math.sin(t * 5 + x);
-        ctx.fillStyle = withAlpha(th.glow, 0.12 + flicker * 0.1);
-        ctx.fillRect(x, 54, 150, 8);
-        ctx.fillStyle = withAlpha(th.glow, 0.05 + flicker * 0.05);
-        ctx.beginPath();
-        ctx.moveTo(x + 20, 62);
-        ctx.lineTo(x + 130, 62);
-        ctx.lineTo(x + 200, 330);
-        ctx.lineTo(x - 50, 330);
-        ctx.closePath();
-        ctx.fill();
-      }
-    } else if (kind === 'lab') {
-      // painéis e tubos
-      const off2 = cam.x * 0.3;
-      for (let x = -((off2 % 150) + 150); x < VIEW_W + 150; x += 150) {
-        ctx.fillStyle = withAlpha(th.near, 0.7);
-        ctx.fillRect(x, 150, 128, 390);
-        ctx.strokeStyle = withAlpha(th.accent, 0.18);
-        ctx.lineWidth = 2;
-        ctx.strokeRect(x + 4, 154, 120, 382);
-        // vidro com líquido verde
-        ctx.fillStyle = withAlpha(th.accent, 0.12);
-        ctx.fillRect(x + 20, 200, 88, 220);
-        const fill = 0.45 + Math.sin(t * 0.9 + x) * 0.12;
-        ctx.fillStyle = withAlpha(th.accent, 0.22);
-        ctx.fillRect(x + 20, 200 + 220 * (1 - fill), 88, 220 * fill);
-        ctx.fillStyle = withAlpha(th.glow, 0.5);
-        ctx.fillRect(x + 26, 208, 3, 204);
-        // bolhas subindo no tanque
-        for (let b = 0; b < 5; b++) {
-          const by = 400 - ((t * (20 + b * 6) + b * 41 + x) % 190);
-          const bx = x + 30 + ((b * 19 + x) % 60);
-          ctx.fillStyle = withAlpha(th.glow, 0.22);
-          ctx.fillRect(bx, by, 2 + (b % 2), 2 + (b % 2));
-        }
-        // monitores
-        ctx.fillStyle = 'rgba(2,14,10,0.9)';
-        ctx.fillRect(x + 34, 444, 60, 34);
-        ctx.fillStyle = withAlpha(th.accent, 0.5);
-        ctx.fillRect(x + 39, 449, 50, 2);
-        ctx.fillRect(x + 39, 455, 34, 2);
-        // scanlines do monitor
-        ctx.fillStyle = withAlpha(th.accent, 0.08);
-        for (let sy = 0; sy < 5; sy++) {
-          ctx.fillRect(x + 36, 448 + sy * 6, 56, 1);
-        }
-      }
-      // tubos no teto
-      ctx.fillStyle = withAlpha(th.tileDark, 0.9);
-      ctx.fillRect(0, 84, VIEW_W, 14);
-      ctx.fillStyle = withAlpha(th.accent, 0.22);
-      ctx.fillRect(0, 86, VIEW_W, 2);
-    } else {
-      // diretoria: estantes e janelas
-      const off2 = cam.x * 0.3;
-      for (let x = -((off2 % 180) + 180); x < VIEW_W + 180; x += 180) {
-        ctx.fillStyle = withAlpha(th.near, 0.8);
-        ctx.fillRect(x, 180, 150, 370);
-        ctx.strokeStyle = withAlpha(th.tileDark, 0.9);
-        ctx.lineWidth = 2;
-        ctx.strokeRect(x + 4, 184, 142, 362);
-        for (let r = 0; r < 4; r++) {
-          ctx.fillStyle = withAlpha(th.tileDark, 0.7);
-          ctx.fillRect(x + 8, 220 + r * 74, 134, 5);
-          for (let b = 0; b < 7; b++) {
-            ctx.fillStyle = withAlpha(r % 2 ? th.tile : th.tileTop, 0.28);
-            ctx.fillRect(x + 12 + b * 18, 192 + r * 74, 13, 28);
-          }
-        }
-      }
-      // janelas altas
-      for (let x = 180; x < VIEW_W; x += 320) {
-        ctx.fillStyle = withAlpha(th.accent, 0.12);
-        ctx.fillRect(x, 100, 90, 100);
-        ctx.strokeStyle = withAlpha(th.glow, 0.25);
-        ctx.strokeRect(x, 100, 90, 100);
-        ctx.fillStyle = withAlpha(th.tileDark, 0.9);
-        ctx.fillRect(x + 43, 100, 4, 100);
-        ctx.fillRect(x, 146, 90, 4);
-      }
-      // chuva batendo nas janelas
-      for (let x = 180; x < VIEW_W; x += 320) {
-        for (let i = 0; i < 12; i++) {
-          const rx = x + 6 + ((i * 17 + t * 40) % 78);
-          const ry = 104 + ((i * 29 + t * 120) % 92);
-          ctx.strokeStyle = 'rgba(180,230,255,0.20)';
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.moveTo(rx, ry);
-          ctx.lineTo(rx - 3, ry + 9);
-          ctx.stroke();
-        }
-      }
-      // relâmpago ocasional
-      if (Math.sin(t * 1.7) > 0.994) {
-        ctx.fillStyle = 'rgba(180,230,255,0.09)';
-        ctx.fillRect(0, 0, VIEW_W, VIEW_H);
-      }
-    }
-
-    // poeira suspensa e brilho suave no piso
-    for (let i = 0; i < 24; i++) {
-      const px = (i * 157 + t * (6 + (i % 5) * 3)) % (VIEW_W + 20) - 10;
-      const py = 120 + ((i * 83 + Math.sin(t * 0.4 + i) * 30) % 420);
-      ctx.fillStyle = withAlpha(th.glow, 0.03 + (i % 4) * 0.012);
-      ctx.fillRect(px, py, 2, 2);
-    }
-    const floorGlow = ctx.createLinearGradient(0, 560, 0, VIEW_H);
-    floorGlow.addColorStop(0, withAlpha(th.accent, 0.10));
-    floorGlow.addColorStop(1, withAlpha(th.accent, 0));
-    ctx.fillStyle = floorGlow;
-    ctx.fillRect(0, 560, VIEW_W, VIEW_H - 560);
-
-    return;
-  }
-
-  // pátio / quadra / treinamento
-  const g = ctx.createLinearGradient(0, 0, 0, VIEW_H);
-  g.addColorStop(0, th.skyTop);
-  g.addColorStop(0.62, th.skyBottom);
-  g.addColorStop(1, th.bg);
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, VIEW_W, VIEW_H);
-
-  // lua
-  const mx = 1030 - cam.x * 0.02;
-  const my = 108;
-  const halo = ctx.createRadialGradient(mx, my, 8, mx, my, 130);
-  halo.addColorStop(0, withAlpha(th.glow, 0.22));
-  halo.addColorStop(1, withAlpha(th.glow, 0));
-  ctx.fillStyle = halo;
-  ctx.fillRect(mx - 140, my - 140, 280, 280);
-  ctx.fillStyle = withAlpha(th.glow, 0.8);
-  ctx.beginPath();
-  ctx.arc(mx, my, 28, 0, TAU);
-  ctx.fill();
-
-  // estrelas
-  for (let i = 0; i < 34; i++) {
-    const sx = (i * 149 + 41) % VIEW_W;
-    const sy = (i * 59 + 17) % 280;
-    ctx.globalAlpha = 0.25 + 0.55 * Math.abs(Math.sin(t * 0.6 + i));
-    ctx.fillStyle = th.glow;
-    ctx.fillRect(sx, sy, 2, 2);
-  }
-  ctx.globalAlpha = 1;
-
-  // nuvens em parallax
-  for (let i = 0; i < 5; i++) {
-    const clx = ((i * 317 - cam.x * 0.05 + t * (4 + i)) % (VIEW_W + 320)) - 160;
-    const cly = 70 + (i % 3) * 44;
-    ctx.fillStyle = withAlpha(th.far, 0.30);
-    ctx.beginPath();
-    ctx.ellipse(clx, cly, 120 + i * 18, 18 + (i % 2) * 6, 0, 0, TAU);
-    ctx.ellipse(clx + 70, cly + 6, 90, 14, 0, 0, TAU);
-    ctx.fill();
-  }
-
-  // prédio escolar com parallax
-  const off = cam.x * 0.22;
-  const baseY = 570;
-  ctx.fillStyle = withAlpha(th.far, 0.9);
-  ctx.fillRect(60 - off * 0.2, baseY - 230, 1160, 230);
-  ctx.fillStyle = withAlpha(th.mid, 0.8);
-  ctx.fillRect(82 - off * 0.2, baseY - 210, 1116, 210);
-  ctx.fillStyle = withAlpha(th.near, 0.9);
-  ctx.fillRect(42 - off * 0.2, baseY - 246, 1196, 18);
-  for (let row = 0; row < 2; row++) {
-    for (let col = 0; col < 12; col++) {
-      const wx = 120 - off * 0.2 + col * 88;
-      const wy = baseY - 184 + row * 58;
-      ctx.fillStyle = withAlpha(th.glow, ((row + col) % 4 === 0) ? 0.45 : 0.16);
-      ctx.fillRect(wx, wy, 42, 32);
-      ctx.fillStyle = withAlpha(th.tileDark, 0.8);
-      ctx.fillRect(wx + 20, wy, 2, 32);
-    }
-  }
-
-  // holofotes de segurança varrendo o pátio
-  for (let i = 0; i < 2; i++) {
-    const bx = 260 + i * 760;
-    const sway = Math.sin(t * 0.5 + i * 2.1) * 90;
-    const beam = ctx.createLinearGradient(bx, 300, bx + sway, baseY);
-    beam.addColorStop(0, withAlpha(th.glow, 0.10));
-    beam.addColorStop(1, withAlpha(th.glow, 0));
-    ctx.fillStyle = beam;
-    ctx.beginPath();
-    ctx.moveTo(bx - 10, 300);
-    ctx.lineTo(bx + 10, 300);
-    ctx.lineTo(bx + sway + 90, baseY);
-    ctx.lineTo(bx + sway - 90, baseY);
-    ctx.closePath();
-    ctx.fill();
-  }
-
-  // árvores em parallax
-  for (let i = 0; i < 9; i++) {
-    const tx = i * 190 - (off * 0.6 % 190);
-    const th2 = 70 + (i % 3) * 18;
-    ctx.fillStyle = withAlpha(th.tileDark, 0.85);
-    ctx.fillRect(tx - 6, baseY - 110, 12, 110);
-    ctx.fillStyle = withAlpha(th.near, 0.9);
-    for (let j = 0; j < 4; j++) {
-      const ox = Math.sin(i * 2 + t * 0.5) * 6;
-      ctx.fillRect(tx - 50 + j * 9 + ox, baseY - 160 - j * 16, 58 - j * 8, 26);
-    }
-  }
-
-  // cerca
-  ctx.fillStyle = withAlpha(th.tileDark, 0.9);
-  ctx.fillRect(0, baseY - 44, VIEW_W, 44);
-  ctx.fillStyle = withAlpha(th.tile, 0.6);
-  for (let x = 0; x < VIEW_W; x += 48) ctx.fillRect(x + 6, baseY - 40, 3, 32);
-  ctx.fillStyle = withAlpha(th.accent, 0.18);
-  ctx.fillRect(0, baseY - 46, VIEW_W, 3);
-
-  // chão
-  ctx.fillStyle = th.bg;
-  ctx.fillRect(0, baseY, VIEW_W, VIEW_H - baseY);
-
-  // grade de fundo paralax
-  ctx.fillStyle = withAlpha(th.edge, 0.3);
-  for (let x = -((cam.x * 0.12 % 64) + 64); x < VIEW_W + 64; x += 64) {
-    ctx.fillRect(x, baseY - 20, 32, 20);
-  }
-
-  // iluminação ambiente / névoa
-  const fogAlpha = 0.04 + 0.02 * Math.abs(Math.sin(t * 0.3));
-  ctx.fillStyle = 'rgba(8,14,10,' + fogAlpha + ')';
-  ctx.fillRect(0, baseY, VIEW_W, VIEW_H - baseY);
-
-  // partículas finas (poeira/luz)
-  for (let i = 0; i < 30; i++) {
-    const px = (i * 137 + Math.floor(t * 20)) % VIEW_W;
-    const py = baseY + ((i * 71 + Math.floor(t * 15)) % (VIEW_H - baseY));
-    ctx.globalAlpha = 0.15;
-    ctx.fillStyle = th.glow;
-    ctx.fillRect(px, py, 1, 1);
-  }
-  ctx.globalAlpha = 1;
-
-  // folhas
-  for (let i = 0; i < 20; i++) {
-    const lx = (i * 173 + t * (14 + (i % 4) * 8)) % (VIEW_W + 60) - 30;
-    const ly = 160 + ((i * 97 + Math.sin(t * 0.7 + i) * 40) % 380);
-    drawLeaf(ctx, lx, ly, 4 + (i % 3) * 2, t * 0.6 + i, th.accent, 0.12 + (i % 3) * 0.04);
+  if (kind === 'hall') {
+    drawHallBackdrop(ctx, th, t, cam.x);
+  } else if (kind === 'lab') {
+    drawLabBackdrop(ctx, th, t, cam.x);
+  } else if (kind === 'office') {
+    drawOfficeBackdrop(ctx, th, t, cam.x);
+  } else if (kind === 'gym') {
+    drawGymBackdrop(ctx, th, t, cam.x);
+  } else {
+    drawSchoolBackdrop(ctx, th, t, false, cam.x);
   }
 };
 
+
 /* ------------------------------ TILES ------------------------------ */
+
+function tileNoise(x, y, seed = 0) {
+  const n = Math.sin(x * 127.1 + y * 311.7 + seed * 74.7) * 43758.5453123;
+  return n - Math.floor(n);
+}
+
+function drawSurfaceRun(ctx, cam, th, level, tx0, tx1, ty) {
+  const kind = th.kind;
+  const x = tx0 * TILE - cam.x;
+  const y = ty * TILE - cam.y;
+  const w = (tx1 - tx0 + 1) * TILE;
+  const worldX0 = tx0 * TILE;
+  const worldX1 = (tx1 + 1) * TILE;
+  const stripH = 14;
+
+  // superfície contínua: um único material por trecho, sem borda por tile
+  ctx.fillStyle = th.floor;
+  ctx.fillRect(x, y, w, stripH);
+  const g = ctx.createLinearGradient(0, y, 0, y + stripH);
+  g.addColorStop(0, withAlpha(th.floorLight, 0.44));
+  g.addColorStop(0.5, withAlpha(th.floorLight, 0.08));
+  g.addColorStop(1, 'rgba(0,0,0,0.20)');
+  ctx.fillStyle = g;
+  ctx.fillRect(x, y, w, stripH);
+
+  // fio de luz no topo
+  ctx.fillStyle = withAlpha(th.floorLight, 0.9);
+  ctx.fillRect(x, y, w, 2);
+  ctx.fillStyle = 'rgba(255,255,255,0.16)';
+  ctx.fillRect(x, y, w, 1);
+
+  // juntas alinhadas ao mundo (nunca a cada tile)
+  const jointStep = kind === 'gym' ? 64 : 96;
+  const firstJoint = Math.ceil(worldX0 / jointStep) * jointStep;
+  for (let wx = firstJoint; wx < worldX1; wx += jointStep) {
+    const jx = Math.round(wx - cam.x);
+    ctx.fillStyle = withAlpha(th.floorJoint, 0.9);
+    ctx.fillRect(jx, y + 2, 1, stripH - 3);
+    ctx.fillStyle = withAlpha(th.floorLight, 0.22);
+    ctx.fillRect(jx + 1, y + 3, 1, 4);
+    if (kind === 'gym') {
+      ctx.fillStyle = withAlpha(th.floorLight, 0.10);
+      ctx.fillRect(jx + 3, y + 5, jointStep - 5, 1);
+    }
+  }
+  ctx.fillStyle = withAlpha(th.floorJoint, 0.55);
+  ctx.fillRect(x, y + stripH - 1, w, 1);
+
+  // profundidade abaixo da superfície
+  const sh = ctx.createLinearGradient(0, y + stripH, 0, y + stripH + 18);
+  sh.addColorStop(0, 'rgba(0,0,0,0.30)');
+  sh.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = sh;
+  ctx.fillRect(x, y + stripH, w, 18);
+
+  if (kind === 'gym') {
+    // veios de madeira e linhas de quadra
+    for (let wx = worldX0 + 12; wx < worldX1 - 8; wx += 24) {
+      const n = tileNoise(wx, ty, 21);
+      ctx.fillStyle = withAlpha(th.floorLight, 0.10 + n * 0.12);
+      ctx.fillRect(wx - cam.x, y + 4 + Math.floor(n * 3) * 2, 18 + n * 6, 1);
+    }
+    if (w > 6 * TILE) {
+      ctx.fillStyle = 'rgba(240,227,196,0.38)';
+      ctx.fillRect(x + 18, y + 6, w - 36, 2);
+      ctx.fillStyle = 'rgba(240,227,196,0.12)';
+      ctx.fillRect(x + 18, y + 9, w - 36, 1);
+      for (let wx = worldX0 + 40; wx < worldX1 - 20; wx += 120) {
+        ctx.fillStyle = 'rgba(30,18,10,0.18)';
+        ctx.fillRect(wx - cam.x, y + 3, 8, 2);
+        ctx.fillRect(wx - cam.x + 4, y + 7, 5, 2);
+      }
+    }
+  } else if (kind === 'hall') {
+    // terrazzo: grãos coloridos
+    for (let wx = worldX0 + 2; wx < worldX1; wx += 7) {
+      const n = tileNoise(wx, ty, 31);
+      const ny = y + 3 + Math.floor(n * (stripH - 6));
+      ctx.fillStyle = withAlpha(n > 0.55 ? th.floorLight : (n > 0.3 ? th.edge : th.floorJoint), 0.22);
+      ctx.fillRect(wx - cam.x, ny, 1, 1);
+    }
+    for (let wx = Math.ceil(worldX0 / 220) * 220; wx < worldX1; wx += 220) {
+      const n = tileNoise(wx, ty, 32);
+      if (n > 0.45) {
+        ctx.fillStyle = withAlpha(th.floorJoint, 0.18);
+        ctx.beginPath();
+        ctx.ellipse(wx - cam.x, y + 7, 10 + n * 16, 2.5, 0, 0, TAU);
+        ctx.fill();
+      }
+    }
+  } else if (kind === 'lab') {
+    // placas de aço e rebites
+    for (let wx = worldX0 + 4; wx < worldX1; wx += 24) {
+      ctx.fillStyle = withAlpha(th.floorLight, 0.08);
+      ctx.fillRect(wx - cam.x, y + 5, 18, 1);
+    }
+    for (let wx = firstJoint; wx < worldX1; wx += jointStep) {
+      const jx = Math.round(wx - cam.x);
+      ctx.fillStyle = withAlpha(th.metal, 0.55);
+      ctx.fillRect(jx + 4, y + 3, 2, 2);
+      ctx.fillRect(jx + 4, y + stripH - 5, 2, 2);
+    }
+    if (w <= 4 * TILE) {
+      for (const edge of [x, x + w - 14]) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(edge, y + 2, 14, 7);
+        ctx.clip();
+        for (let s = -8; s < 18; s += 7) {
+          ctx.fillStyle = withAlpha(th.warm, 0.45);
+          ctx.beginPath();
+          ctx.moveTo(edge + s, y + 9);
+          ctx.lineTo(edge + s + 5, y + 2);
+          ctx.lineTo(edge + s + 9, y + 2);
+          ctx.lineTo(edge + s + 4, y + 9);
+          ctx.closePath();
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+    }
+  } else if (kind === 'office') {
+    // passadeira de tapete com fio dourado
+    if (w > 3 * TILE) {
+      ctx.fillStyle = withAlpha(th.maroon || th.wallDark, 0.45);
+      ctx.fillRect(x + 8, y + 3, w - 16, stripH - 7);
+      ctx.fillStyle = withAlpha(th.gold, 0.30);
+      ctx.fillRect(x + 8, y + 3, w - 16, 1);
+      ctx.fillRect(x + 8, y + stripH - 5, w - 16, 1);
+      for (let wx = worldX0 + 24; wx < worldX1 - 12; wx += 34) {
+        ctx.fillStyle = withAlpha(th.gold, 0.10);
+        ctx.fillRect(wx - cam.x, y + 6, 2, stripH - 12);
+      }
+    } else {
+      for (let wx = worldX0 + 8; wx < worldX1; wx += 16) {
+        ctx.fillStyle = withAlpha(th.floorLight, 0.12);
+        ctx.fillRect(wx - cam.x, y + 4 + (wx % 5), 12, 1);
+      }
+    }
+  } else {
+    // concreto do pátio
+    for (let wx = worldX0 + 3; wx < worldX1; wx += 9) {
+      const n = tileNoise(wx, ty, 41);
+      if (n > 0.55) {
+        ctx.fillStyle = withAlpha(n > 0.82 ? th.floorLight : th.floorJoint, 0.18);
+        ctx.fillRect(wx - cam.x, y + 3 + Math.floor(n * 9), 1, 1);
+      }
+    }
+    for (let wx = Math.ceil(worldX0 / 190) * 190; wx < worldX1; wx += 190) {
+      const n = tileNoise(wx, ty, 42);
+      if (n > 0.35) {
+        const cx = wx - cam.x + n * 26;
+        ctx.strokeStyle = withAlpha(th.floorJoint, 0.55);
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(cx, y + 2);
+        ctx.lineTo(cx + 3, y + 6);
+        ctx.lineTo(cx - 2, y + 9);
+        ctx.lineTo(cx + 4, y + 12);
+        ctx.stroke();
+      }
+    }
+    for (let wx = Math.ceil(worldX0 / 260) * 260; wx < worldX1; wx += 260) {
+      const n = tileNoise(wx, ty, 43);
+      if (n > 0.3) {
+        ctx.fillStyle = withAlpha(th.floorJoint, 0.14);
+        ctx.beginPath();
+        ctx.ellipse(wx - cam.x + 40, y + 8, 18 + n * 22, 3.5, 0, 0, TAU);
+        ctx.fill();
+      }
+    }
+    if (w >= 6 * TILE) {
+      // poças
+      for (let wx = Math.ceil(worldX0 / 320) * 320; wx < worldX1 - 40; wx += 320) {
+        const n = tileNoise(wx, ty, 44);
+        if (n > 0.42) {
+          const px = wx - cam.x + 20 + n * 24;
+          ctx.fillStyle = withAlpha(th.cool, 0.16);
+          ctx.beginPath();
+          ctx.ellipse(px, y + 7, 18 + n * 16, 3.4, 0, 0, TAU);
+          ctx.fill();
+          ctx.fillStyle = withAlpha(th.cool, 0.28);
+          ctx.fillRect(px - 10, y + 6, 9, 1);
+          ctx.fillStyle = withAlpha(th.warm, 0.14);
+          ctx.fillRect(px + 4, y + 8, 7, 1);
+        }
+      }
+      // ralos
+      for (let wx = Math.ceil(worldX0 / 480) * 480; wx < worldX1 - 30; wx += 480) {
+        const n = tileNoise(wx, ty, 45);
+        if (n > 0.4) {
+          const dx = wx - cam.x + 30;
+          ctx.fillStyle = withAlpha(th.metal, 0.5);
+          ctx.fillRect(dx, y + 4, 20, 8);
+          ctx.fillStyle = withAlpha(th.shadow, 0.65);
+          for (let b = 0; b < 4; b++) ctx.fillRect(dx + 3 + b * 4, y + 6, 2, 4);
+        }
+      }
+      // musgo desaturado
+      for (let wx = Math.ceil(worldX0 / 150) * 150; wx < worldX1; wx += 150) {
+        const n = tileNoise(wx, ty, 46);
+        if (n > 0.62) {
+          ctx.fillStyle = 'rgba(92,116,82,0.30)';
+          ctx.fillRect(wx - cam.x + 4, y + 11, 5 + n * 6, 2);
+          ctx.fillRect(wx - cam.x + 8, y + 9, 2, 2);
+        }
+      }
+      // folhas secas
+      for (let wx = Math.ceil(worldX0 / 210) * 210; wx < worldX1; wx += 210) {
+        const n = tileNoise(wx, ty, 47);
+        if (n > 0.5) {
+          ctx.fillStyle = withAlpha(th.wood, 0.35);
+          ctx.fillRect(wx - cam.x + 12, y + 10, 3, 2);
+        }
+      }
+    }
+  }
+}
 
 Game.prototype.drawTiles = function (ctx, cam) {
   const level = this.level;
   const th = level.theme;
+  const kind = th.kind;
   const x0 = Math.max(0, Math.floor(cam.x / TILE) - 1);
   const x1 = Math.min(level.w - 1, Math.ceil((cam.x + VIEW_W) / TILE) + 1);
   const y0 = Math.max(0, Math.floor(cam.y / TILE) - 1);
   const y1 = Math.min(level.h - 1, Math.ceil((cam.y + VIEW_H) / TILE) + 1);
 
+  // corpo contínuo, com variação sutil que não desenha bordas
   for (let ty = y0; ty <= y1; ty++) {
     for (let tx = x0; tx <= x1; tx++) {
       const t = level.tile(tx, ty);
-      if (t === TILE_EMPTY) continue;
+      if (t !== TILE_SOLID) continue;
+      const x = tx * TILE - cam.x;
+      const y = ty * TILE - cam.y;
+      ctx.fillStyle = th.tile;
+      ctx.fillRect(x, y, TILE, TILE);
+
+      const n = tileNoise(tx, ty, 1);
+      if (n > 0.68) {
+        ctx.fillStyle = withAlpha(th.tileTop, 0.045);
+        ctx.fillRect(x, y, TILE, TILE);
+      } else if (n < 0.30) {
+        ctx.fillStyle = 'rgba(0,0,0,0.045)';
+        ctx.fillRect(x, y, TILE, TILE);
+      }
+
+      // textura interna: pequenos grãos, nunca linhas por tile
+      if (kind === 'hall') {
+        for (let i = 0; i < 3; i++) {
+          const nx = tileNoise(tx * 3 + i, ty, 2);
+          const ny = tileNoise(tx, ty * 3 + i, 3);
+          ctx.fillStyle = withAlpha(i % 2 ? th.tileTop : th.tileDark, 0.10);
+          ctx.fillRect(x + 2 + nx * (TILE - 4), y + 15 + ny * 13, 1, 1);
+        }
+      } else if (kind === 'lab') {
+        ctx.fillStyle = withAlpha(th.tileDark, 0.22);
+        if (ty % 2 === 0) ctx.fillRect(x, y + 16, TILE, 1);
+        for (let i = 0; i < 2; i++) {
+          const nx = tileNoise(tx * 5 + i, ty, 4);
+          ctx.fillStyle = withAlpha(th.metal, 0.28);
+          ctx.fillRect(x + 3 + nx * 24, y + 20, 2, 2);
+        }
+      } else if (kind === 'gym') {
+        for (let i = 0; i < 3; i++) {
+          const ny = tileNoise(tx, ty * 4 + i, 5);
+          ctx.fillStyle = withAlpha(th.floorLight, 0.06 + i * 0.02);
+          ctx.fillRect(x + 2, y + 15 + ny * 14, TILE - 6, 1);
+        }
+      } else if (kind === 'office') {
+        for (let i = 0; i < 2; i++) {
+          const nx = tileNoise(tx * 4 + i, ty, 6);
+          ctx.fillStyle = withAlpha(th.floorLight, 0.06);
+          ctx.fillRect(x + 3 + nx * 24, y + 15, 1, 14);
+        }
+      } else {
+        for (let i = 0; i < 3; i++) {
+          const nx = tileNoise(tx * 6 + i, ty, 7);
+          const ny = tileNoise(tx, ty * 6 + i, 8);
+          ctx.fillStyle = withAlpha(nx > 0.5 ? th.tileTop : th.tileDark, 0.12);
+          ctx.fillRect(x + 2 + nx * 27, y + 15 + ny * 13, 1, 1);
+        }
+      }
+    }
+  }
+
+  // topos contínuos, agrupados em trechos
+  for (let ty = y0; ty <= y1; ty++) {
+    let runStart = -1;
+    for (let tx = x0; tx <= x1 + 1; tx++) {
+      const solidTop = tx <= x1 &&
+        level.tile(tx, ty) === TILE_SOLID &&
+        level.tile(tx, ty - 1) === TILE_EMPTY;
+      if (solidTop && runStart < 0) runStart = tx;
+      if (!solidTop && runStart >= 0) {
+        drawSurfaceRun(ctx, cam, th, level, runStart, tx - 1, ty);
+        runStart = -1;
+      }
+    }
+  }
+
+  // silhueta: laterais e bases expostas, contínuas
+  for (let ty = y0; ty <= y1; ty++) {
+    for (let tx = x0; tx <= x1; tx++) {
+      if (level.tile(tx, ty) !== TILE_SOLID) continue;
+      const x = tx * TILE - cam.x;
+      const y = ty * TILE - cam.y;
+      const left = level.tile(tx - 1, ty) !== TILE_SOLID;
+      const right = level.tile(tx + 1, ty) !== TILE_SOLID;
+      const bottom = level.tile(tx, ty + 1) !== TILE_SOLID;
+
+      if (left) {
+        ctx.fillStyle = withAlpha(th.tileDark, 0.9);
+        ctx.fillRect(x, y, 3, TILE);
+        ctx.fillStyle = withAlpha(th.edge, 0.28);
+        ctx.fillRect(x, y + 1, 1, TILE - 2);
+      }
+      if (right) {
+        ctx.fillStyle = withAlpha(th.tileDark, 0.9);
+        ctx.fillRect(x + TILE - 3, y, 3, TILE);
+      }
+      if (bottom) {
+        ctx.fillStyle = withAlpha(th.tileDark, 0.92);
+        ctx.fillRect(x, y + TILE - 4, TILE, 4);
+        ctx.fillStyle = withAlpha(th.edge, 0.15);
+        ctx.fillRect(x, y + TILE - 4, TILE, 1);
+      }
+    }
+  }
+
+  // perigos
+  for (let ty = y0; ty <= y1; ty++) {
+    for (let tx = x0; tx <= x1; tx++) {
+      const t = level.tile(tx, ty);
+      if (t !== TILE_SPIKE && t !== TILE_LASER) continue;
       const x = tx * TILE - cam.x;
       const y = ty * TILE - cam.y;
 
-      if (t === TILE_SOLID) {
-        ctx.fillStyle = th.tile;
-        ctx.fillRect(x, y, TILE, TILE);
-        ctx.fillStyle = th.tileDark;
-        ctx.fillRect(x, y + TILE - 5, TILE, 5);
-        ctx.fillRect(x + TILE - 4, y, 4, TILE);
-
-        // topo iluminado apenas quando exposto
-        if (level.tile(tx, ty - 1) === TILE_EMPTY) {
-          ctx.fillStyle = th.tileTop;
-          ctx.fillRect(x, y, TILE, 5);
-          ctx.fillStyle = th.edge;
-          ctx.fillRect(x, y, TILE, 2);
-          if (th.kind === 'courtyard' || th.kind === 'training') {
-            ctx.fillStyle = withAlpha(th.accent, 0.35);
-            for (let i = 0; i < 4; i++) {
-              ctx.fillRect(x + 5 + i * 7, y - 4, 2, 4);
-            }
-          }
-        }
-
-        // textura de piso / parede
-        if (th.kind === 'hall') {
-          ctx.fillStyle = 'rgba(0,0,0,0.14)';
-          ctx.fillRect(x + 4, y + 12, TILE - 8, 2);
-          ctx.fillRect(x + 4, y + 23, TILE - 8, 2);
-        } else if (th.kind === 'lab') {
-          ctx.fillStyle = withAlpha(th.accent, 0.12);
-          ctx.fillRect(x + 6, y + 8, 6, 2);
-          ctx.fillRect(x + 18, y + 18, 8, 2);
-        } else if (th.kind === 'gym') {
-          ctx.fillStyle = withAlpha(th.edge, 0.16);
-          ctx.fillRect(x + 3, y + 10, TILE - 6, 2);
-        } else if (th.kind === 'office') {
-          ctx.fillStyle = 'rgba(0,0,0,0.12)';
-          ctx.fillRect(x + 6, y + 9, 18, 2);
-        } else {
-          ctx.fillStyle = withAlpha(th.tileDark, 0.5);
-          ctx.fillRect(x + 7, y + 15, 6, 3);
-          ctx.fillRect(x + 20, y + 22, 5, 3);
-        }
-
-        // borda esquerda exposta
-        if (level.tile(tx - 1, ty) === TILE_EMPTY) {
-          ctx.fillStyle = withAlpha(th.edge, 0.45);
-          ctx.fillRect(x, y + 4, 2, TILE - 8);
-        }
-      } else if (t === TILE_SPIKE) {
-        ctx.fillStyle = th.hazard;
-        const spikeH = 18;
+      if (t === TILE_SPIKE) {
+        ctx.fillStyle = withAlpha(th.tileDark, 0.95);
+        ctx.fillRect(x, y + TILE - 6, TILE, 6);
+        ctx.fillStyle = withAlpha(th.metal, 0.45);
+        ctx.fillRect(x, y + TILE - 6, TILE, 1);
         for (let i = 0; i < 4; i++) {
           const sx = x + i * 8;
+          ctx.fillStyle = withAlpha(th.metal, 0.85);
           ctx.beginPath();
-          ctx.moveTo(sx, y + TILE);
-          ctx.lineTo(sx + 4, y + TILE - spikeH);
-          ctx.lineTo(sx + 8, y + TILE);
+          ctx.moveTo(sx + 1, y + TILE - 5);
+          ctx.lineTo(sx + 4, y + TILE - 20);
+          ctx.lineTo(sx + 7, y + TILE - 5);
           ctx.closePath();
           ctx.fill();
+          ctx.fillStyle = 'rgba(255,255,255,0.32)';
+          ctx.fillRect(sx + 4, y + TILE - 19, 1, 11);
+          ctx.fillStyle = withAlpha(th.hazard, 0.75);
+          ctx.fillRect(sx + 3, y + TILE - 5, 2, 2);
         }
-        ctx.fillStyle = withAlpha('#ffffff', 0.35);
-        for (let i = 0; i < 4; i++) {
-          ctx.fillRect(x + i * 8 + 3, y + TILE - spikeH + 3, 2, 6);
-        }
-      } else if (t === TILE_LASER) {
-        // emissores
-        ctx.fillStyle = withAlpha(th.tileDark, 0.95);
+      } else {
+        ctx.fillStyle = withAlpha(th.metal, 0.75);
         ctx.fillRect(x + 2, y, TILE - 4, 7);
         ctx.fillRect(x + 2, y + TILE - 7, TILE - 4, 7);
-        ctx.fillStyle = withAlpha(th.hazard, 0.8);
-        ctx.fillRect(x + 10, y + 2, 12, 3);
-        ctx.fillRect(x + 10, y + TILE - 5, 12, 3);
+        ctx.fillStyle = withAlpha(th.shadow, 0.8);
+        ctx.fillRect(x + 4, y + 2, TILE - 8, 3);
+        ctx.fillRect(x + 4, y + TILE - 5, TILE - 8, 3);
+        ctx.fillStyle = withAlpha(th.hazard, 0.9);
+        ctx.fillRect(x + 10, y + 3, 12, 2);
+        ctx.fillRect(x + 10, y + TILE - 5, 12, 2);
         if (level.laserOn) {
           ctx.save();
           ctx.globalCompositeOperation = 'lighter';
-          ctx.fillStyle = withAlpha(th.hazard, 0.75);
+          ctx.fillStyle = withAlpha(th.hazard, 0.6);
           ctx.fillRect(x + 13, y + 6, 6, TILE - 12);
-          ctx.fillStyle = withAlpha('#ffffff', 0.6);
+          ctx.fillStyle = 'rgba(255,255,255,0.75)';
           ctx.fillRect(x + 15, y + 6, 2, TILE - 12);
           ctx.restore();
+        } else {
+          ctx.fillStyle = withAlpha(th.hazard, 0.35);
+          for (let sy = y + 8; sy < y + TILE - 8; sy += 6) {
+            ctx.fillRect(x + 15, sy, 2, 2);
+          }
         }
       }
     }
@@ -967,8 +2107,8 @@ Game.prototype.drawHUD = function (ctx) {
   // topo
   ctx.save();
   const g = ctx.createLinearGradient(0, 0, 0, 120);
-  g.addColorStop(0, 'rgba(2,10,6,0.78)');
-  g.addColorStop(1, 'rgba(2,10,6,0)');
+  g.addColorStop(0, 'rgba(4,7,14,0.80)');
+  g.addColorStop(1, 'rgba(4,7,14,0)');
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, VIEW_W, 120);
   ctx.restore();
@@ -988,10 +2128,10 @@ Game.prototype.drawHUD = function (ctx) {
 
   // energia
   const ew = 230;
-  ctx.fillStyle = 'rgba(3,14,9,0.85)';
+  ctx.fillStyle = 'rgba(5,9,16,0.85)';
   roundRect(ctx, 26, 58, ew, 15, 4);
   ctx.fill();
-  ctx.strokeStyle = 'rgba(109,255,158,0.25)';
+  ctx.strokeStyle = 'rgba(130,175,215,0.28)';
   ctx.lineWidth = 1;
   roundRect(ctx, 26, 58, ew, 15, 4);
   ctx.stroke();
@@ -1050,10 +2190,10 @@ Game.prototype.drawHUD = function (ctx) {
     const x = 26 + i * 156;
     const selected = i === this.weaponIndex;
     ctx.save();
-    ctx.fillStyle = selected ? withAlpha(w.color, 0.16) : 'rgba(4,16,10,0.82)';
+    ctx.fillStyle = selected ? withAlpha(w.color, 0.16) : 'rgba(6,10,17,0.84)';
     roundRect(ctx, x, wy, 146, 48, 6);
     ctx.fill();
-    ctx.strokeStyle = selected ? w.color : 'rgba(120,180,140,0.22)';
+    ctx.strokeStyle = selected ? w.color : 'rgba(135,170,205,0.22)';
     ctx.lineWidth = selected ? 2 : 1;
     if (selected) {
       ctx.shadowColor = w.color;
@@ -1841,237 +2981,119 @@ Game.prototype.drawCutsceneBackdrop = function (ctx, theme, t) {
   const th = theme || THEMES.school;
   const kind = th.kind;
 
-  if (kind === 'courtyard' || kind === 'training') {
-    drawSchoolBackdrop(ctx, th, t, false);
-    return;
-  }
-
-  const g = ctx.createLinearGradient(0, 0, 0, VIEW_H);
-  g.addColorStop(0, th.skyTop);
-  g.addColorStop(1, th.bg);
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, VIEW_W, VIEW_H);
-
   if (kind === 'gym') {
-    // quadra
-    ctx.fillStyle = withAlpha(th.tileDark, 0.9);
-    ctx.fillRect(0, 300, VIEW_W, 420);
-    ctx.fillStyle = withAlpha(th.tile, 0.55);
-    ctx.fillRect(80, 330, VIEW_W - 160, 340);
-    ctx.strokeStyle = withAlpha(th.edge, 0.5);
-    ctx.lineWidth = 3;
-    ctx.strokeRect(110, 350, VIEW_W - 220, 300);
-    ctx.beginPath();
-    ctx.moveTo(VIEW_W / 2, 350);
-    ctx.lineTo(VIEW_W / 2, 650);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(VIEW_W / 2, 500, 70, 0, TAU);
-    ctx.stroke();
-    // arquibancadas
-    for (let i = 0; i < 4; i++) {
-      ctx.fillStyle = withAlpha(th.mid, 0.85);
-      ctx.fillRect(0, 220 + i * 26, VIEW_W, 20);
-      ctx.fillStyle = withAlpha(th.accent, 0.12);
-      ctx.fillRect(0, 220 + i * 26, VIEW_W, 3);
-    }
-    // torcida
-    for (let i = 0; i < 64; i++) {
-      const hx = 18 + (i * 53) % (VIEW_W - 36);
-      const hy = 228 + (i % 4) * 26;
-      ctx.fillStyle = i % 5 === 0 ? withAlpha(th.accent, 0.25) : 'rgba(8,14,6,0.8)';
-      ctx.beginPath();
-      ctx.arc(hx, hy, 4, 0, TAU);
-      ctx.fill();
-      ctx.fillRect(hx - 4, hy + 3, 8, 10);
-    }
-    // faixa
-    ctx.fillStyle = 'rgba(3,12,8,0.85)';
-    ctx.fillRect(VIEW_W / 2 - 240, 206, 480, 18);
-    drawText(ctx, 'CEPK  ·  FINAL DO SISTEMA', VIEW_W / 2, 219, {
-      size: 10, align: 'center', color: withAlpha(th.accent, 0.7)
-    });
-    // cestas
-    for (const side of [-1, 1]) {
-      const x = side < 0 ? 120 : VIEW_W - 120;
-      ctx.fillStyle = '#d9d9c0';
-      ctx.fillRect(x - 3, 150, 6, 140);
-      ctx.fillRect(x - 24, 286, 48, 5);
-      ctx.strokeStyle = '#ff8c42';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(x, 306, 20, 0, Math.PI);
-      ctx.stroke();
-    }
-    // placar
-    ctx.fillStyle = 'rgba(3,12,8,0.9)';
-    ctx.fillRect(VIEW_W / 2 - 150, 60, 300, 80);
-    ctx.strokeStyle = withAlpha(th.accent, 0.5);
-    ctx.strokeRect(VIEW_W / 2 - 150, 60, 300, 80);
-    drawText(ctx, 'CEPK  00 : 00  SISTEMA', VIEW_W / 2, 100, {
-      size: 20, align: 'center', color: '#ffd24d', glow: '#ffd24d', glowSize: 10
-    });
-    // refletores
-    for (let i = 0; i < 3; i++) {
-      const lx = 200 + i * 440;
-      ctx.fillStyle = withAlpha(th.glow, 0.13);
-      ctx.beginPath();
-      ctx.moveTo(lx - 24, 40);
-      ctx.lineTo(lx + 24, 40);
-      ctx.lineTo(lx + 160, 340);
-      ctx.lineTo(lx - 160, 340);
-      ctx.closePath();
-      ctx.fill();
-    }
-    return;
+    drawGymBackdrop(ctx, th, t, 0);
+  } else if (kind === 'lab') {
+    drawLabBackdrop(ctx, th, t, 0);
+  } else if (kind === 'office') {
+    drawOfficeBackdrop(ctx, th, t, 0);
+  } else if (kind === 'hall') {
+    drawHallBackdrop(ctx, th, t, 0);
+  } else {
+    drawSchoolBackdrop(ctx, th, t, false, 0);
   }
 
-  if (kind === 'lab') {
-    ctx.fillStyle = withAlpha(th.far, 0.95);
-    ctx.fillRect(0, 60, VIEW_W, 620);
-    for (let x = 40; x < VIEW_W; x += 190) {
-      ctx.fillStyle = withAlpha(th.near, 0.7);
-      ctx.fillRect(x, 120, 150, 500);
-      ctx.strokeStyle = withAlpha(th.accent, 0.2);
-      ctx.strokeRect(x + 4, 124, 142, 492);
-      ctx.fillStyle = withAlpha(th.accent, 0.12);
-      ctx.fillRect(x + 22, 180, 106, 300);
-      ctx.fillStyle = withAlpha(th.accent, 0.28);
-      ctx.fillRect(x + 22, 320, 106, 160);
-      ctx.fillStyle = withAlpha(th.glow, 0.5);
-      ctx.fillRect(x + 30, 190, 4, 280);
-      // bolhas no tanque
-      for (let b = 0; b < 6; b++) {
-        const by = 400 - ((t * (18 + b * 4) + b * 37 + x) % 200);
-        const bx = x + 34 + ((b * 17 + x) % 60);
-        ctx.fillStyle = withAlpha(th.glow, 0.35);
-        ctx.beginPath();
-        ctx.arc(bx, by, 2 + (b % 3), 0, TAU);
-        ctx.fill();
-      }
-    }
-    ctx.fillStyle = withAlpha(th.tileDark, 0.95);
-    ctx.fillRect(0, 70, VIEW_W, 18);
-    for (let x = 0; x < VIEW_W; x += 120) {
-      ctx.fillStyle = withAlpha(th.accent, 0.3);
-      ctx.fillRect(x, 74, 60, 4);
-    }
-    return;
-  }
-
-  if (kind === 'office') {
-    // janela grande
-    ctx.fillStyle = withAlpha(th.accent, 0.14);
-    ctx.fillRect(160, 90, 480, 300);
-    ctx.strokeStyle = withAlpha(th.glow, 0.35);
-    ctx.lineWidth = 5;
-    ctx.strokeRect(160, 90, 480, 300);
-    ctx.fillStyle = withAlpha(th.tileDark, 0.95);
-    ctx.fillRect(396, 90, 8, 300);
-    ctx.fillRect(160, 236, 480, 8);
-    // lua
-    ctx.fillStyle = withAlpha(th.glow, 0.7);
-    ctx.beginPath();
-    ctx.arc(520, 160, 34, 0, TAU);
-    ctx.fill();
-    // chuva na janela
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(160, 90, 480, 300);
-    ctx.clip();
-    for (let i = 0; i < 46; i++) {
-      const rx = 160 + ((i * 67 + t * 30) % 480);
-      const ry = 90 + ((i * 91 + t * 170) % 300);
-      ctx.strokeStyle = 'rgba(190,230,255,0.18)';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(rx, ry);
-      ctx.lineTo(rx - 4, ry + 14);
-      ctx.stroke();
-    }
-    ctx.restore();
-    // estantes
-    for (let x = 760; x < VIEW_W; x += 170) {
-      ctx.fillStyle = withAlpha(th.near, 0.8);
-      ctx.fillRect(x, 140, 140, 380);
-      for (let r = 0; r < 4; r++) {
-        ctx.fillStyle = withAlpha(th.tileDark, 0.9);
-        ctx.fillRect(x + 6, 200 + r * 74, 128, 5);
-        for (let b = 0; b < 6; b++) {
-          ctx.fillStyle = withAlpha(r % 2 ? th.tile : th.tileTop, 0.25);
-          ctx.fillRect(x + 12 + b * 19, 174 + r * 74, 13, 24);
-        }
-      }
-    }
-    // mesa
-    ctx.fillStyle = '#2a2418';
-    ctx.fillRect(300, 470, 620, 32);
-    ctx.fillRect(340, 500, 24, 140);
-    ctx.fillRect(856, 500, 24, 140);
-    ctx.fillStyle = withAlpha(th.accent, 0.25);
-    ctx.fillRect(300, 470, 620, 4);
-    // poltrona
-    ctx.fillStyle = '#1b1a14';
-    ctx.fillRect(540, 380, 130, 130);
-    ctx.fillRect(520, 500, 170, 24);
-    return;
-  }
-
-  // corredor
-  ctx.fillStyle = withAlpha(th.far, 0.95);
-  ctx.fillRect(0, 60, VIEW_W, 620);
-  const horizonX = VIEW_W / 2;
-  ctx.strokeStyle = withAlpha(th.accent, 0.12);
-  ctx.lineWidth = 2;
-  for (let i = 0; i < 7; i++) {
-    const x = 80 + i * 190;
-    ctx.beginPath();
-    ctx.moveTo(x, 80);
-    ctx.lineTo(horizonX + (x - horizonX) * 0.2, 360);
-    ctx.stroke();
-  }
-  for (let x = 40; x < VIEW_W; x += 120) {
-    ctx.fillStyle = withAlpha(th.near, 0.85);
-    ctx.fillRect(x, 210, 104, 330);
-    ctx.strokeStyle = withAlpha(th.tileDark, 0.9);
-    ctx.strokeRect(x + 2, 212, 100, 326);
-    ctx.fillStyle = withAlpha(th.accent, 0.3);
-    ctx.fillRect(x + 16, 228, 72, 3);
-    ctx.fillRect(x + 30, 260, 3, 18);
-    ctx.fillRect(x + 70, 260, 3, 18);
-  }
-  for (let x = 140; x < VIEW_W; x += 300) {
-    const fl = 0.5 + Math.sin(t * 6 + x) * 0.5;
-    ctx.fillStyle = withAlpha(th.glow, 0.08 + fl * 0.12);
-    ctx.fillRect(x, 52, 150, 7);
-    ctx.beginPath();
-    ctx.moveTo(x + 20, 60);
-    ctx.lineTo(x + 130, 60);
-    ctx.lineTo(x + 230, 380);
-    ctx.lineTo(x - 80, 380);
-    ctx.closePath();
-    ctx.fill();
-  }
-  // porta ao fundo do corredor
-  ctx.fillStyle = 'rgba(2,10,7,0.9)';
-  ctx.fillRect(horizonX - 52, 300, 104, 180);
-  ctx.strokeStyle = withAlpha(th.accent, 0.4);
-  ctx.lineWidth = 3;
-  ctx.strokeRect(horizonX - 52, 300, 104, 180);
-  drawText(ctx, 'DIRETORIA', horizonX, 322, {
-    size: 10, align: 'center', color: withAlpha(th.glow, 0.55)
-  });
-  // câmera de segurança
-  ctx.fillStyle = '#16241a';
-  ctx.fillRect(VIEW_W - 170, 120, 54, 32);
-  ctx.fillStyle = '#ff3355';
-  ctx.shadowColor = '#ff3355';
-  ctx.shadowBlur = 10 + Math.sin(t * 5) * 5;
-  ctx.fillRect(VIEW_W - 126, 131, 6, 6);
-  ctx.shadowBlur = 0;
-  ctx.fillStyle = withAlpha(th.tileDark, 0.95);
-  ctx.fillRect(0, 540, VIEW_W, 180);
+  // base escura para leitura dos textos da cutscene
+  const vg = ctx.createLinearGradient(0, VIEW_H - 260, 0, VIEW_H);
+  vg.addColorStop(0, 'rgba(3,6,12,0)');
+  vg.addColorStop(1, 'rgba(3,6,12,0.78)');
+  ctx.fillStyle = vg;
+  ctx.fillRect(0, VIEW_H - 260, VIEW_W, 260);
 };
+
+function drawCutsceneHero(ctx, x, groundY, t, color) {
+  const accent = color || '#6dff9e';
+  const bob = Math.sin(t * 1.6) * 2;
+  ctx.save();
+
+  // sombra no ch├úo
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.beginPath();
+  ctx.ellipse(x, groundY + 4, 52, 9, 0, 0, TAU);
+  ctx.fill();
+
+  // aura / contraluz
+  const halo = ctx.createRadialGradient(x, groundY - 90, 10, x, groundY - 90, 130);
+  halo.addColorStop(0, withAlpha(accent, 0.16));
+  halo.addColorStop(1, withAlpha(accent, 0));
+  ctx.fillStyle = halo;
+  ctx.fillRect(x - 140, groundY - 240, 280, 260);
+
+  // pernas e botas
+  ctx.fillStyle = '#0b1710';
+  ctx.fillRect(x - 20, groundY - 62, 16, 62);
+  ctx.fillRect(x + 4, groundY - 62, 16, 62);
+  ctx.fillStyle = '#132a1b';
+  ctx.fillRect(x - 24, groundY - 9, 24, 9);
+  ctx.fillRect(x + 2, groundY - 9, 24, 9);
+  ctx.fillStyle = withAlpha(accent, 0.35);
+  ctx.fillRect(x - 20, groundY - 58, 16, 2);
+  ctx.fillRect(x + 4, groundY - 58, 16, 2);
+
+  // jaqueta / torso
+  ctx.fillStyle = '#10241a';
+  roundRect(ctx, x - 28, groundY - 132 + bob, 56, 76, 8);
+  ctx.fill();
+  // mochila
+  ctx.fillStyle = '#0a1811';
+  roundRect(ctx, x - 42, groundY - 126 + bob, 16, 54, 5);
+  ctx.fill();
+  ctx.fillStyle = withAlpha(accent, 0.18);
+  ctx.fillRect(x - 40, groundY - 120 + bob, 3, 40);
+  // detalhes da jaqueta
+  ctx.fillStyle = withAlpha(accent, 0.30);
+  ctx.fillRect(x - 22, groundY - 118 + bob, 44, 3);
+  ctx.fillRect(x - 2, groundY - 112 + bob, 3, 50);
+  ctx.fillStyle = '#0a1811';
+  ctx.fillRect(x - 26, groundY - 78 + bob, 52, 5);
+
+  // bra├ºos
+  ctx.fillStyle = '#0d1f16';
+  ctx.fillRect(x - 38, groundY - 124 + bob, 12, 56);
+  ctx.fillRect(x + 26, groundY - 124 + bob, 12, 56);
+  ctx.fillStyle = '#163020';
+  ctx.fillRect(x - 40, groundY - 70 + bob, 14, 10);
+  ctx.fillRect(x + 26, groundY - 70 + bob, 14, 10);
+
+  // cabe├ºa / capuz
+  ctx.fillStyle = '#163020';
+  roundRect(ctx, x - 18, groundY - 170 + bob, 36, 42, 11);
+  ctx.fill();
+  ctx.fillStyle = '#08120c';
+  roundRect(ctx, x - 21, groundY - 174 + bob, 42, 18, 8);
+  ctx.fill();
+  // visor brilhante
+  ctx.fillStyle = accent;
+  ctx.shadowColor = accent;
+  ctx.shadowBlur = 16;
+  ctx.fillRect(x - 11, groundY - 155 + bob, 22, 5);
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#eafff0';
+  ctx.fillRect(x - 8, groundY - 154 + bob, 6, 3);
+
+  // bast├úo / arma
+  ctx.save();
+  ctx.translate(x + 34, groundY - 96 + bob);
+  ctx.rotate(0.32 + Math.sin(t * 1.2) * 0.05);
+  ctx.fillStyle = '#2a4a36';
+  ctx.fillRect(-3, 0, 6, 64);
+  ctx.fillStyle = withAlpha(accent, 0.85);
+  ctx.fillRect(-2, 0, 4, 12);
+  ctx.fillStyle = '#0a1811';
+  ctx.fillRect(-5, 52, 10, 8);
+  ctx.restore();
+
+  // rim light
+  ctx.strokeStyle = withAlpha(accent, 0.38);
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x + 27, groundY - 164 + bob);
+  ctx.lineTo(x + 30, groundY - 122 + bob);
+  ctx.lineTo(x + 24, groundY - 70 + bob);
+  ctx.stroke();
+
+  ctx.restore();
+}
 
 function drawCutsceneBoss(ctx, style, color, cx, baseY, t) {
   const pulse = 0.5 + Math.sin(t * 2.2) * 0.5;
@@ -2085,7 +3107,7 @@ function drawCutsceneBoss(ctx, style, color, cx, baseY, t) {
   ctx.fillStyle = aura;
   ctx.fillRect(-320, -440, 640, 480);
 
-  // sombra no chão
+  // sombra no ch├úo
   ctx.fillStyle = 'rgba(0,0,0,0.5)';
   ctx.beginPath();
   ctx.ellipse(0, 6, 150, 20, 0, 0, TAU);
@@ -2140,7 +3162,7 @@ function drawCutsceneBoss(ctx, style, color, cx, baseY, t) {
     for (const [rx, ry] of [[-58, -278], [58, -278], [-58, -214], [58, -214]]) {
       ctx.fillRect(rx, ry, 4, 4);
     }
-    // núcleo com anéis
+    // n├║cleo com an├⌐is
     ctx.fillStyle = withAlpha(color, 0.18);
     ctx.beginPath(); ctx.arc(0, -238, 30 + pulse * 6, 0, TAU); ctx.fill();
     ctx.strokeStyle = withAlpha(color, 0.7);
@@ -2162,7 +3184,7 @@ function drawCutsceneBoss(ctx, style, color, cx, baseY, t) {
     ctx.fillRect(-124, -262, 10, 10);
     ctx.fillRect(114, -262, 10, 10);
 
-    // braços e punhos
+    // bra├ºos e punhos
     ctx.fillStyle = mid;
     roundRect(ctx, -140, -220, 54, 98, 14); ctx.fill();
     roundRect(ctx, 86, -220, 54, 98, 14); ctx.fill();
@@ -2180,7 +3202,7 @@ function drawCutsceneBoss(ctx, style, color, cx, baseY, t) {
     ctx.moveTo(96, -276); ctx.quadraticCurveTo(118, -244, 112, -206);
     ctx.stroke();
 
-    // cabeça / capacete
+    // cabe├ºa / capacete
     ctx.fillStyle = dark;
     roundRect(ctx, -52, -380, 104, 84, 16); ctx.fill();
     ctx.fillStyle = withAlpha(color, 0.3);
@@ -2200,7 +3222,7 @@ function drawCutsceneBoss(ctx, style, color, cx, baseY, t) {
     ctx.fillStyle = '#eafff0';
     ctx.fillRect(-30, -348, 10, 3);
     ctx.fillRect(12, -348, 10, 3);
-    // grade de ventilação
+    // grade de ventila├º├úo
     ctx.fillStyle = withAlpha(color, 0.25);
     for (let i = 0; i < 4; i++) ctx.fillRect(-18, -322 + i * 6, 36, 2);
   } else if (style === 'hunter') {
@@ -2320,100 +3342,6 @@ function drawCutsceneBoss(ctx, style, color, cx, baseY, t) {
     ctx.fillStyle = withAlpha('#ffd24d', 0.8);
     ctx.fillRect(24, -290, 18, 12);
   }
-  ctx.restore();
-}
-
-function drawCutsceneHero(ctx, x, groundY, t, color) {
-  const accent = color || '#6dff9e';
-  const bob = Math.sin(t * 1.6) * 2;
-  ctx.save();
-
-  // sombra no chão
-  ctx.fillStyle = 'rgba(0,0,0,0.5)';
-  ctx.beginPath();
-  ctx.ellipse(x, groundY + 4, 52, 9, 0, 0, TAU);
-  ctx.fill();
-
-  // aura / contraluz
-  const halo = ctx.createRadialGradient(x, groundY - 90, 10, x, groundY - 90, 130);
-  halo.addColorStop(0, withAlpha(accent, 0.16));
-  halo.addColorStop(1, withAlpha(accent, 0));
-  ctx.fillStyle = halo;
-  ctx.fillRect(x - 140, groundY - 240, 280, 260);
-
-  // pernas e botas
-  ctx.fillStyle = '#0b1710';
-  ctx.fillRect(x - 20, groundY - 62, 16, 62);
-  ctx.fillRect(x + 4, groundY - 62, 16, 62);
-  ctx.fillStyle = '#132a1b';
-  ctx.fillRect(x - 24, groundY - 9, 24, 9);
-  ctx.fillRect(x + 2, groundY - 9, 24, 9);
-  ctx.fillStyle = withAlpha(accent, 0.35);
-  ctx.fillRect(x - 20, groundY - 58, 16, 2);
-  ctx.fillRect(x + 4, groundY - 58, 16, 2);
-
-  // jaqueta / torso
-  ctx.fillStyle = '#10241a';
-  roundRect(ctx, x - 28, groundY - 132 + bob, 56, 76, 8);
-  ctx.fill();
-  // mochila
-  ctx.fillStyle = '#0a1811';
-  roundRect(ctx, x - 42, groundY - 126 + bob, 16, 54, 5);
-  ctx.fill();
-  ctx.fillStyle = withAlpha(accent, 0.18);
-  ctx.fillRect(x - 40, groundY - 120 + bob, 3, 40);
-  // detalhes da jaqueta
-  ctx.fillStyle = withAlpha(accent, 0.30);
-  ctx.fillRect(x - 22, groundY - 118 + bob, 44, 3);
-  ctx.fillRect(x - 2, groundY - 112 + bob, 3, 50);
-  ctx.fillStyle = '#0a1811';
-  ctx.fillRect(x - 26, groundY - 78 + bob, 52, 5);
-
-  // braços
-  ctx.fillStyle = '#0d1f16';
-  ctx.fillRect(x - 38, groundY - 124 + bob, 12, 56);
-  ctx.fillRect(x + 26, groundY - 124 + bob, 12, 56);
-  ctx.fillStyle = '#163020';
-  ctx.fillRect(x - 40, groundY - 70 + bob, 14, 10);
-  ctx.fillRect(x + 26, groundY - 70 + bob, 14, 10);
-
-  // cabeça / capuz
-  ctx.fillStyle = '#163020';
-  roundRect(ctx, x - 18, groundY - 170 + bob, 36, 42, 11);
-  ctx.fill();
-  ctx.fillStyle = '#08120c';
-  roundRect(ctx, x - 21, groundY - 174 + bob, 42, 18, 8);
-  ctx.fill();
-  // visor brilhante
-  ctx.fillStyle = accent;
-  ctx.shadowColor = accent;
-  ctx.shadowBlur = 16;
-  ctx.fillRect(x - 11, groundY - 155 + bob, 22, 5);
-  ctx.shadowBlur = 0;
-  ctx.fillStyle = '#eafff0';
-  ctx.fillRect(x - 8, groundY - 154 + bob, 6, 3);
-
-  // bastão / arma
-  ctx.save();
-  ctx.translate(x + 34, groundY - 96 + bob);
-  ctx.rotate(0.32 + Math.sin(t * 1.2) * 0.05);
-  ctx.fillStyle = '#2a4a36';
-  ctx.fillRect(-3, 0, 6, 64);
-  ctx.fillStyle = withAlpha(accent, 0.85);
-  ctx.fillRect(-2, 0, 4, 12);
-  ctx.fillStyle = '#0a1811';
-  ctx.fillRect(-5, 52, 10, 8);
-  ctx.restore();
-
-  // rim light
-  ctx.strokeStyle = withAlpha(accent, 0.38);
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(x + 27, groundY - 164 + bob);
-  ctx.lineTo(x + 30, groundY - 122 + bob);
-  ctx.lineTo(x + 24, groundY - 70 + bob);
-  ctx.stroke();
-
   ctx.restore();
 }
 

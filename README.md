@@ -103,7 +103,9 @@ Depois de cada arena existe uma câmara de saída independente, com portal anima
 
 ## Direção de arte
 
-- **Cenários** com parallax, iluminação ambiente, poeira suspensa, bolhas de laboratório, chuva na diretoria, nuvens e holofotes no pátio.
+- **Paletas por ambiente**: pátio em azul-noite com janelas âmbar, corredores em teal e terrazzo, ginásio em madeira e vinho, laboratório em aço azul e diretoria em vinho e dourado. O verde fica reservado ao Sistema Verde, aos poderes e à identidade do HUD.
+- **Piso contínuo**: superfícies desenhadas por trechos, com juntas de laje alinhadas ao mundo, rachaduras, manchas, poças, ralos, musgo e materiais próprios por tema — sem a antiga grade de blocos.
+- **Cenários** com parallax em camadas, skyline, fachada escolar contínua com janelas acesas/apagadas/quebradas, calhas, ar-condicionado, caixa d'água, relógio, cerca, postes e cones de luz. Interiores com armários, quadros de avisos, tanques de laboratório, racks, estantes, janelas com chuva e arquibancadas.
 - **Cutscenes encenadas**: VEGA aparece em primeiro plano, com aura, rim light e arma; a câmera tem leve deriva cinematográfica, holofotes e partículas de brasas nos alertas de chefe.
 - **Inimigos detalhados**: Walkers com cinto, emblema, rádio e joelheiras; drones com braços de rotor, luzes de navegação e lente; torretas com pés estabilizadores, tambor e ventilação; Chargers com ariete, escapamentos e núcleo; Swoopers com nervuras nas asas, cauda e propulsor.
 - **Chefes** com placas de armadura, rebites, ombreiras e núcleo pulsante, além de silhuetas próprias em cada arena.
