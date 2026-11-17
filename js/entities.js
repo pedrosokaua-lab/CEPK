@@ -2541,29 +2541,29 @@ class Swooper {
 
 const BOSS_PATTERNS = {
   guardian: [
-    ['slam', 'charge'],
-    ['slam', 'charge', 'bash', 'summon'],
-    ['slam', 'summon', 'bash', 'charge']
+    ['slam', 'charge', 'bash'],
+    ['slam', 'charge', 'bash', 'summon', 'shock'],
+    ['slam', 'summon', 'bash', 'charge', 'shock']
   ],
   hunter: [
-    ['fan', 'slash'],
-    ['fan', 'slash', 'blink', 'rain'],
-    ['slash', 'rain', 'fan', 'blink']
+    ['fan', 'slash', 'blink'],
+    ['fan', 'slash', 'blink', 'rain', 'beam'],
+    ['slash', 'rain', 'fan', 'blink', 'beam']
   ],
   bruiser: [
-    ['jump', 'spin'],
-    ['jump', 'spin', 'rocks', 'shock'],
-    ['jump', 'rocks', 'shock', 'spin']
+    ['jump', 'spin', 'rocks'],
+    ['jump', 'spin', 'rocks', 'shock', 'slam'],
+    ['jump', 'rocks', 'shock', 'spin', 'slam']
   ],
   trickster: [
-    ['fan', 'blink'],
-    ['fan', 'blink', 'clones', 'rain'],
-    ['clones', 'blink', 'fan', 'ring']
+    ['fan', 'blink', 'clones'],
+    ['fan', 'blink', 'clones', 'rain', 'ring'],
+    ['clones', 'blink', 'fan', 'ring', 'rain']
   ],
   director: [
-    ['fan', 'slash', 'summon'],
-    ['ring', 'beam', 'summon', 'slash'],
-    ['ring', 'beam', 'clones', 'rain', 'slash']
+    ['fan', 'slash', 'summon', 'beam'],
+    ['ring', 'beam', 'summon', 'slash', 'rain'],
+    ['ring', 'beam', 'clones', 'rain', 'slash', 'fan']
   ]
 };
 
@@ -2616,7 +2616,7 @@ class Boss {
     const diff = (game && game.diff) || DIFFICULTIES[1];
     this.maxHp = Math.max(1, Math.round(this.cfg.hp * diff.bossHp));
     this.hp = this.maxHp;
-    this.speed = (this.cfg.speed || 70) * diff.enemySpeed;
+    this.speed = this.baseSpeed;
     this.x = this.spawnX - this.w / 2;
     this.y = this.spawnY - this.h;
     this.vx = 0;
@@ -2670,12 +2670,12 @@ class Boss {
 
   teleTime(attack) {
     const base = {
-      slam: 0.62, charge: 0.5, bash: 0.42, summon: 0.7,
-      fan: 0.48, slash: 0.36, blink: 0.32, rain: 0.6,
-      jump: 0.56, spin: 0.5, rocks: 0.46, shock: 0.55,
-      clones: 0.6, ring: 0.56, beam: 0.6
-    }[attack] || 0.5;
-    return Math.max(0.2, base / this.aggro);
+      slam: 0.5, charge: 0.4, bash: 0.32, summon: 0.54,
+      fan: 0.38, slash: 0.28, blink: 0.24, rain: 0.48,
+      jump: 0.44, spin: 0.4, rocks: 0.36, shock: 0.44,
+      clones: 0.48, ring: 0.44, beam: 0.48
+    }[attack] || 0.42;
+    return Math.max(0.16, base / (this.aggro * (1 + (this.phase - 1) * 0.18)));
   }
 
   update(dt, game) {
@@ -2715,19 +2715,21 @@ class Boss {
       return;
     }
 
-    if (this.phase === 1 && this.hp <= this.maxHp * 0.6) {
+    if (this.phase === 1 && this.hp <= this.maxHp * 0.66) {
       this.phase = 2;
-      this.speed *= 1.18;
+      this.speed *= 1.24;
+      this.timer = Math.min(this.timer, 0.32);
       game.toast('FASE 2 — ' + this.cfg.name, this.color);
       game.shake(0.5);
       Sfx.tone(90, 0.5, { type: 'sawtooth', vol: 0.16, slide: 120 });
       FX.burst(this.cx, this.cy, 30, { color: this.color, speedMax: 340, lifeMax: 0.9, sizeMax: 7 });
     }
 
-    if (this.phase === 2 && this.cfg.final && this.hp <= this.maxHp * 0.3) {
+    if (this.phase === 2 && this.hp <= this.maxHp * 0.32) {
       this.phase = 3;
-      this.speed *= 1.12;
-      game.toast('FASE 3 — SINAL VERMELHO', '#ff5d7a');
+      this.speed *= 1.18;
+      this.timer = Math.min(this.timer, 0.28);
+      game.toast('FASE 3 — ' + (this.cfg.final ? 'SINAL VERMELHO' : this.cfg.name), '#ff5d7a');
       game.shake(0.7);
       Sfx.tone(80, 0.7, { type: 'sawtooth', vol: 0.18, slide: 180 });
       FX.burst(this.cx, this.cy, 40, { color: '#ff5d7a', speedMax: 400, lifeMax: 1.0, sizeMax: 8 });
@@ -2744,14 +2746,20 @@ class Boss {
     this.dir = p.cx < this.cx ? -1 : 1;
 
     if (this.state === 'idle') {
-      this.vx = approach(this.vx, this.dir * this.speed * 0.75, 520 * dt);
+      this.vx = approach(this.vx, this.dir * this.speed * 0.9, 680 * dt);
       if (this.timer <= 0) this.chooseAttack(game);
     } else if (this.state === 'tele') {
-      this.vx = approach(this.vx, 0, 2800 * dt);
+      this.vx = approach(this.vx, 0, 3000 * dt);
       if (this.timer <= 0) this.startAttack(game);
     } else if (this.state === 'recover') {
-      this.vx = approach(this.vx, 0, 2200 * dt);
-      if (this.timer <= 0) this.begin('idle', rand(0.65, 1.15) / this.aggro);
+      this.vx = approach(this.vx, 0, 2400 * dt);
+      if (this.timer <= 0) {
+        if (this.phase >= 2 && Math.random() < 0.42) {
+          this.chooseAttack(game);
+        } else {
+          this.begin('idle', rand(0.28, 0.62) / (this.aggro * (1 + (this.phase - 1) * 0.08)));
+        }
+      }
     } else {
       this.updateAttack(dt, game);
     }
@@ -2761,7 +2769,8 @@ class Boss {
     const contact = ['charge', 'bash', 'slash', 'spin', 'slam', 'jump'].includes(this.state);
     if (contact && !this.parried) {
       const parryable = this.state === 'bash' || this.state === 'slash';
-      this.contactDamage(game, parryable, this.state === 'charge' || this.state === 'slam' || this.state === 'jump' ? 2 : 1);
+      const heavy = this.state === 'charge' || this.state === 'slam' || this.state === 'jump';
+      this.contactDamage(game, parryable, heavy ? 2 : 1);
     }
 
     if (this.y > game.level.heightPx + 200) {
@@ -2774,22 +2783,22 @@ class Boss {
     if (this.state === 'slam' || this.state === 'jump') {
       if (this.airborne && this.vy >= 0 && this.onGround) {
         this.airborne = false;
-        this.impact(game, 1.2);
-        this.begin('recover', 0.5);
+        this.impact(game, 1.3);
+        this.begin('recover', 0.3);
       } else if (this.timer <= 0) {
         this.airborne = false;
-        this.impact(game, 1);
-        this.begin('recover', 0.5);
+        this.impact(game, 1.15);
+        this.begin('recover', 0.3);
       }
     } else if (this.state === 'charge') {
       if (this.hitWall || this.timer <= 0) {
-        this.impact(game, 0.9);
-        this.begin('recover', 0.5);
+        this.impact(game, 1.05);
+        this.begin('recover', 0.3);
       }
     } else if (this.state === 'bash' || this.state === 'slash' || this.state === 'spin') {
-      if (this.timer <= 0) this.begin('recover', 0.42);
+      if (this.timer <= 0) this.begin('recover', 0.26);
     } else {
-      this.begin('recover', 0.4);
+      this.begin('recover', 0.28);
     }
   }
 
@@ -2799,47 +2808,47 @@ class Boss {
 
     switch (this.attack) {
       case 'slam':
-        this.vy = -780;
-        this.vx = this.dir * 220;
+        this.vy = -820;
+        this.vx = this.dir * 300;
         this.airborne = true;
-        this.begin('slam', 1.2);
+        this.begin('slam', 1.15);
         game.shake(0.3);
         Sfx.tone(110, 0.24, { type: 'sawtooth', vol: 0.1, slide: 80 });
         break;
       case 'jump':
-        this.vy = -820;
-        this.vx = clamp((p.cx - this.cx) / 0.8, -420, 420);
+        this.vy = -880;
+        this.vx = clamp((p.cx - this.cx) / 0.72, -540, 540);
         this.airborne = true;
-        this.begin('jump', 1.3);
+        this.begin('jump', 1.2);
         game.shake(0.3);
         Sfx.tone(110, 0.24, { type: 'sawtooth', vol: 0.1, slide: 80 });
         break;
       case 'charge':
-        this.vx = this.dir * 560;
-        this.begin('charge', 0.9);
+        this.vx = this.dir * 700;
+        this.begin('charge', 0.8);
         game.shake(0.25);
         Sfx.tone(140, 0.2, { type: 'square', vol: 0.1, slide: 60 });
         break;
       case 'bash':
-        this.vx = this.dir * 380;
-        this.begin('bash', 0.35);
+        this.vx = this.dir * 460;
+        this.begin('bash', 0.3);
         Sfx.tone(260, 0.1, { type: 'square', vol: 0.08, slide: -60 });
         break;
       case 'slash':
-        this.x = clamp(p.cx + (p.face > 0 ? -110 : 110) - this.w / 2, 64, game.level.widthPx - this.w - 64);
-        this.vx = this.dir * 560;
-        this.begin('slash', 0.32);
+        this.x = clamp(p.cx + (p.face > 0 ? -100 : 100) - this.w / 2, 64, game.level.widthPx - this.w - 64);
+        this.vx = this.dir * 680;
+        this.begin('slash', 0.28);
         FX.burst(this.cx, this.cy, 16, { color: this.color, speedMax: 240, lifeMax: 0.5 });
         Sfx.tone(520, 0.12, { type: 'sawtooth', vol: 0.08, slide: -180 });
         break;
       case 'fan': {
-        const count = this.phase === 1 ? 3 : this.phase === 2 ? 5 : 7;
-        const spread = 0.34;
+        const count = this.phase === 1 ? 5 : this.phase === 2 ? 7 : 9;
+        const spread = 0.3;
         const base = Math.atan2(p.cy - (this.cy - 10), p.cx - this.cx);
         for (let i = 0; i < count; i++) {
           const ang = base + (i - (count - 1) / 2) * spread;
           const red = this.style === 'director' && this.phase === 3 && i % 2 === 0;
-          const spd = (this.phase === 3 ? 400 : 340) * projMul;
+          const spd = (this.phase === 1 ? 380 : this.phase === 2 ? 430 : 480) * projMul;
           game.projectiles.push(new Projectile(
             this.cx + Math.cos(ang) * (this.w / 2 + 8),
             this.cy - 10 + Math.sin(ang) * 20,
@@ -2850,79 +2859,92 @@ class Boss {
               r: red ? 9 : 7,
               life: 4,
               parryable: !red,
-              damage: 1
+              damage: red ? 2 : 1
             }
           ));
         }
-        this.begin('recover', 0.45);
+        this.begin('recover', 0.3);
         Sfx.tone(300, 0.14, { type: 'square', vol: 0.08, slide: -100 });
         break;
       }
-      case 'summon':
-        this.summon(game);
-        this.begin('recover', 0.55);
-        break;
-      case 'rain': {
-        const count = this.phase === 1 ? 5 : this.phase === 2 ? 7 : 9;
+      case 'summon': {
+        const count = 2 + (this.phase - 1);
         for (let i = 0; i < count; i++) {
-          const x = clamp(p.cx + rand(-320, 320), 48, game.level.widthPx - 48);
-          const y = Math.max(60, this.y - rand(100, 320));
+          const off = (i - (count - 1) / 2) * 170;
+          const x = clamp(this.cx + off, 80, game.level.widthPx - 80);
+          const d = new Drone(x, this.y + 60, game, {});
+          game.enemies.push(d);
+          FX.burst(x, this.y + 30, 14, { color: this.color, speedMax: 180, lifeMax: 0.6 });
+        }
+        game.toast(this.cfg.name + ' CHAMOU REFORÇOS', this.color, 1.4);
+        Sfx.tone(320, 0.3, { type: 'sawtooth', vol: 0.1, slide: -200 });
+        this.begin('recover', 0.4);
+        break;
+      }
+      case 'rain': {
+        const count = this.phase === 1 ? 7 : this.phase === 2 ? 10 : 13;
+        for (let i = 0; i < count; i++) {
+          const x = clamp(p.cx + rand(-360, 360), 48, game.level.widthPx - 48);
+          const y = Math.max(60, this.y - rand(100, 360));
           game.projectiles.push(new Projectile(
-            x, y, rand(-30, 30), 430 * projMul, 'enemy',
-            { color: this.color, r: 8, damage: 1, life: 4, parryable: true, gravity: 220 }
+            x, y, rand(-40, 40), 520 * projMul, 'enemy',
+            { color: this.color, r: 8, damage: 1, life: 4, parryable: true, gravity: 260 }
           ));
           FX.burst(x, y, 5, { color: this.color, speedMax: 90, lifeMax: 0.3 });
         }
-        this.begin('recover', 0.55);
+        this.begin('recover', 0.38);
         Sfx.tone(180, 0.3, { type: 'sawtooth', vol: 0.1, slide: -80 });
         break;
       }
       case 'shock':
-        this.impact(game, 1.25);
-        this.begin('recover', 0.55);
+        this.impact(game, 1.45);
+        if (this.phase >= 2) this.shockwaves(game, 0.72);
+        this.begin('recover', 0.38);
         break;
       case 'rocks': {
-        for (let i = 0; i < 3; i++) {
-          const ang = Math.atan2(p.cy - this.cy, p.cx - this.cx) + rand(-0.18, 0.18);
+        const count = this.phase === 1 ? 4 : 5;
+        for (let i = 0; i < count; i++) {
+          const ang = Math.atan2(p.cy - this.cy, p.cx - this.cx) + rand(-0.22, 0.22);
           game.projectiles.push(new Projectile(
             this.cx, this.cy - 20,
-            Math.cos(ang) * rand(280, 380), -rand(420, 560),
+            Math.cos(ang) * rand(320, 450), -rand(480, 620),
             'enemy',
-            { color: '#ff8c42', r: 10, damage: 1, life: 4, parryable: true, gravity: 900, kind: 'rock' }
+            { color: '#ff8c42', r: 10, damage: 2, life: 4, parryable: true, gravity: 950, kind: 'rock' }
           ));
         }
-        this.begin('recover', 0.55);
+        this.begin('recover', 0.38);
         Sfx.tone(160, 0.2, { type: 'square', vol: 0.08, slide: -60 });
         break;
       }
       case 'blink':
         this.blink(game);
-        this.begin('recover', 0.4);
+        this.begin('recover', 0.26);
         break;
       case 'clones': {
-        for (let i = 0; i < 3; i++) {
-          const ang = rand(0, TAU);
+        const count = this.phase === 1 ? 4 : 6;
+        for (let i = 0; i < count; i++) {
+          const ang = (TAU * i) / count + this.anim * 0.4;
           game.projectiles.push(new Projectile(
             this.cx, this.cy - 10,
-            Math.cos(ang) * 180, Math.sin(ang) * 180,
+            Math.cos(ang) * 220, Math.sin(ang) * 220,
             'enemy',
             {
               color: '#b18cff', r: 8, damage: 1, life: 4,
-              parryable: true, homing: 1.4
+              parryable: true, homing: 1.8
             }
           ));
         }
-        this.begin('recover', 0.5);
+        this.begin('recover', 0.34);
         Sfx.tone(420, 0.24, { type: 'triangle', vol: 0.08, slide: -220 });
         break;
       }
       case 'ring': {
-        const count = this.phase === 1 ? 10 : this.phase === 2 ? 14 : 18;
+        const count = this.phase === 1 ? 14 : this.phase === 2 ? 18 : 24;
         const skip = Math.round(Math.atan2(p.cy - this.cy, p.cx - this.cx) / TAU * count);
         for (let i = 0; i < count; i++) {
           if (i === skip || i === (skip + 1) % count) continue;
           const ang = (TAU * i) / count + this.anim * 0.35;
-          const spd = 270 * projMul;
+          const spd = (this.phase === 1 ? 300 : 330) * projMul;
           game.projectiles.push(new Projectile(
             this.cx, this.cy - 10,
             Math.cos(ang) * spd, Math.sin(ang) * spd,
@@ -2930,21 +2952,21 @@ class Boss {
             { color: this.color, r: 7, life: 5, parryable: true, damage: 1 }
           ));
         }
-        this.begin('recover', 0.5);
+        this.begin('recover', 0.34);
         Sfx.tone(260, 0.2, { type: 'square', vol: 0.08, slide: -120 });
         break;
       }
       case 'beam': {
-        const rows = this.phase === 1 ? 2 : 3;
+        const rows = this.phase === 1 ? 3 : 4;
         for (let i = 0; i < rows; i++) {
-          const y = p.cy - 24 + i * 24;
+          const y = p.cy - 36 + i * 24;
           game.projectiles.push(new Projectile(
             this.cx + this.dir * (this.w / 2 + 10), y,
-            this.dir * 720 * projMul, 0, 'enemy',
-            { color: this.phase === 3 ? '#ff3355' : '#ffd24d', r: 8, damage: 1, life: 3, parryable: this.phase < 3 }
+            this.dir * 840 * projMul, 0, 'enemy',
+            { color: this.phase === 3 ? '#ff3355' : '#ffd24d', r: 8, damage: this.phase === 3 ? 2 : 1, life: 3, parryable: this.phase < 3 }
           ));
         }
-        this.begin('recover', 0.5);
+        this.begin('recover', 0.34);
         Sfx.tone(700, 0.18, { type: 'sawtooth', vol: 0.08, slide: -400 });
         break;
       }
@@ -2966,7 +2988,7 @@ class Boss {
   }
 
   shockwaves(game, mul = 1) {
-    const spd = 460 * mul * (game.diff ? game.diff.projSpeed : 1);
+    const spd = 520 * mul * (game.diff ? game.diff.projSpeed : 1);
     for (const dir of [-1, 1]) {
       game.projectiles.push(new Projectile(
         this.cx + dir * this.w * 0.34,
@@ -2987,20 +3009,9 @@ class Boss {
     });
   }
 
-  summon(game) {
-    game.toast(this.cfg.name + ' CHAMOU REFORÇOS', this.color, 1.4);
-    for (const off of [-170, 170]) {
-      const x = clamp(this.cx + off, 80, game.level.widthPx - 80);
-      const d = new Drone(x, this.y + 60, game, {});
-      game.enemies.push(d);
-      FX.burst(x, this.y + 30, 14, { color: this.color, speedMax: 180, lifeMax: 0.6 });
-    }
-    Sfx.tone(320, 0.3, { type: 'sawtooth', vol: 0.1, slide: -200 });
-  }
-
   blink(game) {
     const p = game.player;
-    const arena = 380;
+    const arena = 270;
     let x = this.cx < p.cx ? p.cx + arena : p.cx - arena;
     x = clamp(x, 90, game.level.widthPx - 90);
     FX.burst(this.cx, this.cy, 20, { color: this.color, speedMax: 260, lifeMax: 0.5 });
@@ -3147,12 +3158,32 @@ class Boss {
 
     // fase 2/3 aura
     if (this.phase >= 2 && !this.dead) {
+      const auraColor = this.phase === 3 ? '#ff5d7a' : this.color;
+      const acx = x + this.w / 2;
+      const acy = y + this.h * 0.52;
       ctx.save();
       ctx.globalCompositeOperation = 'lighter';
-      ctx.strokeStyle = this.phase === 3 ? '#ff5d7a' : this.color;
+      ctx.strokeStyle = auraColor;
       ctx.globalAlpha = 0.35 + Math.sin(this.anim * 8) * 0.12;
       ctx.lineWidth = 3;
       ctx.strokeRect(x - 5, y - 5, this.w + 10, this.h + 10);
+      ctx.globalAlpha = 0.18 + Math.sin(this.anim * 6) * 0.08;
+      ctx.beginPath();
+      ctx.ellipse(acx, acy, this.w * 0.7 + Math.sin(this.anim * 5) * 6, this.h * 0.58, 0, 0, TAU);
+      ctx.stroke();
+      if (this.phase === 3) {
+        for (let i = 0; i < 6; i++) {
+          const a = this.anim * 2.2 + (TAU * i) / 6;
+          const r0 = this.w * 0.52;
+          const r1 = r0 + 18 + Math.abs(Math.sin(this.anim * 9 + i)) * 22;
+          ctx.globalAlpha = 0.28 + Math.abs(Math.sin(this.anim * 7 + i)) * 0.3;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(acx + Math.cos(a) * r0, acy + Math.sin(a) * r0 * 0.7);
+          ctx.lineTo(acx + Math.cos(a + 0.18) * r1, acy + Math.sin(a + 0.18) * r1 * 0.7);
+          ctx.stroke();
+        }
+      }
       ctx.restore();
     }
 

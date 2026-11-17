@@ -1953,78 +1953,306 @@ Game.prototype.drawArena = function (ctx, cam) {
   const right = arena.right * TILE - cam.x;
   const ceil = 10 * TILE - cam.y;
   const floor = 18 * TILE - cam.y;
-  if (right < -200 || left > VIEW_W + 200) return;
+  if (right < -240 || left > VIEW_W + 240) return;
 
   const boss = this.boss;
   const active = this.bossActive && boss && !boss.dead;
   const cleared = this.bossDefeated;
   const color = cleared ? '#6dff9e' : (boss && boss.color) || '#6dff9e';
+  const alert = active ? '#ff5d7a' : color;
   const ex = (left + right) / 2;
+  const w = right - left;
+  const h = floor - ceil;
+  const id = this.level.id || 0;
+  const gateX = this.exitGate ? this.exitGate.tx * TILE - cam.x : right;
+  const exitX = arena.exit * TILE - cam.x + TILE / 2;
 
   ctx.save();
+  ctx.beginPath();
+  ctx.rect(left, ceil, w + 480, h);
+  ctx.clip();
 
-  // refletores da arena
-  for (let i = 0; i < 3; i++) {
-    const bx = left + (right - left) * (0.2 + i * 0.3);
-    const sway = Math.sin(t * 0.8 + i * 1.7) * 20;
+  // parede de fundo da arena
+  const wall = ctx.createLinearGradient(0, ceil, 0, floor);
+  wall.addColorStop(0, 'rgba(3,7,13,0.72)');
+  wall.addColorStop(0.55, 'rgba(4,9,16,0.52)');
+  wall.addColorStop(1, 'rgba(2,5,10,0.34)');
+  ctx.fillStyle = wall;
+  ctx.fillRect(left, ceil, w, h);
+
+  // tinta ambiente da arena
+  const amb = ctx.createLinearGradient(0, ceil, 0, floor);
+  amb.addColorStop(0, withAlpha(alert, active ? 0.08 : 0.05));
+  amb.addColorStop(0.55, 'rgba(2,6,11,0.05)');
+  amb.addColorStop(1, withAlpha(alert, active ? 0.09 : 0.06));
+  ctx.fillStyle = amb;
+  ctx.fillRect(left, ceil, w, h);
+
+  // paineis da parede
+  for (let y = ceil + 42; y < floor; y += 54) {
+    ctx.fillStyle = 'rgba(150,180,215,0.025)';
+    ctx.fillRect(left, y, w, 1);
+  }
+  for (let x = left + 48; x < right; x += 92) {
+    ctx.fillStyle = 'rgba(4,9,15,0.28)';
+    ctx.fillRect(x, ceil + 14, 2, h - 16);
+    ctx.fillStyle = withAlpha('#bcd8ff', 0.04);
+    ctx.fillRect(x + 3, ceil + 14, 1, h - 16);
+  }
+
+  // nome do chefe em marca d'agua
+  if (boss) {
+    ctx.save();
+    ctx.globalAlpha = active ? 0.09 : 0.05;
+    drawText(ctx, boss.cfg.name, ex, ceil + 60, {
+      size: 34, align: 'center', color: color, weight: '900'
+    });
+    ctx.restore();
+    drawText(ctx, cleared ? 'ARENA LIMPA' : active ? 'COMBATE // ' + boss.cfg.name : boss.cfg.name, ex, ceil + 22, {
+      size: 9, align: 'center', color: withAlpha(alert, active ? 0.95 : 0.6)
+    });
+  }
+
+  // selo grande da arena
+  const sealY = ceil + 134;
+  const sealR = 46 + (active ? Math.sin(t * 3) * 3 : 0);
+  ctx.save();
+  ctx.translate(ex, sealY);
+  ctx.strokeStyle = withAlpha(alert, active ? 0.55 : 0.3);
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(0, 0, sealR, 0, TAU);
+  ctx.stroke();
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = withAlpha(alert, 0.35);
+  ctx.beginPath();
+  ctx.arc(0, 0, sealR + 12, 0.3, 2.7);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(0, 0, sealR + 12, 3.44, 5.84);
+  ctx.stroke();
+  ctx.rotate(t * (active ? 0.35 : 0.12));
+  for (let i = 0; i < 8; i++) {
+    const a = (TAU * i) / 8;
+    ctx.fillStyle = withAlpha(alert, 0.32);
+    ctx.fillRect(Math.cos(a) * (sealR + 6) - 2, Math.sin(a) * (sealR + 6) - 2, 4, 4);
+  }
+  ctx.rotate(-t * (active ? 0.35 : 0.12));
+  ctx.fillStyle = withAlpha(alert, 0.16);
+  ctx.beginPath();
+  ctx.moveTo(0, -26);
+  ctx.lineTo(22, 0);
+  ctx.lineTo(0, 26);
+  ctx.lineTo(-22, 0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = withAlpha(alert, 0.65);
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.restore();
+
+  // trelica de teto
+  ctx.fillStyle = 'rgba(8,13,20,0.55)';
+  ctx.fillRect(left, ceil, w, 8);
+  ctx.fillStyle = 'rgba(150,180,215,0.12)';
+  ctx.fillRect(left, ceil + 8, w, 2);
+  for (let x = left + 24; x < right; x += 64) {
+    ctx.fillStyle = 'rgba(180,205,235,0.16)';
+    ctx.fillRect(x, ceil + 2, 3, 5);
+  }
+
+  // lampadas e cabos
+  for (let i = 0; i < 5; i++) {
+    const lx = left + 62 + i * ((w - 124) / 4);
+    ctx.strokeStyle = 'rgba(150,180,215,0.14)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(lx, ceil + 10);
+    ctx.quadraticCurveTo(lx + 12, ceil + 22, lx + 6, ceil + 32);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(10,16,24,0.9)';
+    roundRect(ctx, lx - 9, ceil + 28, 18, 8, 2);
+    ctx.fill();
+    ctx.fillStyle = withAlpha(active ? '#ffd24d' : '#bfe6ff', active ? 0.8 : 0.35);
+    ctx.fillRect(lx - 6, ceil + 34, 12, 2);
+  }
+
+  // refletores com cones volumetricos
+  const beams = 4;
+  for (let i = 0; i < beams; i++) {
+    const bx = left + w * (0.12 + i * 0.253);
+    const sway = Math.sin(t * 0.7 + i * 1.9) * 26;
+    const spread = 90 + i * 8;
     const grad = ctx.createLinearGradient(bx, ceil, bx + sway, floor);
-    grad.addColorStop(0, withAlpha(color, active ? 0.16 : 0.07));
-    grad.addColorStop(1, withAlpha(color, 0));
+    grad.addColorStop(0, withAlpha(alert, active ? 0.2 : 0.1));
+    grad.addColorStop(0.55, withAlpha(alert, active ? 0.07 : 0.035));
+    grad.addColorStop(1, withAlpha(alert, 0));
     ctx.fillStyle = grad;
     ctx.beginPath();
-    ctx.moveTo(bx - 16, ceil);
-    ctx.lineTo(bx + 16, ceil);
-    ctx.lineTo(bx + 120 + sway, floor);
-    ctx.lineTo(bx - 120 + sway, floor);
+    ctx.moveTo(bx - 13, ceil + 8);
+    ctx.lineTo(bx + 13, ceil + 8);
+    ctx.lineTo(bx + spread + sway, floor);
+    ctx.lineTo(bx - spread + sway, floor);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = withAlpha(alert, 0.12);
+    ctx.beginPath();
+    ctx.ellipse(bx + sway, floor - 2, spread * 0.72, 9, 0, 0, TAU);
+    ctx.fill();
+  }
+
+  // holofote que segue o chefe
+  if (boss && !boss.dead) {
+    const bx = boss.cx - cam.x;
+    const grad = ctx.createLinearGradient(bx, ceil, bx, floor);
+    grad.addColorStop(0, withAlpha(alert, active ? 0.26 : 0.12));
+    grad.addColorStop(1, withAlpha(alert, 0));
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.moveTo(bx - 18, ceil + 8);
+    ctx.lineTo(bx + 18, ceil + 8);
+    ctx.lineTo(bx + 92, floor);
+    ctx.lineTo(bx - 92, floor);
     ctx.closePath();
     ctx.fill();
   }
 
-  // emblema no teto
-  const ey = ceil + 26;
-  ctx.strokeStyle = withAlpha(color, active ? 0.9 : 0.55);
+  // piso: circulo de combate, rachaduras, marcas
+  const cyFloor = floor - 2;
+  ctx.strokeStyle = withAlpha(alert, active ? 0.26 : 0.18);
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.arc(ex, ey, 16 + (active ? Math.sin(t * 4) * 2 : 0), 0, TAU);
+  ctx.ellipse(ex, cyFloor, Math.min(190, w * 0.34), 26, 0, 0, TAU);
   ctx.stroke();
+  ctx.setLineDash([8, 10]);
+  ctx.strokeStyle = withAlpha(alert, 0.2);
   ctx.beginPath();
-  ctx.arc(ex, ey, 23, 0.35, 2.65);
+  ctx.ellipse(ex, cyFloor, Math.min(220, w * 0.4), 34, 0, 0, TAU);
   ctx.stroke();
-  ctx.fillStyle = withAlpha(color, active ? 0.95 : 0.65);
-  ctx.beginPath();
-  ctx.moveTo(ex, ey - 9);
-  ctx.lineTo(ex + 8, ey + 2);
-  ctx.lineTo(ex, ey + 11);
-  ctx.lineTo(ex - 8, ey + 2);
-  ctx.closePath();
-  ctx.fill();
+  ctx.setLineDash([]);
+  for (let i = 0; i < 16; i++) {
+    const a = (TAU * i) / 16;
+    const rx = Math.min(190, w * 0.34);
+    ctx.strokeStyle = withAlpha(alert, 0.14);
+    ctx.beginPath();
+    ctx.moveTo(ex + Math.cos(a) * (rx - 7), cyFloor + Math.sin(a) * 20);
+    ctx.lineTo(ex + Math.cos(a) * (rx + 6), cyFloor + Math.sin(a) * 28);
+    ctx.stroke();
+  }
 
-  // faixas de perigo junto aos portões
+  // rachaduras deterministicas
+  for (let i = 0; i < 7; i++) {
+    const sx = ex + Math.sin(i * 12.9898 + id * 7.13) * Math.min(200, w * 0.36);
+    const sy = cyFloor + Math.cos(i * 4.1415 + id) * 16;
+    ctx.strokeStyle = 'rgba(2,5,9,0.35)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(sx, sy);
+    let px = sx;
+    let py = sy;
+    for (let j = 0; j < 4; j++) {
+      px += Math.sin(i * 3.7 + j * 2.1) * 18;
+      py += 4 + Math.cos(i + j) * 3;
+      ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+  }
+
+  // detritos e sucata
+  for (let i = 0; i < 9; i++) {
+    const dx = left + 30 + ((i * 73 + id * 31) % Math.max(1, w - 60));
+    const dy = floor - 4 - (i % 3) * 2;
+    ctx.fillStyle = i % 2 ? 'rgba(26,36,48,0.75)' : 'rgba(14,20,28,0.8)';
+    ctx.fillRect(dx, dy, 4 + (i % 3) * 3, 2 + (i % 2) * 2);
+  }
+
+  // faixas de perigo junto aos portoes
   for (const side of [-1, 1]) {
-    const hx = side < 0 ? left + 4 : right - 52;
-    for (let i = 0; i < 4; i++) {
-      ctx.fillStyle = i % 2 ? 'rgba(255,210,77,0.30)' : 'rgba(20,24,18,0.45)';
-      ctx.fillRect(hx + i * 12, floor - 7, 12, 7);
+    const hx = side < 0 ? left + 2 : right - 58;
+    for (let i = 0; i < 5; i++) {
+      ctx.fillStyle = i % 2 ? withAlpha(active ? '#ffd24d' : alert, 0.32) : 'rgba(8,12,16,0.7)';
+      ctx.fillRect(hx + i * 12, floor - 9, 12, 9);
     }
   }
 
-  // nome / status do chefe
-  if (boss) {
-    const label = cleared ? 'ARENA LIMPA' : active ? boss.cfg.name + ' // COMBATE' : boss.cfg.name;
-    drawText(ctx, label, ex, ceil + 54, {
-      size: 10, align: 'center', color: withAlpha(color, active ? 0.95 : 0.7)
-    });
+  // molduras laterais / luzes de emergencia
+  for (const side of [-1, 1]) {
+    const px = side < 0 ? left + 1 : right - 9;
+    ctx.fillStyle = 'rgba(8,14,22,0.85)';
+    ctx.fillRect(px, ceil + 12, 8, h - 14);
+    ctx.fillStyle = withAlpha(alert, 0.24);
+    ctx.fillRect(px + 2, ceil + 18, 4, h - 26);
+    for (let i = 0; i < 3; i++) {
+      const ly = ceil + 48 + i * 62;
+      const blink = active ? 0.35 + 0.65 * Math.abs(Math.sin(t * 4 + i * 2 + (side > 0 ? 1.2 : 0))) : 0.18;
+      ctx.fillStyle = withAlpha(active ? '#ff3355' : alert, blink);
+      ctx.fillRect(px + 2, ly, 4, 8);
+    }
   }
 
-  // luzes da sala de saída
-  const roomLeft = (arena.exit - 6) * TILE - cam.x;
-  const roomRight = right + 14 * TILE;
-  for (let lx = roomLeft; lx < roomRight; lx += 96) {
-    ctx.fillStyle = withAlpha(cleared ? '#6dff9e' : '#7fe7ff', cleared ? 0.16 : 0.08);
+  // caminho para a saida
+  if (cleared) {
+    const from = Math.max(left + 8, gateX);
+    const to = Math.max(from + 10, exitX);
+    const pulse = 0.45 + Math.sin(t * 4) * 0.2;
+    const pathGrad = ctx.createLinearGradient(from, 0, to, 0);
+    pathGrad.addColorStop(0, 'rgba(109,255,158,0)');
+    pathGrad.addColorStop(0.35, withAlpha('#6dff9e', 0.14));
+    pathGrad.addColorStop(1, withAlpha('#6dff9e', 0.3));
+    ctx.fillStyle = pathGrad;
+    ctx.fillRect(from, floor - 16, to - from, 16);
+    ctx.strokeStyle = withAlpha('#6dff9e', pulse);
+    ctx.lineWidth = 2;
+    for (let x = from + 12; x < to - 8; x += 30) {
+      const off = (t * 60 + x) % 30;
+      ctx.beginPath();
+      ctx.moveTo(x + off - 10, floor - 15);
+      ctx.lineTo(x + off, floor - 8);
+      ctx.lineTo(x + off - 10, floor - 1);
+      ctx.stroke();
+    }
+    const ax = clamp(exitX, left + 30, right + 300);
+    const ay = floor - 120 + Math.sin(t * 3) * 3;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.fillStyle = withAlpha('#6dff9e', 0.55);
     ctx.beginPath();
-    ctx.ellipse(lx, floor, 46, 9, 0, 0, TAU);
+    ctx.moveTo(ax + 14, ay);
+    ctx.lineTo(ax - 6, ay - 10);
+    ctx.lineTo(ax - 6, ay + 10);
+    ctx.closePath();
     ctx.fill();
+    ctx.restore();
   }
+
+  // poeira suspensa
+  for (let i = 0; i < 18; i++) {
+    const px = left + ((i * 137 + t * (8 + (i % 3) * 5) + id * 41) % Math.max(1, w));
+    const py = ceil + 40 + ((i * 89 + Math.sin(t * 0.6 + i) * 30) % Math.max(1, h - 60));
+    ctx.fillStyle = withAlpha(alert, active ? 0.16 : 0.08);
+    ctx.fillRect(px, py, 2, 2);
+  }
+
+  // alerta de lockdown
+  if (active) {
+    const a = 0.035 + 0.035 * Math.abs(Math.sin(t * 2.4));
+    ctx.fillStyle = withAlpha('#ff3355', a);
+    ctx.fillRect(left, ceil, w, h);
+    ctx.strokeStyle = withAlpha('#ff3355', 0.18);
+    ctx.lineWidth = 1;
+    const scanY = ceil + ((t * 90) % Math.max(1, h));
+    ctx.beginPath();
+    ctx.moveTo(left, scanY);
+    ctx.lineTo(right, scanY);
+    ctx.stroke();
+  }
+
+  // vinheta interna
+  const vg = ctx.createRadialGradient(ex, (ceil + floor) / 2, w * 0.18, ex, (ceil + floor) / 2, w * 0.62);
+  vg.addColorStop(0, 'rgba(0,0,0,0)');
+  vg.addColorStop(1, 'rgba(0,0,0,0.34)');
+  ctx.fillStyle = vg;
+  ctx.fillRect(left, ceil, w, h);
 
   ctx.restore();
 };
@@ -4102,32 +4330,135 @@ Game.prototype.renderCutscene = function (ctx) {
   if (!level || !slide) return;
   const t = this.cutsceneTime;
   const boss = this.cutsceneMode === 'boss';
-  const accent = boss ? '#ff5d7a' : '#6dff9e';
+  const bossCfg = level.bossCfg || null;
+  const accent = boss && bossCfg ? bossCfg.color : (boss ? '#ff5d7a' : '#6dff9e');
   const accent2 = boss ? '#ffd24d' : '#7fe7ff';
+  const arenaSlide = slide.motif === 'bossArena' || slide.motif === 'bossArenaFinal';
+  const portraitSlide = boss && !arenaSlide && String(slide.motif).indexOf('boss') === 0;
+
+  // câmera cinematográfica: push-in lento e tremor sutil no alerta de chefe
+  const push = 1 + Math.min(0.035, t * 0.012);
+  const shakeX = boss ? Math.sin(t * 41) * 1.4 : 0;
+  const shakeY = boss ? Math.cos(t * 37) * 0.9 : 0;
+  ctx.save();
+  ctx.translate(VIEW_W / 2 + shakeX, VIEW_H / 2 + shakeY);
+  ctx.scale(push, push);
+  ctx.translate(-VIEW_W / 2, -VIEW_H / 2);
 
   this.drawCutsceneBackdrop(ctx, level.theme, t);
+
   if (boss) {
-    ctx.fillStyle = 'rgba(52,0,12,0.22)';
+    ctx.fillStyle = 'rgba(42,0,10,0.24)';
     ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+
+    // eixo de luz central
+    const core = ctx.createLinearGradient(VIEW_W / 2, 0, VIEW_W / 2, 640);
+    core.addColorStop(0, withAlpha(accent, 0.22));
+    core.addColorStop(1, withAlpha(accent, 0));
+    ctx.fillStyle = core;
+    ctx.beginPath();
+    ctx.moveTo(VIEW_W / 2 - 34, 0);
+    ctx.lineTo(VIEW_W / 2 + 34, 0);
+    ctx.lineTo(VIEW_W / 2 + 210, 640);
+    ctx.lineTo(VIEW_W / 2 - 210, 640);
+    ctx.closePath();
+    ctx.fill();
+
     // holofotes de alerta
-    for (let i = 0; i < 2; i++) {
-      const bx = 400 + i * 480;
-      const sway = Math.sin(t * 0.7 + i * 2.1) * 30;
-      const beam = ctx.createLinearGradient(bx, 0, bx + sway, 600);
-      beam.addColorStop(0, 'rgba(255,93,122,0.16)');
-      beam.addColorStop(1, 'rgba(255,93,122,0)');
+    for (let i = 0; i < 3; i++) {
+      const bx = 260 + i * 380;
+      const sway = Math.sin(t * 0.7 + i * 2.1) * 34;
+      const beam = ctx.createLinearGradient(bx, 0, bx + sway, 620);
+      beam.addColorStop(0, withAlpha(accent, 0.2));
+      beam.addColorStop(1, withAlpha(accent, 0));
       ctx.fillStyle = beam;
       ctx.beginPath();
       ctx.moveTo(bx - 14, 0);
       ctx.lineTo(bx + 14, 0);
-      ctx.lineTo(bx + sway + 110, 600);
-      ctx.lineTo(bx + sway - 110, 600);
+      ctx.lineTo(bx + sway + 120, 620);
+      ctx.lineTo(bx + sway - 120, 620);
       ctx.closePath();
       ctx.fill();
     }
+
+    // linhas de velocidade radiais
+    ctx.save();
+    ctx.translate(VIEW_W / 2, 340);
+    ctx.rotate(t * 0.04);
+    for (let i = 0; i < 26; i++) {
+      const a = (TAU * i) / 26;
+      const r0 = 310 + (i % 3) * 44;
+      const r1 = r0 + 90 + Math.abs(Math.sin(t * 2.2 + i)) * 120;
+      ctx.strokeStyle = withAlpha(accent, 0.035 + (i % 4) * 0.012);
+      ctx.lineWidth = 1 + (i % 2);
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * r0, Math.sin(a) * r0 * 0.62);
+      ctx.lineTo(Math.cos(a) * r1, Math.sin(a) * r1 * 0.62);
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 
-  // câmera cinematográfica: leve deriva
+  // silhueta gigante do chefe nas telas de arena
+  if (boss && arenaSlide && bossCfg) {
+    const appear = clamp((t - 0.1) / 0.9, 0, 1);
+    ctx.save();
+    ctx.globalAlpha = 0.28 * appear;
+    ctx.translate(VIEW_W / 2, 704);
+    ctx.scale(1.26, 1.26);
+    drawCutsceneBoss(ctx, bossCfg.style, accent, 0, 0, t);
+    ctx.restore();
+  }
+
+  // retículo de mira nas telas de apresentação do chefe
+  if (portraitSlide) {
+    const cx = VIEW_W / 2;
+    const cy = 340;
+    const pulse = 0.5 + Math.sin(t * 3) * 0.5;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.strokeStyle = withAlpha(accent, 0.22 + pulse * 0.2);
+    ctx.lineWidth = 2;
+    ctx.setLineDash([12, 10]);
+    ctx.beginPath();
+    ctx.arc(0, 0, 184 + pulse * 8, 0, TAU);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+      const bx = sx * 208;
+      const by = sy * 208;
+      ctx.beginPath();
+      ctx.moveTo(bx - sx * 28, by);
+      ctx.lineTo(bx, by);
+      ctx.lineTo(bx, by - sy * 28);
+      ctx.stroke();
+    }
+    const scanY = Math.sin(t * 1.8) * 150;
+    ctx.strokeStyle = withAlpha(accent, 0.25);
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(-190, scanY);
+    ctx.lineTo(190, scanY);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // névoa baixa
+  ctx.save();
+  for (let i = 0; i < 4; i++) {
+    const fy = 500 + i * 34;
+    const fog = ctx.createLinearGradient(0, fy - 38, 0, fy + 38);
+    fog.addColorStop(0, 'rgba(180,220,255,0)');
+    fog.addColorStop(0.5, withAlpha(boss ? accent : '#7fe7ff', 0.035));
+    fog.addColorStop(1, 'rgba(180,220,255,0)');
+    ctx.fillStyle = fog;
+    ctx.beginPath();
+    ctx.ellipse(VIEW_W / 2 + Math.sin(t * 0.25 + i) * 60, fy, 520, 38, 0, 0, TAU);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // motivo do slide com deriva
   const driftX = Math.sin(t * 0.35) * 8;
   const driftY = Math.cos(t * 0.28) * 4;
   ctx.save();
@@ -4135,27 +4466,42 @@ Game.prototype.renderCutscene = function (ctx) {
   this.drawCutsceneMotif(ctx, slide.motif, t);
   ctx.restore();
 
-  // VEGA em primeiro plano
+  // VEGA em primeiro plano, entrando pela direita
+  const heroEase = 1 - Math.pow(1 - clamp(t / 0.6, 0, 1), 3);
   ctx.save();
-  ctx.translate(VIEW_W - 208, 566);
+  ctx.translate(VIEW_W - 208 + (1 - heroEase) * 90, 566);
   ctx.scale(1.24, 1.24);
-  drawCutsceneHero(ctx, 0, 0, t, boss ? '#ff8fa3' : '#6dff9e');
+  drawCutsceneHero(ctx, 0, 0, t, boss ? accent : '#6dff9e');
   ctx.restore();
 
   // partículas cinematográficas
   ctx.save();
-  const pcount = boss ? 36 : 22;
+  const pcount = boss ? 46 : 22;
   for (let i = 0; i < pcount; i++) {
     const seed = i * 131.7;
     const px = ((seed + Math.sin(t * 0.6 + i) * 40) % VIEW_W + VIEW_W) % VIEW_W;
-    const py = 620 - ((t * (boss ? 34 : 14) + seed) % 460);
+    const py = 620 - ((t * (boss ? 38 : 14) + seed) % 460);
     const a = boss
-      ? 0.25 + 0.45 * Math.abs(Math.sin(t * 2 + i))
+      ? 0.22 + 0.5 * Math.abs(Math.sin(t * 2 + i))
       : 0.08 + 0.12 * Math.abs(Math.sin(t + i));
-    ctx.fillStyle = withAlpha(boss ? (i % 3 ? '#ff8a5c' : '#ffd24d') : '#9dffbd', a);
+    ctx.fillStyle = withAlpha(boss ? (i % 3 ? accent : '#ffd24d') : '#9dffbd', a);
     const s = boss ? 2 + (i % 3) : 2;
     ctx.fillRect(px, py, s, s);
   }
+  ctx.restore();
+
+  // fade-in e flash de abertura
+  const introFade = clamp(1 - t / 0.7, 0, 1);
+  if (introFade > 0) {
+    ctx.fillStyle = `rgba(2,4,8,${introFade * 0.92})`;
+    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+  }
+  const flash = Math.pow(clamp(1 - t / 0.45, 0, 1), 2);
+  if (flash > 0.01) {
+    ctx.fillStyle = withAlpha(accent, 0.22 * flash);
+    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+  }
+
   ctx.restore();
 
   // vinheta
@@ -4196,7 +4542,7 @@ Game.prototype.renderCutscene = function (ctx) {
     ctx.rect(0, 0, VIEW_W, topH);
     ctx.clip();
     for (let x = -40; x < VIEW_W + 40; x += 48) {
-      ctx.fillStyle = 'rgba(255,93,122,0.10)';
+      ctx.fillStyle = withAlpha(accent, 0.1);
       ctx.beginPath();
       ctx.moveTo(x, 0);
       ctx.lineTo(x + 24, 0);
@@ -4208,11 +4554,16 @@ Game.prototype.renderCutscene = function (ctx) {
     ctx.restore();
   }
 
-  drawScanlines(ctx, boss ? 0.14 : 0.10);
+  // linhas de acento do letterbox
+  ctx.fillStyle = withAlpha(accent, 0.24);
+  ctx.fillRect(0, topH, VIEW_W, 1);
+  ctx.fillRect(0, VIEW_H - 1, VIEW_W, 1);
+
+  drawScanlines(ctx, boss ? 0.14 : 0.1);
 
   // moldura pulsante no modo chefe
   if (boss) {
-    const a = 0.10 + (0.5 + Math.sin(t * 4) * 0.5) * 0.22;
+    const a = 0.1 + (0.5 + Math.sin(t * 4) * 0.5) * 0.22;
     ctx.strokeStyle = withAlpha(accent, a);
     ctx.lineWidth = 3;
     ctx.strokeRect(6, 6, VIEW_W - 12, VIEW_H - 12);
@@ -4234,12 +4585,28 @@ Game.prototype.renderCutscene = function (ctx) {
   }
 
   // cabeçalho
-  drawText(ctx, boss ? 'CEPK // ALERTA DE CHEFE' : 'CEPK // REGISTRO ' + String(this.cutsceneIndex + 1).padStart(2, '0'), 34, 30, {
-    size: 11, color: withAlpha(boss ? accent2 : '#b4e6c3', 0.75)
+  ctx.fillStyle = withAlpha(boss ? '#ff3355' : accent, 0.45 + Math.abs(Math.sin(t * 4)) * 0.55);
+  ctx.fillRect(26, 26, 5, 5);
+  drawText(ctx, boss ? 'CEPK // ALERTA DE CHEFE' : 'CEPK // REGISTRO ' + String(this.cutsceneIndex + 1).padStart(2, '0'), 38, 30, {
+    size: 11, color: withAlpha(boss ? accent2 : '#b4e6c3', 0.78)
   });
   drawText(ctx, level.name.toUpperCase(), VIEW_W - 34, 30, {
     size: 11, align: 'right', color: 'rgba(180,230,195,0.55)'
   });
+
+  // identificação do alvo no topo
+  if (boss && bossCfg) {
+    drawText(ctx, 'ALVO PRIORITÁRIO', VIEW_W / 2, 18, {
+      size: 8, align: 'center', color: withAlpha(accent2, 0.7)
+    });
+    drawText(ctx, bossCfg.name, VIEW_W / 2, 38, {
+      size: 17, align: 'center', color: '#ffffff', glow: accent, glowSize: 12
+    });
+  }
+
+  // barra vertical de acento
+  ctx.fillStyle = withAlpha(accent, 0.55);
+  ctx.fillRect(46, VIEW_H - 205, 2, 150);
 
   // tag do slide
   if (slide.tag) {

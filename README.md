@@ -93,20 +93,21 @@ Ao entrar na área final de cada fase, a câmera trava em uma arena dedicada:
 
 - Um **gatilho** dispara a cutscene exclusiva do chefe (dois slides com arte própria).
 - O **portão de entrada** se fecha e o **portão de saída** permanece travado durante a luta.
-- A arena tem teto, colunas, refletores, faixas de perigo e o emblema do chefe.
+- A arena tem parede de fundo com painéis, treliça de teto, lâmpadas, **quatro refletores volumétricos**, holofote que segue o chefe, selo giratório, marca d'água com o nome do alvo e piso de combate com círculo, rachaduras e detritos.
+- Durante a luta, **luzes de emergência piscam**, um **lockdown vermelho** cobre a sala e uma linha de varredura percorre a arena.
 - Se VEGA cair, o chefe é resetado e a luta recomeça sem repetir a cutscene.
-- Ao derrotar o chefe, os dois portões se abrem e a **sala de saída** é liberada.
+- Ao derrotar o chefe, o lockdown cessa, os portões se abrem e um **caminho luminoso com setas** aponta para a saída.
 
 ## Sala de saída
 
-Depois de cada arena existe uma câmara de saída independente, com portal animado, moldura de metal, colunas laterais, anéis de energia, partículas, iluminação no piso e a placa **SAÍDA**. Enquanto o chefe estiver de pé, o portal aparece bloqueado com correntes e luz vermelha.
+Depois de cada arena existe uma câmara de saída independente, com portal animado, moldura de metal, colunas laterais, anéis de energia, partículas, iluminação no piso e a placa **SAÍDA**. Enquanto o chefe estiver de pé, o portal aparece bloqueado com correntes e luz vermelha. O corredor entre o portão e o portal é **largo e sem pilares**, e os portões têm dois tiles de largura para garantir a passagem depois da vitória.
 
 ## Direção de arte
 
 - **Paletas por ambiente**: pátio em azul-noite com janelas âmbar, corredores em teal e terrazzo, ginásio em madeira e vinho, laboratório em aço azul e diretoria em vinho e dourado. O verde fica reservado ao Sistema Verde, aos poderes e à identidade do HUD.
 - **Piso contínuo**: superfícies desenhadas por trechos, com juntas de laje alinhadas ao mundo, rachaduras, manchas, poças, ralos, musgo e materiais próprios por tema — sem a antiga grade de blocos.
 - **Cenários** com parallax em camadas, skyline, fachada escolar contínua com janelas acesas/apagadas/quebradas, calhas, ar-condicionado, caixa d'água, relógio, cerca, postes e cones de luz. Interiores com armários, quadros de avisos, tanques de laboratório, racks, estantes, janelas com chuva e arquibancadas.
-- **Cutscenes encenadas**: VEGA aparece em primeiro plano, com aura, rim light e arma; a câmera tem leve deriva cinematográfica, holofotes e partículas de brasas nos alertas de chefe.
+- **Cutscenes encenadas**: VEGA aparece em primeiro plano, com aura, rim light e arma; a câmera faz **push-in** com tremor sutil, flash de abertura e vinheta. Nos alertas de chefe há holofotes na cor do alvo, linhas de velocidade radiais, névoa baixa, retículo de mira, silhueta gigante do chefe, partículas de brasas, cabeçalho **ALVO PRIORITÁRIO** e letterbox animado.
 - **Inimigos detalhados**: Walkers com cinto, emblema, rádio e joelheiras; drones com braços de rotor, luzes de navegação e lente; torretas com pés estabilizadores, tambor e ventilação; Chargers com ariete, escapamentos e núcleo; Swoopers com nervuras nas asas, cauda e propulsor.
 - **Chefes** com placas de armadura, rebites, ombreiras e núcleo pulsante, além de silhuetas próprias em cada arena.
 
@@ -118,7 +119,19 @@ Depois de cada arena existe uma câmara de saída independente, com portal anima
 - **A COORDENADORA** — clones, teleportes e padrões de projéteis. Arena: Protocolo de Contenção.
 - **A DIRETORA** — três fases, feixes, invocações e um sinal vermelho. Arena: Sinal Vermelho.
 
-Os chefes telegrafam ataques, mudam de fase conforme perdem vida e podem ser atordoados com parry. Cada um tem cutscene de entrada, arena temática e sala de saída própria.
+Os chefes telegrafam ataques e podem ser atordoados com parry. **Todos os cinco têm três fases**: a fase 2 começa em 66% da vida e a fase 3 em 32%. A cada fase eles ficam mais rápidos, encurtam os telegraphs, reduzem a recuperação e encadeiam combos extras. Cada um tem cutscene de entrada, arena temática e sala de saída própria.
+
+Vida e ritmo dos chefes no modo Normal:
+
+| Chefe | Vida | Velocidade | Padrões principais |
+| --- | --- | --- | --- |
+| O Porteiro | 100 | 84 | investida, marretada, ondas de choque, reforços |
+| A Inspetora | 150 | 96 | leque de projéteis, lâminas, teleporte, chuva, feixe |
+| O Técnico | 210 | 92 | salto, giro, pedras, ondas, impacto |
+| A Coordenadora | 280 | 104 | clones, teleporte, leque, anel, chuva |
+| A Diretora | 420 | 112 | anel, feixe, reforços, clones, chuva e leque |
+
+Os ataques especiais (pedras, feixes vermelhos e projéteis marcados) causam **2 de dano**; o contato comum continua em 1–2 para manter as lutas justas.
 
 ## Dificuldade
 

@@ -488,16 +488,15 @@ function level1() {
   b.checkpoint(104, 17);
 
   // Arena do chefe + sala de saída
-  b.gate(107, 11, 1, 7, 'boss_arena', false);
-  b.gate(127, 11, 1, 7, 'boss_exit', true);
+  b.gate(107, 11, 2, 7, 'boss_arena', false);
+  b.gate(127, 11, 2, 7, 'boss_exit', true);
   b.solid(107, 10, 35, 1);
   b.solid(141, 10, 1, 8);
   b.solid(111, 14, 3);
   b.solid(120, 14, 3);
-  b.solid(130, 12, 1, 6);
   b.solid(139, 12, 1, 6);
   b.gear(121, 12);
-  b.boss(117, 17, { name: 'O PORTEIRO', hp: 48, speed: 62, color: '#6dff9e', w: 116, h: 122, style: 'guardian' });
+  b.boss(117, 17, { name: 'O PORTEIRO', hp: 100, speed: 84, color: '#6dff9e', w: 116, h: 122, style: 'guardian' });
   b.exit(135, 17);
 
   return b.build();
@@ -647,16 +646,15 @@ function level2() {
   b.checkpoint(112, 17);
 
   // Arena do chefe + sala de saída
-  b.gate(114, 11, 1, 7, 'boss_arena', false);
-  b.gate(134, 11, 1, 7, 'boss_exit', true);
+  b.gate(114, 11, 2, 7, 'boss_arena', false);
+  b.gate(134, 11, 2, 7, 'boss_exit', true);
   b.solid(114, 10, 38, 1);
   b.solid(151, 10, 1, 8);
   b.solid(118, 14, 3);
   b.solid(128, 14, 3);
-  b.solid(137, 12, 1, 6);
   b.solid(149, 12, 1, 6);
   b.gear(129, 12);
-  b.boss(124, 17, { name: 'A INSPETORA', hp: 64, speed: 72, color: '#ffd24d', w: 112, h: 126, style: 'hunter' });
+  b.boss(124, 17, { name: 'A INSPETORA', hp: 150, speed: 96, color: '#ffd24d', w: 112, h: 126, style: 'hunter' });
   b.exit(143, 17);
 
   return b.build();
@@ -809,16 +807,15 @@ function level3() {
   b.checkpoint(119, 17);
 
   // Arena do chefe + sala de saída
-  b.gate(122, 11, 1, 7, 'boss_arena', false);
-  b.gate(142, 11, 1, 7, 'boss_exit', true);
+  b.gate(122, 11, 2, 7, 'boss_arena', false);
+  b.gate(142, 11, 2, 7, 'boss_exit', true);
   b.solid(122, 10, 40, 1);
   b.solid(161, 10, 1, 8);
   b.solid(125, 14, 3);
   b.solid(137, 14, 3);
-  b.solid(146, 12, 1, 6);
   b.solid(158, 12, 1, 6);
   b.gear(138, 12);
-  b.boss(132, 17, { name: 'O TÉCNICO', hp: 80, speed: 68, color: '#ff8c42', w: 124, h: 136, style: 'bruiser' });
+  b.boss(132, 17, { name: 'O TÉCNICO', hp: 210, speed: 92, color: '#ff8c42', w: 124, h: 136, style: 'bruiser' });
   b.exit(152, 17);
 
   return b.build();
@@ -972,16 +969,15 @@ function level4() {
   b.checkpoint(126, 17);
 
   // Arena do chefe + sala de saída
-  b.gate(128, 11, 1, 7, 'boss_arena', false);
-  b.gate(148, 11, 1, 7, 'boss_exit', true);
+  b.gate(128, 11, 2, 7, 'boss_arena', false);
+  b.gate(148, 11, 2, 7, 'boss_exit', true);
   b.solid(128, 10, 40, 1);
   b.solid(167, 10, 1, 8);
   b.solid(132, 14, 3);
   b.solid(143, 14, 3);
-  b.solid(152, 12, 1, 6);
   b.solid(164, 12, 1, 6);
   b.gear(144, 12);
-  b.boss(138, 17, { name: 'A COORDENADORA', hp: 98, speed: 76, color: '#b18cff', w: 120, h: 132, style: 'trickster' });
+  b.boss(138, 17, { name: 'A COORDENADORA', hp: 280, speed: 104, color: '#b18cff', w: 120, h: 132, style: 'trickster' });
   b.exit(158, 17);
 
   return b.build();
@@ -1136,16 +1132,15 @@ function level5() {
   b.checkpoint(101, 17);
 
   // Arena final + sala de saída
-  b.gate(102, 11, 1, 7, 'boss_arena', false);
-  b.gate(122, 11, 1, 7, 'boss_exit', true);
+  b.gate(102, 11, 2, 7, 'boss_arena', false);
+  b.gate(122, 11, 2, 7, 'boss_exit', true);
   b.solid(102, 10, 38, 1);
   b.solid(139, 10, 1, 8);
   b.solid(106, 14, 3);
   b.solid(116, 14, 3);
-  b.solid(125, 12, 1, 6);
   b.solid(137, 12, 1, 6);
   b.gear(117, 12);
-  b.boss(112, 17, { name: 'A DIRETORA', hp: 156, speed: 82, color: '#ff5d7a', w: 140, h: 150, final: true, style: 'director' });
+  b.boss(112, 17, { name: 'A DIRETORA', hp: 420, speed: 112, color: '#ff5d7a', w: 140, h: 150, final: true, style: 'director' });
   b.exit(131, 17);
 
   return b.build();
