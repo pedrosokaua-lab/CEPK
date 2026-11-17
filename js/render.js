@@ -150,6 +150,151 @@ function drawPowerIcon(ctx, x, y, s, power, color, state) {
   ctx.restore();
 }
 
+function drawCharacterFace(ctx, ch, x, y, s, t = 0) {
+  const u = s / 16;
+  const px = (gx, gy, gw, gh, color) => {
+    ctx.fillStyle = color;
+    ctx.fillRect(Math.round(x + gx * u), Math.round(y + gy * u), Math.ceil(gw * u), Math.ceil(gh * u));
+  };
+  ctx.save();
+  px(0, 0, 16, 16, 'rgba(3,12,8,0.94)');
+  // ombros
+  px(2, 13, 12, 3, ch.jacket);
+  px(2, 13, 12, 1, ch.jacketLight);
+  px(6, 12, 4, 2, ch.skinDark);
+  // rosto
+  px(4, 4, 8, 8, ch.skin);
+  px(4, 10, 8, 2, ch.skinDark);
+  px(5, 5, 6, 1, withAlpha('#ffffff', 0.12));
+  // olhos
+  px(5, 7, 2, 2, '#f7fbf2');
+  px(9, 7, 2, 2, '#f7fbf2');
+  px(6, 7, 1, 2, '#183020');
+  px(10, 7, 1, 2, '#183020');
+  // boca
+  px(7, 10, 2, 1, '#5a2a20');
+  // cabelo / acessório
+  if (ch.style === 'short') {
+    px(3, 2, 10, 3, ch.hair);
+    px(3, 4, 2, 3, ch.hair);
+    px(11, 4, 2, 2, ch.hair);
+    px(4, 2, 4, 1, ch.hairLight);
+    px(2, 6, 1, 2, ch.accent);
+  } else if (ch.style === 'ponytail') {
+    px(3, 2, 10, 3, ch.hair);
+    px(3, 4, 2, 3, ch.hair);
+    px(11, 4, 2, 2, ch.hair);
+    px(4, 2, 4, 1, ch.hairLight);
+    px(2, 3, 10, 1, ch.color);
+    px(13, 4, 2, 5, ch.hair);
+  } else if (ch.style === 'buzz') {
+    px(4, 2, 8, 2, ch.hair);
+    px(4, 4, 1, 2, ch.hair);
+    px(11, 4, 1, 2, ch.hair);
+    px(5, 2, 3, 1, ch.hairLight);
+    px(5, 10, 6, 2, withAlpha(ch.hair, 0.55));
+  } else {
+    px(2, 1, 12, 4, ch.jacketDark);
+    px(2, 4, 2, 9, ch.jacketDark);
+    px(12, 4, 2, 9, ch.jacketDark);
+    px(4, 2, 8, 2, ch.hair);
+    px(4, 4, 8, 1, ch.hairLight);
+    px(3, 6, 1, 3, ch.accent);
+    px(12, 6, 1, 3, ch.accent);
+  }
+  ctx.strokeStyle = withAlpha(ch.color, 0.55 + Math.sin(t * 3) * 0.15);
+  ctx.lineWidth = Math.max(1, s * 0.035);
+  ctx.strokeRect(x + 1, y + 1, s - 2, s - 2);
+  ctx.restore();
+}
+
+function drawWeaponGlyph(ctx, id, x, y, s, color) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(s / 32, s / 32);
+  if (id === 'bastao') {
+    ctx.strokeStyle = '#5a3a1c';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(-10, 10);
+    ctx.lineTo(8, -8);
+    ctx.stroke();
+    ctx.strokeStyle = '#d9b06a';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(-9, 9);
+    ctx.lineTo(7, -7);
+    ctx.stroke();
+    ctx.fillStyle = color;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 9;
+    ctx.fillRect(4, -14, 8, 8);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(7, -11, 2, 2);
+    ctx.shadowBlur = 0;
+  } else if (id === 'estilingue') {
+    ctx.strokeStyle = '#4a2a12';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(-8, 12);
+    ctx.lineTo(0, -2);
+    ctx.moveTo(0, -2);
+    ctx.lineTo(-6, -13);
+    ctx.moveTo(0, -2);
+    ctx.lineTo(8, -11);
+    ctx.stroke();
+    ctx.strokeStyle = '#a86a36';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(-7, 11);
+    ctx.lineTo(0, -2);
+    ctx.moveTo(0, -2);
+    ctx.lineTo(-5, -12);
+    ctx.moveTo(0, -2);
+    ctx.lineTo(7, -10);
+    ctx.stroke();
+    ctx.strokeStyle = '#7a2a24';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(-5, -12);
+    ctx.lineTo(1, -3);
+    ctx.lineTo(7, -10);
+    ctx.stroke();
+    ctx.fillStyle = '#ffd24d';
+    ctx.shadowColor = '#ffd24d';
+    ctx.shadowBlur = 7;
+    ctx.fillRect(-1, -5, 4, 3);
+    ctx.shadowBlur = 0;
+  } else {
+    ctx.strokeStyle = '#4a2a12';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(-9, 12);
+    ctx.lineTo(4, -5);
+    ctx.stroke();
+    ctx.strokeStyle = '#a86a36';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(-8, 11);
+    ctx.lineTo(3, -4);
+    ctx.stroke();
+    ctx.fillStyle = '#5a6678';
+    ctx.fillRect(-2, -18, 18, 13);
+    ctx.fillStyle = '#9aa7b8';
+    ctx.fillRect(-1, -17, 16, 9);
+    ctx.fillStyle = '#d7e2ee';
+    ctx.fillRect(0, -17, 14, 2);
+    ctx.fillStyle = color;
+    ctx.fillRect(1, -12, 12, 2);
+    ctx.fillStyle = '#ffd24d';
+    ctx.shadowColor = '#ff8c42';
+    ctx.shadowBlur = 8;
+    ctx.fillRect(4, -15, 5, 5);
+    ctx.shadowBlur = 0;
+  }
+  ctx.restore();
+}
+
 function drawPanel(ctx, x, y, w, h, opts = {}) {
   const {
     fill = 'rgba(5,20,12,0.88)', stroke = 'rgba(109,255,158,0.25)',
@@ -2331,119 +2476,202 @@ Game.prototype.drawHUD = function (ctx) {
   const p = this.player;
   if (!p) return;
   const th = this.level.theme;
+  const ch = p.character || this.character || CHARACTERS[0];
 
   // topo
   ctx.save();
-  const g = ctx.createLinearGradient(0, 0, 0, 120);
-  g.addColorStop(0, 'rgba(4,7,14,0.80)');
+  const g = ctx.createLinearGradient(0, 0, 0, 132);
+  g.addColorStop(0, 'rgba(4,7,14,0.86)');
+  g.addColorStop(0.7, 'rgba(4,7,14,0.36)');
   g.addColorStop(1, 'rgba(4,7,14,0)');
   ctx.fillStyle = g;
-  ctx.fillRect(0, 0, VIEW_W, 120);
+  ctx.fillRect(0, 0, VIEW_W, 132);
   ctx.restore();
 
-  // vida
-  drawText(ctx, 'VEGA', 26, 20, { size: 12, color: withAlpha(th.glow, 0.8) });
+  /* ------- painel do personagem ------- */
+  const px0 = 18, py0 = 14, pw0 = 354, ph0 = 96;
+  ctx.save();
+  ctx.fillStyle = 'rgba(4,12,9,0.86)';
+  roundRect(ctx, px0, py0, pw0, ph0, 9);
+  ctx.fill();
+  ctx.strokeStyle = withAlpha(ch.color, 0.5);
+  ctx.lineWidth = 1.5;
+  roundRect(ctx, px0, py0, pw0, ph0, 9);
+  ctx.stroke();
+  ctx.fillStyle = withAlpha(ch.color, 0.09);
+  roundRect(ctx, px0 + 3, py0 + 3, pw0 - 6, 26, 6);
+  ctx.fill();
+  ctx.restore();
+
+  drawCharacterFace(ctx, ch, px0 + 12, py0 + 14, 68, this.time);
+  drawText(ctx, ch.name, px0 + 92, py0 + 20, {
+    size: 19, color: ch.color, glow: ch.color, glowSize: 10
+  });
+  drawText(ctx, ch.role + ' · ' + ch.desc.split('.')[0], px0 + 92, py0 + 40, {
+    size: 9, color: 'rgba(205,235,215,0.62)'
+  });
+
+  // vida em corações
+  const heartSize = p.maxHp > 8 ? 11 : 14;
+  const heartGap = p.maxHp > 8 ? 13 : 17;
   for (let i = 0; i < p.maxHp; i++) {
     const filled = i < p.hp;
-    drawPixelHeart(ctx, 26 + i * 22, 34, 16, filled ? '#6dff9e' : 'rgba(30,60,42,0.9)');
+    drawPixelHeart(ctx, px0 + 92 + i * heartGap, py0 + 50, heartSize,
+      filled ? ch.color : 'rgba(24,44,34,0.95)');
     if (filled) {
       ctx.save();
-      ctx.globalAlpha = 0.35;
-      drawPixelHeart(ctx, 26 + i * 22, 34, 16, '#ffffff');
+      ctx.globalAlpha = 0.32;
+      drawPixelHeart(ctx, px0 + 92 + i * heartGap, py0 + 50, heartSize, '#ffffff');
       ctx.restore();
     }
   }
+  drawText(ctx, p.hp + '/' + p.maxHp, px0 + pw0 - 16, py0 + 56, {
+    size: 10, align: 'right', color: withAlpha(ch.color, 0.85)
+  });
 
   // energia
-  const ew = 230;
-  ctx.fillStyle = 'rgba(5,9,16,0.85)';
-  roundRect(ctx, 26, 58, ew, 15, 4);
+  const ex = px0 + 92, ey = py0 + 70, ew = pw0 - 112;
+  ctx.fillStyle = 'rgba(5,9,16,0.9)';
+  roundRect(ctx, ex, ey, ew, 14, 4);
   ctx.fill();
-  ctx.strokeStyle = 'rgba(130,175,215,0.28)';
+  ctx.strokeStyle = 'rgba(130,175,215,0.3)';
   ctx.lineWidth = 1;
-  roundRect(ctx, 26, 58, ew, 15, 4);
+  roundRect(ctx, ex, ey, ew, 14, 4);
   ctx.stroke();
   const ep = clamp(p.energy / p.maxEnergy, 0, 1);
-  const eg = ctx.createLinearGradient(26, 0, 26 + ew, 0);
+  const eg = ctx.createLinearGradient(ex, 0, ex + ew, 0);
   eg.addColorStop(0, '#2f8a4c');
-  eg.addColorStop(1, p.energyLock > 0 ? '#ff8c42' : '#7fe7ff');
+  eg.addColorStop(0.65, p.energyLock > 0 ? '#ff8c42' : '#7fe7ff');
+  eg.addColorStop(1, p.energyLock > 0 ? '#ffd24d' : '#b6ff9a');
   ctx.fillStyle = eg;
-  roundRect(ctx, 28, 60, (ew - 4) * ep, 11, 3);
+  roundRect(ctx, ex + 2, ey + 2, Math.max(0, (ew - 4) * ep), 10, 3);
   ctx.fill();
-  drawText(ctx, 'ENERGIA', 30, 66, { size: 8, color: 'rgba(3,18,10,0.9)' });
+  ctx.save();
+  ctx.globalAlpha = 0.22;
+  ctx.fillStyle = '#ffffff';
+  roundRect(ctx, ex + 2, ey + 2, Math.max(0, (ew - 4) * ep), 3, 2);
+  ctx.fill();
+  ctx.restore();
+  drawText(ctx, 'ENERGIA', ex + 7, ey + 7, { size: 8, color: 'rgba(3,18,10,0.92)' });
+  drawText(ctx, Math.round(p.energy) + ' / ' + p.maxEnergy, ex + ew - 7, ey + 7, {
+    size: 8, align: 'right', color: 'rgba(235,255,240,0.9)'
+  });
 
-  // fase / dificuldade
+  /* ------- fase / dificuldade ------- */
   const diff = DIFFICULTIES[this.difficulty];
-  drawText(ctx, this.level.name.toUpperCase(), VIEW_W - 26, 22, {
-    size: 15, align: 'right', color: withAlpha(th.glow, 0.9)
+  drawText(ctx, this.level.name.toUpperCase(), VIEW_W - 24, 26, {
+    size: 17, align: 'right', color: withAlpha(th.glow, 0.95)
   });
-  drawText(ctx, `${diff.name}  ·  ${this.level.subtitle || ''}`, VIEW_W - 26, 42, {
-    size: 10, align: 'right', color: withAlpha(diff.color, 0.7)
+  drawText(ctx, `${diff.name}  ·  ${this.level.subtitle || ''}`, VIEW_W - 24, 47, {
+    size: 10, align: 'right', color: withAlpha(diff.color, 0.72)
   });
-
-  // contadores
-  drawText(ctx, `◆ ${this.stats.gears}/${this.totalGears}   ● ${this.stats.cores}/${this.totalCores}   ✦ ${this.cluesFound.size}/4`, VIEW_W - 26, 62, {
-    size: 11, align: 'right', color: 'rgba(210,240,220,0.7)'
+  drawText(ctx, `◆ ${this.stats.gears}/${this.totalGears}   ● ${this.stats.cores}/${this.totalCores}   ✦ ${this.cluesFound.size}/4`, VIEW_W - 24, 68, {
+    size: 11, align: 'right', color: 'rgba(215,242,225,0.75)'
   });
 
-  // barra do chefe
+  /* ------- barra do chefe ------- */
   if (this.boss && this.boss.active && !this.boss.dead) {
     const bw = 500;
     const bx = VIEW_W / 2 - bw / 2;
-    const by = 24;
-    drawText(ctx, this.boss.cfg.name, VIEW_W / 2, by - 10, {
-      size: 14, align: 'center', color: this.boss.color, glow: this.boss.color, glowSize: 8
-    });
-    ctx.fillStyle = 'rgba(3,10,7,0.9)';
-    roundRect(ctx, bx, by, bw, 16, 4);
-    ctx.fill();
-    ctx.strokeStyle = withAlpha(this.boss.color, 0.65);
-    ctx.lineWidth = 1.5;
-    roundRect(ctx, bx, by, bw, 16, 4);
-    ctx.stroke();
+    const by = 30;
     const bp = clamp(this.boss.hp / this.boss.maxHp, 0, 1);
-    ctx.fillStyle = this.boss.phase === 3 ? '#ff3355' : this.boss.phase === 2 ? '#ffd24d' : this.boss.color;
-    roundRect(ctx, bx + 2, by + 2, (bw - 4) * bp, 12, 3);
+    const phaseColor = this.boss.phase === 3 ? '#ff3355' : this.boss.phase === 2 ? '#ffd24d' : this.boss.color;
+
+    ctx.save();
+    // moldura ornamentada
+    ctx.fillStyle = 'rgba(3,9,8,0.94)';
+    roundRect(ctx, bx - 18, by - 18, bw + 36, 44, 8);
     ctx.fill();
-    drawText(ctx, `FASE ${this.boss.phase}`, bx + bw + 14, by + 8, {
-      size: 10, color: withAlpha(this.boss.color, 0.8)
+    ctx.strokeStyle = withAlpha(phaseColor, 0.45);
+    ctx.lineWidth = 1.5;
+    roundRect(ctx, bx - 18, by - 18, bw + 36, 44, 8);
+    ctx.stroke();
+    // pontas
+    ctx.fillStyle = withAlpha(phaseColor, 0.85);
+    ctx.beginPath();
+    ctx.moveTo(bx - 26, by - 6);
+    ctx.lineTo(bx - 14, by - 16);
+    ctx.lineTo(bx - 14, by + 14);
+    ctx.lineTo(bx - 26, by + 4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(bx + bw + 26, by - 6);
+    ctx.lineTo(bx + bw + 14, by - 16);
+    ctx.lineTo(bx + bw + 14, by + 14);
+    ctx.lineTo(bx + bw + 26, by + 4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
+    drawText(ctx, this.boss.cfg.name, VIEW_W / 2, by - 7, {
+      size: 13, align: 'center', color: phaseColor, glow: phaseColor, glowSize: 9
+    });
+    ctx.fillStyle = 'rgba(2,7,6,0.95)';
+    roundRect(ctx, bx, by + 3, bw, 14, 4);
+    ctx.fill();
+    ctx.strokeStyle = withAlpha(phaseColor, 0.6);
+    ctx.lineWidth = 1;
+    roundRect(ctx, bx, by + 3, bw, 14, 4);
+    ctx.stroke();
+    const bg2 = ctx.createLinearGradient(bx, 0, bx + bw, 0);
+    bg2.addColorStop(0, phaseColor);
+    bg2.addColorStop(0.6, this.boss.phase === 3 ? '#ff7a4d' : phaseColor);
+    bg2.addColorStop(1, '#ffffff');
+    ctx.fillStyle = bg2;
+    roundRect(ctx, bx + 2, by + 5, Math.max(0, (bw - 4) * bp), 10, 3);
+    ctx.fill();
+    // marcas de fase
+    for (let i = 1; i <= 2; i++) {
+      const mx = bx + (bw * (i === 1 ? 0.34 : 0.68));
+      ctx.fillStyle = 'rgba(4,10,8,0.9)';
+      ctx.fillRect(mx, by + 3, 2, 14);
+    }
+    drawText(ctx, `FASE ${this.boss.phase}`, bx + bw + 36, by + 10, {
+      size: 9, color: withAlpha(phaseColor, 0.9)
     });
   }
 
-  // armas
+  /* ------- armas ------- */
   const wy = 646;
-  drawText(ctx, 'ARMAS', 26, wy - 12, { size: 9, color: 'rgba(180,220,190,0.6)' });
+  drawText(ctx, 'ARMAS', 24, wy - 12, { size: 9, color: 'rgba(180,220,190,0.6)' });
   for (let i = 0; i < WEAPONS.length; i++) {
     const w = WEAPONS[i];
-    const x = 26 + i * 156;
+    const x = 24 + i * 152;
     const selected = i === this.weaponIndex;
     ctx.save();
-    ctx.fillStyle = selected ? withAlpha(w.color, 0.16) : 'rgba(6,10,17,0.84)';
-    roundRect(ctx, x, wy, 146, 48, 6);
+    ctx.fillStyle = selected ? withAlpha(w.color, 0.18) : 'rgba(6,10,17,0.88)';
+    roundRect(ctx, x, wy, 142, 52, 7);
     ctx.fill();
-    ctx.strokeStyle = selected ? w.color : 'rgba(135,170,205,0.22)';
+    ctx.strokeStyle = selected ? w.color : 'rgba(135,170,205,0.24)';
     ctx.lineWidth = selected ? 2 : 1;
     if (selected) {
       ctx.shadowColor = w.color;
-      ctx.shadowBlur = 12;
+      ctx.shadowBlur = 14;
     }
-    roundRect(ctx, x, wy, 146, 48, 6);
+    roundRect(ctx, x, wy, 142, 52, 7);
     ctx.stroke();
     ctx.shadowBlur = 0;
-    drawKeycap(ctx, String(i + 1), x + 8, wy + 12, w.color, true, 0.9);
-    drawText(ctx, w.name, x + 38, wy + 20, {
-      size: 12, color: selected ? w.color : 'rgba(205,235,215,0.72)'
+    if (selected) {
+      ctx.fillStyle = withAlpha(w.color, 0.9);
+      roundRect(ctx, x, wy, 4, 52, 2);
+      ctx.fill();
+    }
+    drawWeaponGlyph(ctx, w.id, x + 26, wy + 27, 34, w.color);
+    drawKeycap(ctx, String(i + 1), x + 46, wy + 5, w.color, true, 0.78);
+    drawText(ctx, w.name, x + 48, wy + 27, {
+      size: 12, color: selected ? w.color : 'rgba(205,235,215,0.78)'
     });
-    drawText(ctx, w.melee ? 'CORPO A CORPO' : `TIRO · ${w.energy} ENERGIA`, x + 38, wy + 35, {
-      size: 8, color: 'rgba(170,210,185,0.55)'
+    drawText(ctx, w.melee ? 'CORPO A CORPO' : `TIRO · ${w.energy} ENERGIA`, x + 48, wy + 41, {
+      size: 8, color: 'rgba(170,210,185,0.58)'
     });
     ctx.restore();
   }
 
-  // poderes
+  /* ------- poderes ------- */
   const pw = 46;
   const powers = ['pulse', 'focus', 'shield', 'super'];
-  const px = VIEW_W - 26 - powers.length * (pw + 12) + 12;
+  const px = VIEW_W - 24 - powers.length * (pw + 10) + 10;
   drawText(ctx, 'PODERES', px, wy - 12, { size: 9, color: 'rgba(180,220,190,0.6)' });
   powers.forEach((id, i) => {
     const info = POWER_INFO[id];
@@ -2452,32 +2680,32 @@ Game.prototype.drawHUD = function (ctx) {
     if (id === 'focus' && p.focus) state = 'active';
     if (id === 'shield' && p.shield) state = 'active';
     if (id === 'super' && p.superActive) state = 'active';
-    drawPowerIcon(ctx, px + i * (pw + 12), wy, pw, id, info.color, state);
+    drawPowerIcon(ctx, px + i * (pw + 10), wy, pw, id, info.color, state);
   });
 
-  // impulso / parry
+  /* ------- impulso / parry ------- */
   const cdy = wy - 12;
-  drawText(ctx, 'IMPULSO', 500, cdy - 2, { size: 8, color: 'rgba(170,210,185,0.55)' });
-  drawKeycap(ctx, 'SHIFT', 500, cdy + 7, '#7fe7ff', p.dashCd <= 0, 0.9);
-  drawText(ctx, 'PARRY', 590, cdy - 2, { size: 8, color: 'rgba(170,210,185,0.55)' });
-  drawKeycap(ctx, 'E', 590, cdy + 7, '#6dff9e', p.parryCd <= 0, 0.9);
+  drawText(ctx, 'IMPULSO', 512, cdy - 2, { size: 8, color: 'rgba(170,210,185,0.55)' });
+  drawKeycap(ctx, 'SHIFT', 512, cdy + 7, '#7fe7ff', p.dashCd <= 0, 0.9);
+  drawText(ctx, 'PARRY', 602, cdy - 2, { size: 8, color: 'rgba(170,210,185,0.55)' });
+  drawKeycap(ctx, 'E', 602, cdy + 7, '#6dff9e', p.parryCd <= 0, 0.9);
   if (p.parryChain > 1 && p.parryChainTimer > 0) {
-    drawText(ctx, 'x' + p.parryChain, 626, cdy + 15, {
+    drawText(ctx, 'x' + p.parryChain, 638, cdy + 15, {
       size: 12, color: '#ffd24d', glow: '#ffd24d', glowSize: 8
     });
   }
   if (p.dashCd > 0) {
     ctx.fillStyle = 'rgba(3,14,9,0.7)';
-    ctx.fillRect(500, cdy + 31, 58, 3);
+    ctx.fillRect(512, cdy + 31, 58, 3);
     ctx.fillStyle = '#7fe7ff';
-    ctx.fillRect(500, cdy + 31, 58 * (1 - p.dashCd / 0.65), 3);
+    ctx.fillRect(512, cdy + 31, 58 * (1 - p.dashCd / 0.65), 3);
   }
 
   // tutorial
   if (this.level.tutorial) this.drawTutorialHUD(ctx);
 
   // mudo
-  drawText(ctx, Sfx.muted ? 'SOM OFF' : 'M · SOM', VIEW_W - 26, VIEW_H - 16, {
+  drawText(ctx, Sfx.muted ? 'SOM OFF' : 'M · SOM', VIEW_W - 24, VIEW_H - 14, {
     size: 9, align: 'right', color: 'rgba(150,190,165,0.45)'
   });
 
@@ -2528,6 +2756,9 @@ Game.prototype.render = function () {
     case 'menu':
       this.renderMenu(ctx);
       break;
+    case 'characters':
+      this.renderCharacterSelect(ctx);
+      break;
     case 'difficulty':
       this.renderDifficulty(ctx);
       break;
@@ -2565,6 +2796,130 @@ Game.prototype.render = function () {
       this.renderVictory(ctx);
       break;
   }
+};
+
+/* ------------------------------ PERSONAGENS ------------------------------ */
+
+Game.prototype.renderCharacterSelect = function (ctx) {
+  this.drawMenuBackground(ctx, THEMES.school);
+  const t = this.menuTime;
+  const cards = this.characterLayout();
+
+  // fundo decorativo
+  ctx.save();
+  ctx.globalAlpha = 0.45;
+  drawGear(ctx, 70, 120, 30, 11, t * 0.15, withAlpha('#6dff9e', 0.2), 3);
+  drawGear(ctx, VIEW_W - 70, 120, 26, 10, -t * 0.12, withAlpha('#7fe7ff', 0.18), 3);
+  ctx.restore();
+
+  drawText(ctx, 'CEPK  //  ESCALA DE PLANTÃO', VIEW_W / 2, 40, {
+    size: 11, align: 'center', color: 'rgba(180,240,200,0.6)'
+  });
+  drawText(ctx, 'SELECIONE O PERSONAGEM', VIEW_W / 2, 84, {
+    size: 34, align: 'center', color: '#d9ffb0', glow: '#6dff9e', glowSize: 18
+  });
+  drawText(ctx, 'Cada monitor tem um estilo próprio. A escolha fica salva no seu progresso.', VIEW_W / 2, 116, {
+    size: 12, align: 'center', color: 'rgba(195,235,210,0.68)'
+  });
+
+  cards.forEach((card) => {
+    const ch = card.ch;
+    const selected = card.index === this.selectedCharacter;
+    const active = ch.id === this.characterId;
+    const hover = selected;
+
+    ctx.save();
+    // sombra / brilho
+    if (hover) {
+      ctx.shadowColor = ch.color;
+      ctx.shadowBlur = 22;
+    }
+    ctx.fillStyle = hover ? 'rgba(8,22,16,0.96)' : 'rgba(5,13,10,0.9)';
+    roundRect(ctx, card.x, card.y, card.w, card.h, 12);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = hover ? ch.color : withAlpha(ch.color, 0.28);
+    ctx.lineWidth = hover ? 2.5 : 1.2;
+    roundRect(ctx, card.x, card.y, card.w, card.h, 12);
+    ctx.stroke();
+    if (hover) {
+      ctx.fillStyle = withAlpha(ch.color, 0.1);
+      roundRect(ctx, card.x + 4, card.y + 4, card.w - 8, 132, 9);
+      ctx.fill();
+    }
+
+    // retrato
+    const faceSize = 108;
+    drawCharacterFace(ctx, ch, card.x + card.w / 2 - faceSize / 2, card.y + 18, faceSize, t + card.index);
+    // pedestal
+    ctx.fillStyle = withAlpha(ch.color, 0.28);
+    ctx.fillRect(card.x + card.w / 2 - 54, card.y + 128, 108, 2);
+
+    // nome / função
+    drawText(ctx, ch.name, card.x + card.w / 2, card.y + 152, {
+      size: 23, align: 'center', color: ch.color, glow: hover ? ch.color : null, glowSize: 10
+    });
+    drawText(ctx, ch.role, card.x + card.w / 2, card.y + 174, {
+      size: 9, align: 'center', color: 'rgba(190,225,205,0.6)'
+    });
+
+    // barras de atributos
+    const rows = [
+      ['VIDA', clamp((2 + ch.hpBonus) / 4, 0.15, 1), '#6dff9e'],
+      ['VELOCIDADE', clamp((ch.speed - 0.8) / 0.4, 0.15, 1), '#7fe7ff'],
+      ['DANO', clamp((ch.damage - 0.8) / 0.45, 0.15, 1), '#ff8c42'],
+      ['ENERGIA', clamp((ch.energy - 0.75) / 0.65, 0.15, 1), '#b18cff']
+    ];
+    rows.forEach(([label, value, color], i) => {
+      const ry = card.y + 196 + i * 22;
+      drawText(ctx, label, card.x + 22, ry, { size: 9, color: 'rgba(190,225,205,0.62)' });
+      ctx.fillStyle = 'rgba(2,9,6,0.9)';
+      roundRect(ctx, card.x + 96, ry - 5, card.w - 120, 10, 3);
+      ctx.fill();
+      ctx.fillStyle = color;
+      roundRect(ctx, card.x + 98, ry - 3, (card.w - 124) * value, 6, 2);
+      ctx.fill();
+      ctx.save();
+      ctx.globalAlpha = 0.25;
+      ctx.fillStyle = '#ffffff';
+      roundRect(ctx, card.x + 98, ry - 3, (card.w - 124) * value, 2, 1);
+      ctx.fill();
+      ctx.restore();
+    });
+
+    // descrição
+    ctx.fillStyle = 'rgba(160,210,180,0.16)';
+    ctx.fillRect(card.x + 20, card.y + 292, card.w - 40, 1);
+    const lines = wrapTextLines(ctx, ch.desc, card.w - 40, 11);
+    lines.slice(0, 3).forEach((line, i) => {
+      drawText(ctx, line, card.x + 20, card.y + 310 + i * 16, {
+        size: 11, color: 'rgba(205,235,215,0.66)'
+      });
+    });
+
+    // selo
+    if (active) {
+      ctx.fillStyle = withAlpha(ch.color, 0.2);
+      roundRect(ctx, card.x + card.w / 2 - 54, card.y + 352, 108, 20, 5);
+      ctx.fill();
+      ctx.strokeStyle = withAlpha(ch.color, 0.7);
+      ctx.lineWidth = 1;
+      roundRect(ctx, card.x + card.w / 2 - 54, card.y + 352, 108, 20, 5);
+      ctx.stroke();
+      drawText(ctx, 'EM USO', card.x + card.w / 2, card.y + 362, {
+        size: 9, align: 'center', color: ch.color
+      });
+    } else if (selected) {
+      drawText(ctx, 'CONFIRMAR', card.x + card.w / 2, card.y + 362, {
+        size: 9, align: 'center', color: 'rgba(230,255,238,0.75)'
+      });
+    }
+    ctx.restore();
+  });
+
+  drawText(ctx, '← →  ESCOLHER     ENTER / CLIQUE  CONFIRMAR     ESC  VOLTAR', VIEW_W / 2, 622, {
+    size: 11, align: 'center', color: 'rgba(190,230,205,0.62)'
+  });
 };
 
 /* ------------------------------ MENU ------------------------------ */
@@ -2607,7 +2962,8 @@ Game.prototype.renderMenu = function (ctx) {
   drawText(ctx, 'COLÉGIO PRESIDENTE KENNEDY', VIEW_W / 2, 210, {
     size: 18, align: 'center', color: '#c8ffda', glow: '#2f8a4c', glowSize: 12
   });
-  drawText(ctx, 'VEGA · MONITOR DE SEGURANÇA · TURNO DA MADRUGADA', VIEW_W / 2, 242, {
+  const menuChar = this.character || CHARACTERS[0];
+  drawText(ctx, menuChar.name + ' · ' + menuChar.role + ' · TURNO DA MADRUGADA', VIEW_W / 2, 242, {
     size: 11, align: 'center', color: 'rgba(180,230,195,0.58)'
   });
 
@@ -4882,7 +5238,8 @@ Game.prototype.renderVictory = function (ctx) {
     });
   }
 
-  drawText(ctx, 'VEGA · MONITOR DE SEGURANÇA', VIEW_W / 2, 646, {
+  const endChar = this.character || CHARACTERS[0];
+  drawText(ctx, endChar.name + ' · ' + endChar.role, VIEW_W / 2, 646, {
     size: 11, align: 'center', color: 'rgba(230,255,210,0.6)'
   });
   drawText(ctx, 'ENTER / CLIQUE PARA VOLTAR AO MENU', VIEW_W / 2, 678, {

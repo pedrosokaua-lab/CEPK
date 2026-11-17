@@ -427,7 +427,7 @@ function level1() {
     ],
     hint: 'Q libera o PULSO: destrói projéteis e empurra inimigos.',
     boss: { name: 'O PORTEIRO', hp: 48, speed: 62, color: '#6dff9e', w: 116, h: 122, style: 'guardian' },
-    arena: { left: 107, right: 127, trigger: 109, exit: 135 }
+    arena: { left: 107, right: 133, trigger: 109, exit: 138 }
   });
 
   b.ground(0, 20);
@@ -446,14 +446,14 @@ function level1() {
   b.spikes(21, 20, 7);
 
   b.ground(28, 18);
-  b.turret(32, 17, { hp: 3, damage: 1, range: 500 });  // New Turret enemy
+  b.turret(32, 17, { variant: 'mortar', hp: 3, damage: 1, range: 620 });
   b.solid(33, 13, 5);
   b.gear(35, 11);
   b.clue(36, 12, 'pista1');
   b.checkpoint(36, 17);
-  b.enemy(41, 17);
+  b.enemy(41, 17, { variant: 'runner' });
   b.spikes(43, 17, 2);
-  b.drone(44, 10);
+  b.drone(44, 10, { variant: 'sprayer' });
 
   b.solid(47, 15, 2);
   b.gear(47, 13);
@@ -464,9 +464,10 @@ function level1() {
   b.solid(64, 16, 4);
   b.gear(60, 11);
   b.core(65, 14);
-  b.drone(61, 9);
-  b.enemy(57, 17);
-  b.enemy(68, 17);
+  b.drone(61, 9, { variant: 'sniper' });
+  b.enemy(57, 17, { variant: 'shield' });
+  b.enemy(68, 17, { variant: 'bomber' });
+  b.swooper(71, 9, { variant: 'swarm' });
   b.checkpoint(70, 17);
 
   b.solid(77, 15, 3);
@@ -476,7 +477,9 @@ function level1() {
   b.laser(92, 13, 1, 5);
   b.solid(87, 14, 3);
   b.gear(88, 12);
-  b.enemy(88, 17);
+  b.enemy(88, 17, { variant: 'brute' });
+  b.swooper(98, 9, { variant: 'bomber' });
+  b.charger(99, 17);
   b.spikes(95, 17, 3);
 
   // Pulo duplo com spring
@@ -489,15 +492,16 @@ function level1() {
 
   // Arena do chefe + sala de saída
   b.gate(107, 11, 2, 7, 'boss_arena', false);
-  b.gate(127, 11, 2, 7, 'boss_exit', true);
+  b.gate(133, 11, 2, 7, 'boss_exit', true);
   b.solid(107, 10, 35, 1);
   b.solid(141, 10, 1, 8);
   b.solid(111, 14, 3);
   b.solid(120, 14, 3);
-  b.solid(139, 12, 1, 6);
-  b.gear(121, 12);
+  b.solid(127, 14, 3);
+  b.solid(140, 12, 1, 6);
+  b.gear(130, 12);
   b.boss(117, 17, { name: 'O PORTEIRO', hp: 100, speed: 84, color: '#6dff9e', w: 116, h: 122, style: 'guardian' });
-  b.exit(135, 17);
+  b.exit(138, 17);
 
   return b.build();
 }
@@ -583,7 +587,7 @@ function level2() {
     ],
     hint: 'Segure K para ativar o FOCO e desacelerar inimigos e projéteis.',
     boss: { name: 'A INSPETORA', hp: 64, speed: 72, color: '#ffd24d', w: 112, h: 126, style: 'hunter' },
-    arena: { left: 114, right: 134, trigger: 116, exit: 143 }
+    arena: { left: 114, right: 140, trigger: 116, exit: 146 }
   });
 
   b.ground(0, 17);
@@ -591,7 +595,7 @@ function level2() {
   b.power(6, 16, 'focus');
   b.solid(8, 14, 4);
   b.gear(9, 12);
-  b.enemy(12, 17);
+  b.enemy(12, 17, { variant: 'runner' });
   b.crate(14, 17);
   b.crate(15, 17);
   b.crate(16, 17);
@@ -603,15 +607,16 @@ function level2() {
   b.checkpoint(28, 17);
   b.solid(30, 15, 5);
   b.gear(31, 13);
-  b.drone(34, 11);
-  b.drone(40, 9);
+  b.drone(34, 11, { variant: 'sniper' });
+  b.drone(40, 9, { variant: 'sprayer' });
   b.laser(37, 12, 1, 6);
-  b.enemy(35, 17);
-  b.enemy(42, 17);
+  b.enemy(35, 17, { variant: 'shield' });
+  b.enemy(42, 17, { variant: 'bomber' });
   b.spikes(44, 17, 2);
 
   b.solid(47, 15, 2);
   b.gear(47, 13);
+  b.swooper(49, 9, { variant: 'swarm' });
 
   b.ground(52, 25);
   b.solid(54, 16, 4);
@@ -620,11 +625,12 @@ function level2() {
   b.solid(66, 16, 4);
   b.gear(61, 11);
   b.core(67, 14);
-  b.drone(58, 9);
-  b.enemy(56, 17);
-  b.enemy(64, 17);
+  b.drone(58, 9, { variant: 'sprayer' });
+  b.enemy(56, 17, { variant: 'brute' });
+  b.enemy(64, 17, { variant: 'runner' });
   b.checkpoint(69, 17);
   b.laser(72, 13, 1, 5);
+  b.swooper(71, 8, { variant: 'bomber' });
   b.crate(74, 17);
   b.crate(75, 17);
 
@@ -634,28 +640,31 @@ function level2() {
   b.ground(85, 22);
   b.solid(88, 14, 4);
   b.gear(89, 12);
-  b.enemy(90, 17);
-  b.drone(96, 10);
+  b.enemy(90, 17, { variant: 'shield' });
+  b.charger(93, 17, { variant: 'armored' });
+  b.drone(96, 10, { variant: 'sniper' });
+  b.swooper(81, 9, { variant: 'bomber' });
   b.spikes(98, 17, 2);
   b.laser(101, 13, 1, 5);
   b.checkpoint(103, 17);
 
   b.ground(107, 45);
   b.solid(110, 14, 3);
-  b.turret(109, 17, { hp: 3, damage: 1, range: 550 });
+  b.turret(109, 17, { variant: 'mortar', hp: 3, damage: 1, range: 620 });
   b.checkpoint(112, 17);
 
   // Arena do chefe + sala de saída
   b.gate(114, 11, 2, 7, 'boss_arena', false);
-  b.gate(134, 11, 2, 7, 'boss_exit', true);
+  b.gate(140, 11, 2, 7, 'boss_exit', true);
   b.solid(114, 10, 38, 1);
   b.solid(151, 10, 1, 8);
   b.solid(118, 14, 3);
   b.solid(128, 14, 3);
+  b.solid(135, 14, 3);
   b.solid(149, 12, 1, 6);
-  b.gear(129, 12);
-  b.boss(124, 17, { name: 'A INSPETORA', hp: 150, speed: 96, color: '#ffd24d', w: 112, h: 126, style: 'hunter' });
-  b.exit(143, 17);
+  b.gear(136, 12);
+  b.boss(126, 17, { name: 'A INSPETORA', hp: 150, speed: 96, color: '#ffd24d', w: 112, h: 126, style: 'hunter' });
+  b.exit(146, 17);
 
   return b.build();
 }
@@ -741,7 +750,7 @@ function level3() {
     ],
     hint: 'Segure R para ativar o ESCUDO e absorver os ataques.',
     boss: { name: 'O TÉCNICO', hp: 80, speed: 68, color: '#ff8c42', w: 124, h: 136, style: 'bruiser' },
-    arena: { left: 122, right: 142, trigger: 124, exit: 152 }
+    arena: { left: 122, right: 148, trigger: 124, exit: 154 }
   });
 
   b.ground(0, 20);
@@ -749,8 +758,9 @@ function level3() {
   b.power(7, 16, 'shield');
   b.solid(4, 14, 4);
   b.gear(5, 12);
-  b.enemy(12, 17);
-  b.drone(15, 10);
+  b.enemy(12, 17, { variant: 'runner' });
+  b.drone(15, 10, { variant: 'sprayer' });
+  b.turret(17, 17, { variant: 'laser', range: 600 });
 
   b.solid(22, 15, 3);
   b.gear(23, 13);
@@ -761,13 +771,14 @@ function level3() {
   b.solid(38, 13, 4);
   b.gear(39, 11);
   b.clue(40, 12, 'pista3');
-  b.drone(35, 9);
-  b.enemy(36, 17);
+  b.drone(35, 9, { variant: 'sniper' });
+  b.enemy(36, 17, { variant: 'brute' });
   b.spikes(42, 17, 2);
 
   b.solid(47, 16, 2);
   b.solid(50, 13, 2);
   b.gear(50, 11);
+  b.swooper(45, 9, { variant: 'swarm' });
 
   b.ground(53, 24);
   b.checkpoint(56, 17);
@@ -778,14 +789,16 @@ function level3() {
   b.gear(62, 12);
   b.solid(67, 14, 3);
   b.gear(68, 12);
-  b.enemy(63, 17);
-  b.enemy(69, 17);
+  b.enemy(63, 17, { variant: 'shield' });
+  b.enemy(69, 17, { variant: 'bomber' });
+  b.swooper(74, 8, { variant: 'bomber' });
   b.crate(74, 17);
   b.crate(75, 17);
   b.crate(76, 17);
 
   b.solid(77, 21, 8);
   b.spikes(77, 20, 8);
+  b.swooper(81, 9, { variant: 'swarm' });
 
   b.ground(85, 24);
   b.checkpoint(88, 17);
@@ -793,11 +806,13 @@ function level3() {
   b.solid(97, 12, 5);
   b.gear(91, 13);
   b.core(98, 10);
-  b.drone(94, 8);
-  b.drone(103, 10);
-  b.enemy(95, 17);
-  b.enemy(101, 17);
+  b.drone(94, 8, { variant: 'sniper' });
+  b.drone(103, 10, { variant: 'sprayer' });
+  b.enemy(95, 17, { variant: 'runner' });
+  b.enemy(101, 17, { variant: 'brute' });
+  b.charger(92, 17, { variant: 'armored' });
   b.spikes(105, 17, 2);
+  b.swooper(107, 8, { variant: 'swarm' });
 
   // Spring for high jump training
   b.spring(110, 17);  // New Spring
@@ -808,15 +823,16 @@ function level3() {
 
   // Arena do chefe + sala de saída
   b.gate(122, 11, 2, 7, 'boss_arena', false);
-  b.gate(142, 11, 2, 7, 'boss_exit', true);
+  b.gate(148, 11, 2, 7, 'boss_exit', true);
   b.solid(122, 10, 40, 1);
   b.solid(161, 10, 1, 8);
   b.solid(125, 14, 3);
   b.solid(137, 14, 3);
+  b.solid(144, 14, 3);
   b.solid(158, 12, 1, 6);
-  b.gear(138, 12);
-  b.boss(132, 17, { name: 'O TÉCNICO', hp: 210, speed: 92, color: '#ff8c42', w: 124, h: 136, style: 'bruiser' });
-  b.exit(152, 17);
+  b.gear(145, 12);
+  b.boss(134, 17, { name: 'O TÉCNICO', hp: 210, speed: 92, color: '#ff8c42', w: 124, h: 136, style: 'bruiser' });
+  b.exit(154, 17);
 
   return b.build();
 }
@@ -902,7 +918,7 @@ function level4() {
     ],
     hint: 'F ativa a ADRENALINA: mais velocidade, salto e dano por 6s.',
     boss: { name: 'A COORDENADORA', hp: 98, speed: 76, color: '#b18cff', w: 120, h: 132, style: 'trickster' },
-    arena: { left: 128, right: 148, trigger: 130, exit: 158 }
+    arena: { left: 128, right: 154, trigger: 130, exit: 160 }
   });
 
   b.ground(0, 16);
@@ -910,7 +926,7 @@ function level4() {
   b.power(6, 16, 'super');
   b.solid(8, 14, 3);
   b.gear(9, 12);
-  b.enemy(11, 17);
+  b.enemy(11, 17, { variant: 'runner' });
 
   b.solid(16, 21, 10);
   b.spikes(16, 20, 10);
@@ -923,9 +939,10 @@ function level4() {
   b.laser(38, 12, 1, 6);
   b.solid(34, 14, 3);
   b.gear(35, 12);
-  b.turret(33, 17, { hp: 3, damage: 1, range: 500 });  // New Turret
-  b.enemy(41, 17);
-  b.drone(37, 9);
+  b.turret(33, 17, { variant: 'mortar', hp: 3, damage: 1, range: 620 });
+  b.enemy(41, 17, { variant: 'shield' });
+  b.drone(37, 9, { variant: 'sniper' });
+  b.swooper(44, 9, { variant: 'swarm' });
 
   b.solid(47, 15, 3);
   b.solid(51, 13, 2);
@@ -938,22 +955,26 @@ function level4() {
   b.solid(73, 16, 4);
   b.gear(68, 11);
   b.core(74, 14);
-  b.drone(64, 8);
-  b.drone(71, 10);
+  b.drone(64, 8, { variant: 'sprayer' });
+  b.drone(71, 10, { variant: 'sniper' });
+  b.enemy(66, 17, { variant: 'brute' });
+  b.enemy(72, 17, { variant: 'bomber' });
   b.spikes(75, 17, 3);
 
   b.solid(79, 15, 3);
   b.solid(83, 13, 2);
   b.gear(83, 11);
+  b.swooper(80, 9, { variant: 'bomber' });
 
   b.ground(88, 22);
   b.laser(91, 12, 1, 6);
   b.laser(98, 12, 1, 6);
   b.solid(94, 14, 3);
   b.gear(95, 12);
-  b.charger(92, 17, { hp: 5, speed: 76 });  // New Charger
-  b.enemy(92, 17);  // Keep existing
-  b.drone(102, 9);
+  b.charger(92, 17, { variant: 'armored' });
+  b.enemy(97, 17, { variant: 'bomber' });
+  b.drone(102, 9, { variant: 'sprayer' });
+  b.swooper(108, 8, { variant: 'swarm' });
   b.checkpoint(104, 17);
 
   // Pista 4/4 — pegada de Kennedito
@@ -970,15 +991,16 @@ function level4() {
 
   // Arena do chefe + sala de saída
   b.gate(128, 11, 2, 7, 'boss_arena', false);
-  b.gate(148, 11, 2, 7, 'boss_exit', true);
+  b.gate(154, 11, 2, 7, 'boss_exit', true);
   b.solid(128, 10, 40, 1);
   b.solid(167, 10, 1, 8);
   b.solid(132, 14, 3);
   b.solid(143, 14, 3);
+  b.solid(150, 14, 3);
   b.solid(164, 12, 1, 6);
-  b.gear(144, 12);
-  b.boss(138, 17, { name: 'A COORDENADORA', hp: 280, speed: 104, color: '#b18cff', w: 120, h: 132, style: 'trickster' });
-  b.exit(158, 17);
+  b.gear(151, 12);
+  b.boss(140, 17, { name: 'A COORDENADORA', hp: 280, speed: 104, color: '#b18cff', w: 120, h: 132, style: 'trickster' });
+  b.exit(160, 17);
 
   return b.build();
 }
@@ -1074,37 +1096,39 @@ function level5() {
     ],
     hint: 'Combine PULSO, FOCO, ESCUDO e ADRENALINA. O parry é a chave.',
     boss: { name: 'A DIRETORA', hp: 156, speed: 82, color: '#ff5d7a', w: 140, h: 150, final: true, style: 'director' },
-    arena: { left: 102, right: 122, trigger: 104, exit: 131 }
+    arena: { left: 102, right: 128, trigger: 104, exit: 134 }
   });
 
   b.ground(0, 16);
   b.spawn(2, 17);
   b.gear(5, 15);
-  b.enemy(9, 17);
-  b.drone(12, 10);
+  b.enemy(9, 17, { variant: 'runner' });
+  b.drone(12, 10, { variant: 'sniper' });
   b.laser(14, 12, 1, 6);
 
   b.ground(16, 10);
   b.solid(18, 15, 4);
   b.gear(19, 13);
   b.checkpoint(22, 17);
+  b.swooper(24, 9, { variant: 'swarm' });
 
   b.ground(26, 10);
   b.laser(28, 12, 1, 6);
   b.laser(33, 12, 1, 6);
-  b.enemy(30, 17);
-  b.drone(31, 8);
+  b.enemy(30, 17, { variant: 'shield' });
+  b.drone(31, 8, { variant: 'sprayer' });
   b.gear(30, 15);
 
   b.ground(36, 10);
   b.solid(38, 15, 4);
   b.gear(39, 13);
-  b.enemy(42, 17);
+  b.enemy(42, 17, { variant: 'brute' });
 
   b.ground(46, 10);
   b.laser(48, 12, 1, 6);
   b.checkpoint(51, 17);
-  b.drone(53, 9);
+  b.drone(53, 9, { variant: 'sniper' });
+  b.swooper(45, 9, { variant: 'bomber' });
 
   // Section with crumble platforms
   b.ground(56, 84);
@@ -1115,6 +1139,11 @@ function level5() {
   b.gear(61, 12);
   b.gear(81, 12);
   b.core(91, 12);
+  b.turret(58, 17, { variant: 'mortar', range: 640 });
+  b.enemy(64, 17, { variant: 'bomber' });
+  b.swooper(66, 8, { variant: 'swarm' });
+  b.charger(68, 17, { variant: 'armored' });
+  b.enemy(74, 17, { variant: 'runner' });
 
   // Kennedito cage at tile 94-112, position 17
   b.kennedito(94, 17);  // New Kennedito Cage
@@ -1122,10 +1151,12 @@ function level5() {
   // Crumble platforms before the cage
   b.crumble(82, 17, 5);  // Crumble section
   b.crumble(88, 17, 3);  // Another crumble section
+  b.enemy(88, 17, { variant: 'shield' });
+  b.swooper(90, 8, { variant: 'bomber' });
 
   // Turret and charger before the cage
-  b.turret(78, 17, { hp: 3, damage: 1, range: 500 });  // New Turret
-  b.charger(84, 17, { hp: 5, speed: 74 });  // New Charger
+  b.turret(78, 17, { variant: 'laser', range: 620 });
+  b.charger(84, 17, { variant: 'berserk' });
 
   // Portão de resgate: só abre depois de libertar Kennedito.
   b.gate(99, 11, 1, 7, 'rescue');
@@ -1133,15 +1164,16 @@ function level5() {
 
   // Arena final + sala de saída
   b.gate(102, 11, 2, 7, 'boss_arena', false);
-  b.gate(122, 11, 2, 7, 'boss_exit', true);
+  b.gate(128, 11, 2, 7, 'boss_exit', true);
   b.solid(102, 10, 38, 1);
   b.solid(139, 10, 1, 8);
   b.solid(106, 14, 3);
   b.solid(116, 14, 3);
+  b.solid(123, 14, 3);
   b.solid(137, 12, 1, 6);
-  b.gear(117, 12);
-  b.boss(112, 17, { name: 'A DIRETORA', hp: 420, speed: 112, color: '#ff5d7a', w: 140, h: 150, final: true, style: 'director' });
-  b.exit(131, 17);
+  b.gear(124, 12);
+  b.boss(114, 17, { name: 'A DIRETORA', hp: 420, speed: 112, color: '#ff5d7a', w: 140, h: 150, final: true, style: 'director' });
+  b.exit(134, 17);
 
   return b.build();
 }

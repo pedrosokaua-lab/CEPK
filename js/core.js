@@ -78,6 +78,113 @@ const DIFFICULTIES = [
   }
 ];
 
+/* ------------------------------ PERSONAGENS ------------------------------ */
+
+const CHARACTERS = [
+  {
+    id: 'vega',
+    name: 'VEGA',
+    role: 'MONITOR',
+    color: '#6dff9e',
+    accent: '#7fe7ff',
+    hpBonus: 0,
+    speed: 1,
+    damage: 1,
+    energy: 1,
+    skin: '#e8b07a',
+    skinDark: '#c98b58',
+    hair: '#2a1d16',
+    hairLight: '#4a3426',
+    jacket: '#2f8a4c',
+    jacketDark: '#1c5c32',
+    jacketLight: '#49b86a',
+    shirt: '#f2f7ef',
+    badge: '#ffd24d',
+    boot: '#111a2c',
+    pants: '#22304a',
+    style: 'short',
+    desc: 'Equilibrado e confiável. O monitor padrão do CEPK, sem fraquezas.'
+  },
+  {
+    id: 'luna',
+    name: 'LUNA',
+    role: 'ATLETA',
+    color: '#ffd24d',
+    accent: '#ff8c42',
+    hpBonus: -1,
+    speed: 1.14,
+    damage: 1,
+    energy: 1,
+    skin: '#d99a68',
+    skinDark: '#b97a4e',
+    hair: '#1d2a44',
+    hairLight: '#3b4f78',
+    jacket: '#c8553d',
+    jacketDark: '#8f3527',
+    jacketLight: '#ef7a5a',
+    shirt: '#ffe9c8',
+    badge: '#ffd24d',
+    boot: '#2a1a16',
+    pants: '#4a2a33',
+    style: 'ponytail',
+    desc: 'Velocidade de pista: corre mais rápido e troca de posição com facilidade.'
+  },
+  {
+    id: 'bruno',
+    name: 'BRUNO',
+    role: 'TÉCNICO',
+    color: '#ff8c42',
+    accent: '#ffd24d',
+    hpBonus: 2,
+    speed: 0.92,
+    damage: 1.18,
+    energy: 0.85,
+    skin: '#b97a4e',
+    skinDark: '#8f5734',
+    hair: '#141414',
+    hairLight: '#2e2e2e',
+    jacket: '#b5562e',
+    jacketDark: '#7a3418',
+    jacketLight: '#d97a4a',
+    shirt: '#e8e2d0',
+    badge: '#ff8c42',
+    boot: '#1c1410',
+    pants: '#3a2a20',
+    style: 'buzz',
+    desc: 'Tanque da quadra: mais vida e mais dano, mas paga em mobilidade.'
+  },
+  {
+    id: 'nina',
+    name: 'NINA',
+    role: 'HACKER',
+    color: '#b18cff',
+    accent: '#7fe7ff',
+    hpBonus: 0,
+    speed: 1.04,
+    damage: 0.92,
+    energy: 1.35,
+    skin: '#f0c49a',
+    skinDark: '#cf9c70',
+    hair: '#5a3b8f',
+    hairLight: '#8560c9',
+    jacket: '#5c3f9e',
+    jacketDark: '#3b266e',
+    jacketLight: '#8560c9',
+    shirt: '#c8f4ff',
+    badge: '#b18cff',
+    boot: '#1a1630',
+    pants: '#2a2350',
+    style: 'hood',
+    desc: 'Especialista em energia: barra maior, recarga acelerada e muito estilo.'
+  }
+];
+
+const CHARACTER_IDS = CHARACTERS.map((c) => c.id);
+
+function getCharacter(id) {
+  return CHARACTERS.find((c) => c.id === id) || CHARACTERS[0];
+}
+
 /* ------------------------------ ARMAS ------------------------------ */
 
 const WEAPONS = [
@@ -542,6 +649,7 @@ function loadSave() {
       clues: data.clues && typeof data.clues === 'object' ? data.clues : {},
       completed: Array.isArray(data.completed) ? data.completed : [],
       tutorialDone: !!data.tutorialDone,
+      character: CHARACTER_IDS.includes(data.character) ? data.character : 'vega',
       difficulty: Number.isFinite(diffValue) ? clamp(diffValue, 0, DIFFICULTIES.length - 1) : 1
     };
   } catch (err) {

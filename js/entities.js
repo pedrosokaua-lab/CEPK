@@ -167,6 +167,11 @@ function drawKenneditoSprite(ctx, x, y, scale = 1, t = 0, opts = {}) {
 class Player {
   constructor(x, y, game) {
     this.game = game;
+    const ch = (game && game.character) || CHARACTERS[0];
+    this.character = ch;
+    this.speedMul = ch.speed || 1;
+    this.damageMul = ch.damage || 1;
+    this.energyMul = ch.energy || 1;
     this.w = 28;
     this.h = 42;
     this.x = x - this.w / 2;
@@ -178,8 +183,8 @@ class Player {
     this.face = 1;
     this.maxHp = 5;
     this.hp = 5;
-    this.maxEnergy = 100;
-    this.energy = 100;
+    this.maxEnergy = Math.round(100 * this.energyMul);
+    this.energy = this.maxEnergy;
     this.energyLock = 0;
     this.invuln = 0;
     this.hurtFlash = 0;
@@ -273,8 +278,8 @@ class Player {
     const right = Input.isDown('ArrowRight', 'KeyD');
     const running = Input.isDown('ShiftLeft', 'ShiftRight');
     const superOn = this.superActive;
-    const maxSpeed = (running ? 338 : 226) * (superOn ? 1.2 : 1);
-    const accel = this.onGround ? 3400 : 2350;
+    const maxSpeed = (running ? 338 : 226) * this.speedMul * (superOn ? 1.2 : 1);
+    const accel = (this.onGround ? 3400 : 2350) * (0.85 + this.speedMul * 0.15);
 
     // Mira de 8 direções: WASD/setas definem o lado do golpe e do tiro.
     const aimRawX = (right ? 1 : 0) - (left ? 1 : 0);
@@ -311,7 +316,7 @@ class Player {
       this.dashCd = 0.65;
       this.justDashed = true;
       this.invuln = Math.max(this.invuln, 0.22);
-      this.vx = this.face * 720;
+      this.vx = this.face * 720 * this.speedMul;
       this.vy = 0;
       Sfx.tone(300, 0.14, { type: 'sawtooth', vol: 0.08, slide: 260 });
       Sfx.noise(0.12, 0.06, { freq: 1200 });
@@ -322,7 +327,7 @@ class Player {
     }
 
     if (this.dashTimer > 0) {
-      this.vx = this.face * 720;
+      this.vx = this.face * 720 * this.speedMul;
       this.vy = Math.min(this.vy, 30);
     }
 
@@ -428,7 +433,7 @@ class Player {
       }
     } else {
       const regen = game.diff ? game.diff.energyRegen : 1;
-      this.energy = Math.min(this.maxEnergy, this.energy + 10 * regen * dt);
+      this.energy = Math.min(this.maxEnergy, this.energy + 10 * regen * this.energyMul * dt);
     }
 
     /* ------- física ------- */
@@ -486,8 +491,8 @@ class Player {
       w: boxW,
       h: boxH
     };
-    const damage = weapon.damage + (finisher ? 1 : 0) + (this.superActive ? 2 : 0);
-    const bossDamage = weapon.bossDamage + (finisher ? 2 : 0) + (this.superActive ? 3 : 0);
+    const damage = Math.max(1, Math.round((weapon.damage + (finisher ? 1 : 0) + (this.superActive ? 2 : 0)) * this.damageMul));
+    const bossDamage = Math.max(1, Math.round((weapon.bossDamage + (finisher ? 2 : 0) + (this.superActive ? 3 : 0)) * this.damageMul));
     const force = weapon.id === 'martelo' ? 700 : 420;
     let hit = false;
 
@@ -562,8 +567,8 @@ class Player {
     game.projectiles.push(new Projectile(px, py, dx * weapon.speed, dy * weapon.speed, 'player', {
       color: weapon.color,
       r: 5,
-      damage: weapon.damage + (this.superActive ? 2 : 0),
-      bossDamage: weapon.bossDamage + (this.superActive ? 3 : 0),
+      damage: Math.max(1, Math.round((weapon.damage + (this.superActive ? 2 : 0)) * this.damageMul)),
+      bossDamage: Math.max(1, Math.round((weapon.bossDamage + (this.superActive ? 3 : 0)) * this.damageMul)),
       life: 1.2,
       kind: 'pellet',
       parryable: false
@@ -653,6 +658,7 @@ class Player {
     const y = this.y - cam.y;
     if (this.dead) return;
 
+    const ch = this.character || CHARACTERS[0];
     const blink = this.invuln > 0 && Math.floor(this.invuln * 24) % 2 === 0;
     ctx.save();
     if (blink) ctx.globalAlpha = 0.42;
@@ -660,14 +666,31 @@ class Player {
     const walk = this.onGround && Math.abs(this.vx) > 30 ? Math.sin(this.anim * 14) * 3 : 0;
     const bob = this.onGround ? 0 : Math.sin(this.anim * 5) * 1.5;
     const squash = 1 - this.landSquash * 0.12;
+    const superOn = this.superActive;
+
+    const skin = ch.skin;
+    const skinDark = ch.skinDark;
+    const jacket = superOn ? '#ffd24d' : ch.jacket;
+    const jacketDark = superOn ? '#b9861f' : ch.jacketDark;
+    const jacketLight = superOn ? '#fff2b0' : ch.jacketLight;
+    const hair = ch.hair;
+    const hairLight = ch.hairLight;
+    const shirt = superOn ? '#fff8d8' : ch.shirt;
+    const badge = superOn ? '#ffffff' : ch.badge;
+    const boot = ch.boot;
+    const pants = ch.pants;
+    const accent = superOn ? '#fff2b0' : ch.accent;
 
     // rastro do dash
     if (this.dashTimer > 0) {
       ctx.save();
-      ctx.globalAlpha = 0.22;
-      ctx.fillStyle = '#6dff9e';
-      for (let i = 1; i <= 3; i++) {
-        ctx.fillRect(x - this.face * i * 18, y + 10, this.w, this.h - 10);
+      for (let i = 1; i <= 4; i++) {
+        ctx.globalAlpha = 0.24 - i * 0.045;
+        ctx.fillStyle = accent;
+        const tx = x - this.face * i * 15;
+        ctx.fillRect(tx + 4, y + 10, this.w - 8, this.h - 14);
+        ctx.fillStyle = ch.color;
+        ctx.fillRect(tx + 9, y + 16, this.w - 18, this.h - 24);
       }
       ctx.restore();
     }
@@ -678,63 +701,188 @@ class Player {
     ctx.ellipse(x + this.w / 2, y + this.h + 3, 16, 5, 0, 0, TAU);
     ctx.fill();
 
-    const skin = '#e8b07a';
-    const skinDark = '#c98b58';
-    const blazer = this.superActive ? '#4a9c3c' : '#2f8a4c';
-    const blazerDark = this.superActive ? '#2d6826' : '#1c5c32';
+    // cachecol (VEGA) / cauda (LUNA) atrás do corpo
+    if (ch.style === 'short') {
+      const flap = Math.sin(this.anim * 10) * 3 + (this.onGround ? 0 : -4);
+      ctx.save();
+      ctx.globalAlpha = 0.85;
+      ctx.fillStyle = accent;
+      ctx.fillRect(x - this.face * 6 - 2, y + 15 + bob, 8, 4);
+      ctx.fillRect(x - this.face * 10 - 2, y + 18 + bob + flap, 7, 3);
+      ctx.restore();
+    }
+    if (ch.style === 'ponytail') {
+      const sway = Math.sin(this.anim * 9) * 2 + (this.onGround ? 0 : -2);
+      const px = this.face > 0 ? x - 4 : x + this.w - 1;
+      ctx.fillStyle = hair;
+      ctx.fillRect(px, y + 4 + bob, 4, 8);
+      ctx.fillRect(px - this.face * 3, y + 10 + bob + sway, 3, 7);
+      ctx.fillStyle = hairLight;
+      ctx.fillRect(px + 1, y + 5 + bob, 1, 5);
+    }
+
+    // braço de trás
+    ctx.fillStyle = jacketDark;
+    ctx.fillRect(x - 1, y + 17 + bob, 5, 10);
+    ctx.fillStyle = skinDark;
+    ctx.fillRect(x - 1, y + 25 + bob, 5, 4);
 
     // pernas
-    ctx.fillStyle = '#22304a';
-    ctx.fillRect(x + 5, y + 30 + walk, 7, 10 - walk);
-    ctx.fillRect(x + 17, y + 30 - walk, 7, 10 + walk);
-    ctx.fillStyle = '#111a2c';
-    ctx.fillRect(x + 3, y + 39 + walk, 10, 4);
-    ctx.fillRect(x + 16, y + 39 - walk, 10, 4);
+    ctx.fillStyle = pants;
+    ctx.fillRect(x + 5, y + 29 + walk, 7, 10 - walk);
+    ctx.fillRect(x + 17, y + 29 - walk, 7, 10 + walk);
+    ctx.fillStyle = jacketDark;
+    ctx.fillRect(x + 5, y + 34 + walk, 7, 3);
+    ctx.fillRect(x + 17, y + 34 - walk, 7, 3);
+    ctx.fillStyle = boot;
+    ctx.fillRect(x + 3, y + 38 + walk, 10, 4);
+    ctx.fillRect(x + 16, y + 38 - walk, 10, 4);
+    ctx.fillStyle = withAlpha(accent, 0.5);
+    ctx.fillRect(x + 4, y + 38 + walk, 8, 1);
+    ctx.fillRect(x + 17, y + 38 - walk, 8, 1);
 
-    // corpo / blazer
-    ctx.fillStyle = blazer;
-    ctx.fillRect(x + 3, y + 14 + bob, 22, 19 * squash);
-    ctx.fillStyle = blazerDark;
-    ctx.fillRect(x + 3, y + 29 + bob, 22, 4);
-    ctx.fillStyle = '#f2f7ef';
-    ctx.fillRect(x + 11, y + 14 + bob, 7, 13);
-    ctx.fillStyle = '#d7e2d2';
-    ctx.fillRect(x + 13, y + 14 + bob, 2, 13);
+    // torso / jaqueta
+    ctx.fillStyle = jacket;
+    ctx.fillRect(x + 3, y + 13 + bob, 22, 17 * squash);
+    ctx.fillStyle = jacketLight;
+    ctx.fillRect(x + 4, y + 13 + bob, 3, 14 * squash);
+    ctx.fillStyle = jacketDark;
+    ctx.fillRect(x + 22, y + 13 + bob, 3, 16 * squash);
+    ctx.fillRect(x + 3, y + 27 + bob, 22, 3);
+    // camisa
+    ctx.fillStyle = shirt;
+    ctx.fillRect(x + 11, y + 13 + bob, 7, 13);
+    ctx.fillStyle = withAlpha('#000000', 0.15);
+    ctx.fillRect(x + 14, y + 13 + bob, 1, 13);
+    // gola
+    ctx.fillStyle = jacketDark;
+    ctx.fillRect(x + 9, y + 13 + bob, 3, 3);
+    ctx.fillRect(x + 17, y + 13 + bob, 3, 3);
+    // cinto
+    ctx.fillStyle = boot;
+    ctx.fillRect(x + 3, y + 28 + bob, 22, 3);
+    ctx.fillStyle = badge;
+    ctx.fillRect(x + 13, y + 28 + bob, 3, 3);
     // crachá
-    ctx.fillStyle = '#ffd24d';
-    ctx.fillRect(x + 19, y + 19 + bob, 4, 4);
-    ctx.fillStyle = '#2a2410';
-    ctx.fillRect(x + 20, y + 20 + bob, 2, 2);
+    ctx.fillStyle = badge;
+    ctx.fillRect(x + 19, y + 18 + bob, 4, 5);
+    ctx.fillStyle = withAlpha('#000000', 0.65);
+    ctx.fillRect(x + 20, y + 19 + bob, 2, 2);
+    // faixa refletiva
+    ctx.fillStyle = withAlpha(accent, 0.65);
+    ctx.fillRect(x + 4, y + 24 + bob, 18, 1);
 
-    // braços
-    ctx.fillStyle = blazer;
-    ctx.fillRect(x - 1, y + 17 + bob, 5, 10);
+    // ombreiras
+    ctx.fillStyle = jacketLight;
+    ctx.fillRect(x + 2, y + 13 + bob, 7, 3);
+    ctx.fillRect(x + 19, y + 13 + bob, 7, 3);
+    ctx.fillStyle = jacketDark;
+    ctx.fillRect(x + 2, y + 16 + bob, 2, 2);
+    ctx.fillRect(x + 24, y + 16 + bob, 2, 2);
+
+    // braço da frente
+    ctx.fillStyle = jacket;
     ctx.fillRect(x + 24, y + 17 + bob, 5, 10);
+    ctx.fillStyle = jacketLight;
+    ctx.fillRect(x + 24, y + 17 + bob, 1, 8);
     ctx.fillStyle = skin;
-    ctx.fillRect(x - 1, y + 26 + bob, 5, 4);
-    ctx.fillRect(x + 24, y + 26 + bob, 5, 4);
+    ctx.fillRect(x + 24, y + 25 + bob, 5, 4);
+    ctx.fillStyle = accent;
+    ctx.fillRect(x + 24, y + 24 + bob, 5, 1);
 
     // cabeça
-    ctx.fillStyle = skin;
-    ctx.fillRect(x + 6, y + 3 + bob, 16, 12);
     ctx.fillStyle = skinDark;
-    ctx.fillRect(x + 6, y + 12 + bob, 16, 3);
-    // cabelo
-    ctx.fillStyle = '#2a1d16';
-    ctx.fillRect(x + 5, y + 1 + bob, 18, 5);
-    ctx.fillRect(x + (this.face > 0 ? 5 : 20), y + 5 + bob, 3, 3);
-    // olho
-    ctx.fillStyle = '#f7fbf2';
-    ctx.fillRect(x + (this.face > 0 ? 16 : 8), y + 7 + bob, 4, 3);
-    ctx.fillStyle = '#183020';
-    ctx.fillRect(x + (this.face > 0 ? 18 : 8), y + 8 + bob, 2, 2);
+    ctx.fillRect(x + 12, y + 12 + bob, 5, 3);
+    ctx.fillStyle = skin;
+    ctx.fillRect(x + 6, y + 2 + bob, 16, 12);
+    ctx.fillStyle = skinDark;
+    ctx.fillRect(x + 6, y + 11 + bob, 16, 3);
     // orelha
     ctx.fillStyle = skinDark;
-    ctx.fillRect(x + (this.face > 0 ? 21 : 5), y + 8 + bob, 2, 3);
+    ctx.fillRect(x + (this.face > 0 ? 21 : 5), y + 7 + bob, 2, 3);
 
-    // faixa de monitor no braço
-    ctx.fillStyle = '#ffd24d';
-    ctx.fillRect(x + 24, y + 20 + bob, 5, 2);
+    // olho
+    const eyeX = x + (this.face > 0 ? 15 : 7);
+    ctx.fillStyle = '#f7fbf2';
+    ctx.fillRect(eyeX, y + 6 + bob, 5, 4);
+    ctx.fillStyle = '#183020';
+    ctx.fillRect(eyeX + (this.face > 0 ? 3 : 0), y + 7 + bob, 2, 3);
+    // sobrancelha
+    ctx.fillStyle = hair;
+    ctx.fillRect(eyeX - (this.face > 0 ? 0 : 1), y + 5 + bob, 5, 1);
+    // boca
+    ctx.fillStyle = withAlpha('#5a2a20', 0.75);
+    ctx.fillRect(x + (this.face > 0 ? 16 : 9), y + 11 + bob, 3, 1);
+
+    // cabelo / acessório por personagem
+    if (ch.style === 'short') {
+      ctx.fillStyle = hair;
+      ctx.fillRect(x + 5, y + bob, 18, 5);
+      ctx.fillRect(x + 4, y + 4 + bob, 4, 5);
+      ctx.fillRect(x + 20, y + 4 + bob, 4, 3);
+      ctx.fillStyle = hairLight;
+      ctx.fillRect(x + 7, y + 1 + bob, 6, 1);
+      // headset
+      ctx.fillStyle = accent;
+      ctx.fillRect(x + (this.face > 0 ? 3 : 22), y + 5 + bob, 3, 4);
+      ctx.fillStyle = '#eafff5';
+      ctx.fillRect(x + (this.face > 0 ? 4 : 23), y + 6 + bob, 1, 2);
+      ctx.strokeStyle = withAlpha(accent, 0.8);
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x + (this.face > 0 ? 5 : 23), y + 9 + bob);
+      ctx.lineTo(x + (this.face > 0 ? 9 : 19), y + 12 + bob);
+      ctx.stroke();
+    } else if (ch.style === 'ponytail') {
+      ctx.fillStyle = hair;
+      ctx.fillRect(x + 5, y + bob, 18, 5);
+      ctx.fillRect(x + 4, y + 4 + bob, 3, 4);
+      ctx.fillRect(x + 21, y + 4 + bob, 3, 3);
+      ctx.fillStyle = hairLight;
+      ctx.fillRect(x + 8, y + 1 + bob, 7, 1);
+      // faixa
+      ctx.fillStyle = ch.color;
+      ctx.fillRect(x + 5, y + 3 + bob, 18, 2);
+      ctx.fillStyle = '#fff2b0';
+      ctx.fillRect(x + (this.face > 0 ? 21 : 6), y + 3 + bob, 2, 2);
+    } else if (ch.style === 'buzz') {
+      ctx.fillStyle = hair;
+      ctx.fillRect(x + 6, y + 1 + bob, 16, 4);
+      ctx.fillRect(x + 5, y + 4 + bob, 2, 4);
+      ctx.fillRect(x + 21, y + 4 + bob, 2, 3);
+      ctx.fillStyle = hairLight;
+      ctx.fillRect(x + 8, y + 1 + bob, 5, 1);
+      // barba
+      ctx.fillStyle = withAlpha(hair, 0.55);
+      ctx.fillRect(x + 7, y + 10 + bob, 14, 3);
+      ctx.fillStyle = skinDark;
+      ctx.fillRect(x + 12, y + 11 + bob, 5, 1);
+    } else {
+      // capuz
+      ctx.fillStyle = jacketDark;
+      ctx.fillRect(x + 3, y - 1 + bob, 22, 7);
+      ctx.fillRect(x + 3, y + 4 + bob, 4, 12);
+      ctx.fillRect(x + 21, y + 4 + bob, 4, 12);
+      ctx.fillStyle = jacket;
+      ctx.fillRect(x + 6, y + bob, 16, 3);
+      ctx.fillStyle = hairLight;
+      ctx.fillRect(x + 9, y + 3 + bob, 10, 2);
+      // fones
+      ctx.fillStyle = '#22263a';
+      ctx.fillRect(x + 4, y + 5 + bob, 3, 5);
+      ctx.fillRect(x + 21, y + 5 + bob, 3, 5);
+      ctx.fillStyle = accent;
+      ctx.fillRect(x + 4, y + 6 + bob, 2, 2);
+      ctx.fillRect(x + 22, y + 6 + bob, 2, 2);
+    }
+
+    // luz de contorno
+    ctx.save();
+    ctx.globalAlpha = 0.5;
+    ctx.fillStyle = accent;
+    ctx.fillRect(x + 4, y + 1 + bob, 16, 1);
+    ctx.fillRect(x + 4, y + 14 + bob, 1, 10);
+    ctx.restore();
 
     /* ------- arma ------- */
     const weapon = WEAPONS[this.attackWeapon] || WEAPONS[0];
@@ -748,42 +896,117 @@ class Player {
       else if (this.attackAimY > 0.35) ctx.rotate(1.05);
     }
     if (weapon.id === 'bastao') {
+      // cabo
+      ctx.strokeStyle = '#3a2412';
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(-2, 2);
+      ctx.lineTo(24, -21);
+      ctx.stroke();
       ctx.strokeStyle = '#d9b06a';
       ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(20, -18);
+      ctx.moveTo(-1, 1);
+      ctx.lineTo(23, -20);
       ctx.stroke();
-      ctx.fillStyle = '#7fe7ff';
-      ctx.fillRect(18, -21, 5, 5);
-    } else if (weapon.id === 'estilingue') {
-      ctx.strokeStyle = '#8a5a2b';
-      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#f7dfa6';
+      ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(0, 0);
-      ctx.lineTo(9, -10);
-      ctx.moveTo(9, -10);
-      ctx.lineTo(16, -6);
-      ctx.moveTo(9, -10);
-      ctx.lineTo(11, -18);
+      ctx.lineTo(20, -17);
       ctx.stroke();
-      ctx.strokeStyle = '#ffd24d';
+      // empunhadura
+      ctx.fillStyle = '#5a3a1c';
+      for (let i = 0; i < 3; i++) ctx.fillRect(i * 2 - 1, -i * 2 + 2, 4, 2);
+      // ponta energética
+      ctx.fillStyle = accent;
+      ctx.shadowColor = accent;
+      ctx.shadowBlur = 10;
+      ctx.fillRect(21, -25, 6, 6);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(23, -23, 2, 2);
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = withAlpha(accent, 0.7);
+      ctx.lineWidth = 1;
+      ctx.strokeRect(20, -26, 8, 8);
+    } else if (weapon.id === 'estilingue') {
+      // cabo e forquilha
+      ctx.strokeStyle = '#4a2a12';
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(-1, 2);
+      ctx.lineTo(8, -10);
+      ctx.moveTo(8, -10);
+      ctx.lineTo(3, -22);
+      ctx.moveTo(8, -10);
+      ctx.lineTo(17, -18);
+      ctx.stroke();
+      ctx.strokeStyle = '#a86a36';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(-1, 1);
+      ctx.lineTo(8, -10);
+      ctx.moveTo(8, -10);
+      ctx.lineTo(4, -21);
+      ctx.moveTo(8, -10);
+      ctx.lineTo(16, -17);
+      ctx.stroke();
+      // amarração
+      ctx.fillStyle = '#d9b06a';
+      ctx.fillRect(6, -12, 4, 2);
+      // elásticos
+      const pull = this.attackTimer > 0 ? 4 : 0;
+      ctx.strokeStyle = '#7a2a24';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.moveTo(16, -6);
-      ctx.lineTo(11, -18);
+      ctx.moveTo(3, -21);
+      ctx.lineTo(9 - pull, -12 + pull * 0.5);
+      ctx.lineTo(16, -17);
       ctx.stroke();
+      // bolsa + projétil
+      ctx.fillStyle = '#4a2a12';
+      ctx.fillRect(7 - pull, -14 + pull * 0.5, 5, 4);
+      ctx.fillStyle = '#ffd24d';
+      ctx.shadowColor = '#ffd24d';
+      ctx.shadowBlur = 8;
+      ctx.fillRect(8 - pull, -13 + pull * 0.5, 3, 2);
+      ctx.shadowBlur = 0;
     } else {
-      ctx.strokeStyle = '#8a5a2b';
+      // cabo
+      ctx.strokeStyle = '#3a2412';
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(-2, 2);
+      ctx.lineTo(17, -18);
+      ctx.stroke();
+      ctx.strokeStyle = '#a86a36';
       ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(15, -16);
+      ctx.moveTo(-1, 1);
+      ctx.lineTo(16, -17);
       ctx.stroke();
+      // empunhadura
+      ctx.fillStyle = '#5a3a1c';
+      for (let i = 0; i < 4; i++) ctx.fillRect(i * 2 - 1, -i * 2 + 2, 4, 2);
+      // cabeça do martelo
+      ctx.fillStyle = '#5a6678';
+      ctx.fillRect(10, -31, 20, 14);
+      ctx.fillStyle = '#9aa7b8';
+      ctx.fillRect(11, -30, 18, 10);
+      ctx.fillStyle = '#d7e2ee';
+      ctx.fillRect(12, -30, 16, 2);
       ctx.fillStyle = '#ff8c42';
-      ctx.fillRect(12, -24, 12, 9);
+      ctx.fillRect(12, -24, 16, 2);
+      ctx.fillStyle = '#5a6678';
+      ctx.fillRect(13, -21, 14, 2);
+      // núcleo
       ctx.fillStyle = '#ffd24d';
-      ctx.fillRect(12, -24, 12, 2);
+      ctx.shadowColor = '#ff8c42';
+      ctx.shadowBlur = 9;
+      ctx.fillRect(17, -28, 6, 6);
+      ctx.fillStyle = '#fff6c8';
+      ctx.fillRect(19, -26, 2, 2);
+      ctx.shadowBlur = 0;
     }
     ctx.restore();
 
@@ -1233,6 +1456,13 @@ class Walker {
     const diff = (game && game.diff) || DIFFICULTIES[1];
     this.game = game;
     this.opts = opts;
+    this.variant = opts.variant || 'standard';
+    const V = {
+      runner: { hp: 2, speed: 1.7, dmg: 1 },
+      brute: { hp: 7, speed: 0.68, dmg: 2 },
+      bomber: { hp: 3, speed: 1.12, dmg: 1 },
+      shield: { hp: 6, speed: 0.8, dmg: 1 }
+    }[this.variant] || {};
     this.w = 38;
     this.h = 38;
     this.x = x - this.w / 2;
@@ -1247,9 +1477,10 @@ class Walker {
     this.training = !!opts.training;
     this.tag = opts.tag || null;
     this.invulnerable = !!opts.invulnerable;
-    this.hp = Math.max(1, Math.round((opts.hp || 3) * (this.training ? 1 : diff.enemyHp)));
+    this.hp = Math.max(1, Math.round((opts.hp || V.hp || 3) * (this.training ? 1 : diff.enemyHp)));
     this.maxHp = this.hp;
-    this.speed = 78 * diff.enemySpeed;
+    this.speed = 78 * diff.enemySpeed * (V.speed || 1);
+    this.contactDmg = V.dmg || 1;
     this.aggro = diff.aggression;
     this.flash = 0;
     this.dead = false;
@@ -1259,6 +1490,10 @@ class Walker {
     this.attackCd = rand(0.8, 1.8);
     this.alerted = false;
     this.staggerTimer = 0;
+    this.detonated = false;
+    this.variantColor = {
+      runner: '#ffd24d', brute: '#ff8c42', bomber: '#ff5d6c', shield: '#7fe7ff'
+    }[this.variant] || '#6dff9e';
   }
 
   update(dt, game) {
@@ -1274,6 +1509,13 @@ class Walker {
     const dy = p ? p.cy - (this.y + this.h / 2) : 0;
     const d = p ? Math.hypot(dx, dy) : 9999;
     this.alerted = !!p && !p.dead && d < 420;
+
+    if (this.variant === 'bomber' && this.alerted && d < 58) {
+      this.detonate(game);
+      this.dead = true;
+      game.onEnemyKilled(this);
+      return;
+    }
 
     if (this.training) {
       this.vx = 0;
@@ -1334,7 +1576,7 @@ class Walker {
           p.parrySuccess();
           this.stagger(1.0);
         } else {
-          p.hurt(2, this.x + this.w / 2, this, true);
+          p.hurt(this.variant === 'brute' ? 3 : 2, this.x + this.w / 2, this, true);
         }
         this.state = 'recover';
         this.timer = 0.4;
@@ -1379,7 +1621,7 @@ class Walker {
     }
 
     if (p && !p.dead && aabb(this, p) && this.state !== 'strike') {
-      p.hurt(1, this.x + this.w / 2, this, false);
+      p.hurt(this.contactDmg, this.x + this.w / 2, this, false);
     }
 
     if (this.y > game.level.heightPx + 120) this.dead = true;
@@ -1392,6 +1634,26 @@ class Walker {
     this.vx = 0;
   }
 
+  detonate(game) {
+    if (this.detonated) return;
+    this.detonated = true;
+    const cx = this.x + this.w / 2;
+    const cy = this.y + this.h / 2;
+    FX.burst(cx, cy, 28, {
+      color: '#ff5d6c', speedMax: 320, lifeMax: 0.75, sizeMax: 7, gravity: 300
+    });
+    FX.burst(cx, cy, 14, {
+      color: '#ffd24d', speedMax: 180, lifeMax: 0.5, sizeMax: 5
+    });
+    game.shake(0.45);
+    Sfx.noise(0.32, 0.18, { freq: 420 });
+    Sfx.tone(90, 0.32, { type: 'sawtooth', vol: 0.13, slide: -40 });
+    const p = game.player;
+    if (p && !p.dead && dist(cx, cy, p.cx, p.cy) < 110) {
+      p.hurt(2, cx, this, false);
+    }
+  }
+
   hurt(n, game, source = null) {
     if (this.dead) return;
     if (this.invulnerable) {
@@ -1401,6 +1663,16 @@ class Walker {
       });
       Sfx.tone(900, 0.05, { type: 'square', vol: 0.03 });
       return;
+    }
+    if (this.variant === 'shield' && source) {
+      const sx = source.cx != null ? source.cx : (source.x != null ? source.x : this.x);
+      const fromFront = Math.sign(sx - (this.x + this.w / 2)) === this.dir;
+      if (fromFront) {
+        n = Math.max(1, n - 1);
+        FX.burst(this.x + this.w / 2 + this.dir * 20, this.y + this.h / 2, 5, {
+          color: '#7fe7ff', speedMax: 130, lifeMax: 0.3
+        });
+      }
     }
     this.hp -= n;
     this.flash = 0.15;
@@ -1413,6 +1685,7 @@ class Walker {
     }
     if (this.hp <= 0) {
       this.dead = true;
+      if (this.variant === 'bomber') this.detonate(game);
       game.onEnemyKilled(this);
     }
   }
@@ -1461,9 +1734,20 @@ class Walker {
       return;
     }
 
-    const body = this.flash > 0 ? '#ffffff' : charging ? '#b84a2a' : '#2f7a48';
-    const dark = this.flash > 0 ? '#ffffff' : '#173d26';
-    const eye = charging ? '#ff2d4a' : '#c6ff6a';
+    const body = this.flash > 0 ? '#ffffff'
+      : charging ? '#b84a2a'
+      : this.variant === 'brute' ? '#8a3c1e'
+      : this.variant === 'bomber' ? '#8f2f3a'
+      : this.variant === 'shield' ? '#2f5f8a'
+      : this.variant === 'runner' ? '#5a8a2f'
+      : '#2f7a48';
+    const dark = this.flash > 0 ? '#ffffff'
+      : this.variant === 'brute' ? '#4a1e0e'
+      : this.variant === 'bomber' ? '#4a141c'
+      : this.variant === 'shield' ? '#173a52'
+      : this.variant === 'runner' ? '#2f4a18'
+      : '#173d26';
+    const eye = charging ? '#ff2d4a' : this.variantColor;
 
     // pernas
     ctx.fillStyle = dark;
@@ -1538,6 +1822,61 @@ class Walker {
     ctx.fillStyle = '#ffd24d';
     ctx.fillRect(x + 17, y - 2 + bob, 4, 2);
 
+    // marcas de variante
+    if (this.variant === 'runner') {
+      ctx.fillStyle = withAlpha('#ffd24d', 0.8);
+      ctx.beginPath();
+      ctx.moveTo(x + 21, y - 16 + bob);
+      ctx.lineTo(x + 15, y - 8 + bob);
+      ctx.lineTo(x + 19, y - 8 + bob);
+      ctx.lineTo(x + 16, y - 1 + bob);
+      ctx.lineTo(x + 24, y - 10 + bob);
+      ctx.lineTo(x + 20, y - 10 + bob);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = withAlpha('#ffd24d', 0.5);
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 2; i++) {
+        const sx = x + 38 + i * 6;
+        ctx.beginPath();
+        ctx.moveTo(sx, y + 12 + i * 7 + bob);
+        ctx.lineTo(sx + 10, y + 12 + i * 7 + bob);
+        ctx.stroke();
+      }
+    } else if (this.variant === 'brute') {
+      ctx.fillStyle = dark;
+      ctx.fillRect(x - 5, y + 8 + bob, 10, 14);
+      ctx.fillRect(x + 33, y + 8 + bob, 10, 14);
+      ctx.fillStyle = withAlpha('#ffd24d', 0.55);
+      ctx.fillRect(x - 4, y + 10 + bob, 8, 2);
+      ctx.fillRect(x + 34, y + 10 + bob, 8, 2);
+      ctx.fillStyle = '#5a2410';
+      ctx.fillRect(x + 8, y + 14 + bob, 22, 4);
+      ctx.fillStyle = this.variantColor;
+      ctx.fillRect(x + 15, y + 19 + bob, 8, 3);
+    } else if (this.variant === 'bomber') {
+      const bx = this.dir > 0 ? x + 1 : x + 30;
+      ctx.fillStyle = '#2a0d12';
+      ctx.fillRect(bx, y + 12 + bob, 7, 16);
+      ctx.fillStyle = this.flash > 0 ? '#ffffff' : '#c22f3f';
+      ctx.fillRect(bx + 1, y + 13 + bob, 5, 14);
+      const blink = Math.sin(this.anim * 12) > 0.2;
+      ctx.fillStyle = blink ? '#ffd24d' : '#5a3a10';
+      ctx.fillRect(bx + 2, y + 10 + bob, 3, 3);
+      ctx.fillStyle = '#0f0a08';
+      ctx.fillRect(bx + 2, y + 6 + bob, 2, 4);
+    } else if (this.variant === 'shield') {
+      const sx = this.dir > 0 ? x + 31 : x + 1;
+      ctx.fillStyle = '#123a52';
+      ctx.fillRect(sx, y + 8 + bob, 6, 20);
+      ctx.fillStyle = '#7fe7ff';
+      ctx.fillRect(sx + 1, y + 9 + bob, 4, 18);
+      ctx.fillStyle = '#e8ffff';
+      ctx.fillRect(sx + 2, y + 11 + bob, 2, 6);
+      ctx.fillStyle = withAlpha('#7fe7ff', 0.3);
+      ctx.fillRect(sx - 1, y + 6 + bob, 8, 2);
+    }
+
     if (charging) {
       ctx.fillStyle = '#ff5d6c';
       ctx.shadowColor = '#ff2d4a';
@@ -1592,10 +1931,19 @@ class Drone {
     this.parryTrainer = !!opts.parryTrainer;
     this.fixed = !!opts.fixed;
     this.invulnerable = !!opts.invulnerable;
-    this.hp = Math.max(1, Math.round((opts.hp || 2) * (this.training ? 1 : diff.enemyHp)));
+    this.variant = opts.variant || 'standard';
+    const V = {
+      sniper: { hp: 2, speed: 540, burst: 1, dmg: 2, color: '#b18cff', aim: 0.9, cd: 2.8 },
+      sprayer: { hp: 3, speed: 270, burst: 5, dmg: 1, color: '#6dff9e', aim: 0.45, cd: 2.3 }
+    }[this.variant] || {};
+    this.hp = Math.max(1, Math.round((opts.hp || V.hp || 2) * (this.training ? 1 : diff.enemyHp)));
     this.maxHp = this.hp;
-    this.projSpeed = (this.parryTrainer ? 210 : 300) * diff.projSpeed;
-    this.burstCount = this.parryTrainer ? 1 : diff.burst;
+    this.projSpeed = (this.parryTrainer ? 210 : (V.speed || 300)) * diff.projSpeed;
+    this.burstCount = this.parryTrainer ? 1 : (V.burst || diff.burst);
+    this.projDamage = V.dmg || 1;
+    this.projColor = V.color || '#ff5a6e';
+    this.aimTime = V.aim || 0.5;
+    this.fireCd = V.cd || null;
     this.aggro = diff.aggression;
     this.flash = 0;
     this.dead = false;
@@ -1639,7 +1987,7 @@ class Drone {
 
       if (!this.training && d < 540 && this.mode === 'hover' && this.shootTimer <= 0) {
         this.mode = 'aim';
-        this.aimTimer = (this.parryTrainer ? 0.8 : 0.5) / this.aggro;
+        this.aimTimer = (this.parryTrainer ? 0.8 : this.aimTime) / this.aggro;
         Sfx.tone(700, 0.08, { type: 'square', vol: 0.03, slide: 120 });
       }
 
@@ -1666,7 +2014,9 @@ class Drone {
         this.burstTimer = this.parryTrainer ? 0.5 : 0.12;
         if (this.burstLeft <= 0) {
           this.mode = 'hover';
-          this.shootTimer = this.parryTrainer ? 1.8 : rand(1.9, 3.0) / this.aggro;
+          this.shootTimer = this.parryTrainer
+            ? 1.8
+            : (this.fireCd ? this.fireCd / this.aggro : rand(1.9, 3.0) / this.aggro);
         }
       }
     }
@@ -1694,19 +2044,24 @@ class Drone {
     const cy = this.y + this.h / 2;
     const lead = this.parryTrainer ? 0 : 0.14;
     const ang = Math.atan2((p.cy + p.vy * lead) - cy, (p.cx + p.vx * lead) - cx);
-    const a = ang + (this.parryTrainer ? 0 : (Math.random() - 0.5) * 0.06);
+    const spread = this.parryTrainer ? 0 : this.variant === 'sprayer' ? 0.24 : 0.06;
+    const a = ang + (Math.random() - 0.5) * spread;
     const spd = this.projSpeed;
+    const color = this.parryTrainer ? '#ffd24d' : this.projColor;
     game.projectiles.push(new Projectile(cx, cy, Math.cos(a) * spd, Math.sin(a) * spd, 'enemy', {
-      color: this.parryTrainer ? '#ffd24d' : '#ff5a6e',
-      r: this.parryTrainer ? 9 : 6,
-      damage: 1,
+      color,
+      r: this.parryTrainer ? 9 : this.variant === 'sniper' ? 7 : 6,
+      damage: this.parryTrainer ? 1 : this.projDamage,
       parryable: true,
-      life: this.parryTrainer ? 4 : 3
+      life: this.parryTrainer ? 4 : this.variant === 'sniper' ? 3.5 : 3,
+      kind: this.variant === 'sniper' ? 'laser' : 'orb'
     }));
     this.muzzle = 0.12;
-    Sfx.tone(this.parryTrainer ? 640 : 520, 0.07, { type: 'square', vol: 0.045, slide: -160 });
+    Sfx.tone(this.parryTrainer ? 640 : this.variant === 'sniper' ? 760 : 520, 0.07, {
+      type: 'square', vol: 0.045, slide: -160
+    });
     FX.burst(cx + Math.cos(a) * 12, cy + Math.sin(a) * 12, 4, {
-      color: this.parryTrainer ? '#ffd24d' : '#ff5a6e', speedMax: 110, lifeMax: 0.25
+      color, speedMax: 110, lifeMax: 0.25
     });
   }
 
@@ -1738,7 +2093,10 @@ class Drone {
     const y = this.y - cam.y;
     const bob = Math.sin(this.phase) * 2;
     const alert = this.mode === 'aim' || this.mode === 'fire';
-    const eye = this.parryTrainer ? '#ffd24d' : alert ? '#ff5a6e' : '#7ffff0';
+    const eye = this.parryTrainer ? '#ffd24d'
+      : this.variant === 'sniper' ? '#b18cff'
+      : this.variant === 'sprayer' ? '#6dff9e'
+      : alert ? '#ff5a6e' : '#7ffff0';
 
     ctx.save();
     ctx.fillStyle = 'rgba(0,0,0,0.2)';
@@ -1763,7 +2121,11 @@ class Drone {
     ctx.lineTo(x + 32, y + 4 + bob);
     ctx.stroke();
 
-    ctx.fillStyle = this.flash > 0 ? '#ffffff' : this.parryTrainer ? '#7a6a20' : '#2f5f66';
+    ctx.fillStyle = this.flash > 0 ? '#ffffff'
+      : this.parryTrainer ? '#7a6a20'
+      : this.variant === 'sniper' ? '#4a3a6e'
+      : this.variant === 'sprayer' ? '#2f6e4a'
+      : '#2f5f66';
     ctx.fillRect(x + 3, y + 7 + bob, 30, 15);
     ctx.strokeStyle = '#123a40';
     ctx.lineWidth = 2;
@@ -1789,6 +2151,24 @@ class Drone {
     ctx.fillRect(x + 26, y - 2 + bob, 1, 4);
     ctx.fillStyle = '#ffd24d';
     ctx.fillRect(x + 25, y - 3 + bob, 3, 2);
+
+    if (this.variant === 'sniper') {
+      // cano longo de precisão
+      ctx.fillStyle = '#2a1d3a';
+      ctx.fillRect(x + 33, y + 14 + bob, 13, 4);
+      ctx.fillStyle = '#b18cff';
+      ctx.fillRect(x + 44, y + 15 + bob, 4, 2);
+      ctx.fillStyle = withAlpha('#b18cff', 0.4);
+      ctx.fillRect(x + 30, y + 13 + bob, 4, 6);
+    } else if (this.variant === 'sprayer') {
+      // três bocais
+      ctx.fillStyle = '#123a2a';
+      ctx.fillRect(x + 32, y + 11 + bob, 7, 12);
+      ctx.fillStyle = '#6dff9e';
+      ctx.fillRect(x + 35, y + 12 + bob, 2, 2);
+      ctx.fillRect(x + 35, y + 16 + bob, 2, 2);
+      ctx.fillRect(x + 35, y + 20 + bob, 2, 2);
+    }
 
     ctx.fillStyle = eye;
     ctx.shadowColor = eye;
@@ -1889,11 +2269,17 @@ class Turret {
     this.y = y - this.h;
     this.cx = this.x + this.w / 2;
     this.cy = this.y + this.h * 0.38;
-    this.hp = Math.max(1, Math.round((opts.hp || 4) * diff.enemyHp));
+    this.variant = opts.variant || 'standard';
+    const V = {
+      mortar: { hp: 5, range: 640, color: '#ff8c42', dmg: 2, charge: 0.8 },
+      laser: { hp: 4, range: 720, color: '#ff5d7a', dmg: 2, charge: 0.9 }
+    }[this.variant] || {};
+    this.hp = Math.max(1, Math.round((opts.hp || V.hp || 4) * diff.enemyHp));
     this.maxHp = this.hp;
-    this.range = opts.range || 560;
-    this.damage = opts.damage || 1;
-    this.color = opts.color || '#ffd24d';
+    this.range = opts.range || V.range || 560;
+    this.damage = opts.damage || V.dmg || 1;
+    this.color = opts.color || V.color || '#ffd24d';
+    this.chargeTime = V.charge || 0.55;
     this.aggro = diff.aggression;
     this.angle = Math.PI;
     this.cd = rand(0.7, 1.4);
@@ -1925,7 +2311,7 @@ class Turret {
       this.charge -= dt;
       if (this.charge <= 0) this.fire(game);
     } else if (d < this.range && this.cd <= 0) {
-      this.charge = 0.55 / this.aggro;
+      this.charge = this.chargeTime / this.aggro;
       this.cd = 2.15 / this.aggro + rand(0, 0.35);
       Sfx.tone(620, 0.08, { type: 'square', vol: 0.035, slide: 120 });
       FX.burst(this.cx + Math.cos(this.angle) * 24, this.cy + Math.sin(this.angle) * 24, 5, {
@@ -1935,9 +2321,38 @@ class Turret {
   }
 
   fire(game) {
-    const spd = 285 * (game.diff ? game.diff.projSpeed : 1);
+    const p = game.player;
+    const projMul = game.diff ? game.diff.projSpeed : 1;
     const bx = this.cx + Math.cos(this.angle) * 25;
     const by = this.cy + Math.sin(this.angle) * 25;
+    if (this.variant === 'mortar' && p && !p.dead) {
+      const dx = p.cx - bx;
+      const dy = p.cy - by;
+      const t = 0.85;
+      const vx = dx / t;
+      const vy = dy / t - 0.5 * 760 * t;
+      game.projectiles.push(new Projectile(bx, by, vx, vy, 'enemy', {
+        color: '#ff8c42', r: 10, damage: 2, parryable: true, life: 4.5,
+        gravity: 760, kind: 'rock'
+      }));
+      this.charge = 0;
+      this.flash = 0.1;
+      FX.burst(bx, by, 10, { color: '#ff8c42', speedMax: 160, lifeMax: 0.35 });
+      Sfx.tone(160, 0.16, { type: 'square', vol: 0.06, slide: -80 });
+      return;
+    }
+    if (this.variant === 'laser') {
+      const spd = 840 * projMul;
+      game.projectiles.push(new Projectile(bx, by, Math.cos(this.angle) * spd, Math.sin(this.angle) * spd, 'enemy', {
+        color: '#ff5d7a', r: 7, damage: 2, parryable: false, life: 2.6, kind: 'laser'
+      }));
+      this.charge = 0;
+      this.flash = 0.1;
+      FX.burst(bx, by, 12, { color: '#ff5d7a', speedMax: 220, lifeMax: 0.35 });
+      Sfx.tone(920, 0.12, { type: 'sawtooth', vol: 0.06, slide: -520 });
+      return;
+    }
+    const spd = 285 * projMul;
     game.projectiles.push(new Projectile(bx, by, Math.cos(this.angle) * spd, Math.sin(this.angle) * spd, 'enemy', {
       color: this.color,
       r: 7,
@@ -2088,9 +2503,16 @@ class Charger {
     this.onGround = false;
     this.hitWall = 0;
     this.dir = -1;
-    this.hp = Math.max(1, Math.round((opts.hp || 5) * diff.enemyHp));
+    this.variant = opts.variant || 'standard';
+    const V = {
+      armored: { hp: 9, speed: 0.82, dmg: 2, charge: 0.9 },
+      berserk: { hp: 6, speed: 1.35, dmg: 2, charge: 1.28 }
+    }[this.variant] || {};
+    this.hp = Math.max(1, Math.round((opts.hp || V.hp || 5) * diff.enemyHp));
     this.maxHp = this.hp;
-    this.speed = 74 * diff.enemySpeed;
+    this.speed = 74 * diff.enemySpeed * (V.speed || 1);
+    this.contactDmg = V.dmg || 2;
+    this.chargeSpeed = 610 * (V.charge || 1);
     this.aggro = diff.aggression;
     this.state = 'patrol';
     this.timer = 0;
@@ -2130,14 +2552,14 @@ class Charger {
       if (this.timer <= 0) {
         this.state = 'charge';
         this.timer = 0.62;
-        this.vx = this.dir * 610 * (game.diff ? game.diff.enemySpeed : 1);
+        this.vx = this.dir * this.chargeSpeed * (game.diff ? game.diff.enemySpeed : 1);
         Sfx.tone(230, 0.12, { type: 'square', vol: 0.07, slide: -90 });
         FX.burst(this.x + this.w / 2, this.y + this.h / 2, 10, {
           color: '#ff8c42', speedMax: 200, lifeMax: 0.35, shape: 'line'
         });
       }
     } else if (this.state === 'charge') {
-      this.vx = this.dir * 610 * (game.diff ? game.diff.enemySpeed : 1);
+      this.vx = this.dir * this.chargeSpeed * (game.diff ? game.diff.enemySpeed : 1);
       if (this.timer <= 0 || this.hitWall) {
         this.state = 'stun';
         this.timer = 0.55;
@@ -2172,7 +2594,7 @@ class Charger {
         p.parrySuccess();
         this.stagger(1.1);
       } else {
-        p.hurt(2, this.x + this.w / 2, this, true);
+        p.hurt(this.contactDmg, this.x + this.w / 2, this, true);
         this.state = 'stun';
         this.timer = 0.5;
         this.vx = -this.dir * 180;
@@ -2209,6 +2631,8 @@ class Charger {
     const charge = this.state === 'charge';
     const windup = this.state === 'windup';
     const stun = this.state === 'stun';
+    const accent = this.variant === 'armored' ? '#9aa7b8' : this.variant === 'berserk' ? '#ff3355' : '#ff8c42';
+    const chassis = this.variant === 'armored' ? '#3a3f4a' : this.variant === 'berserk' ? '#4a1818' : '#3a2418';
     ctx.save();
 
     ctx.fillStyle = 'rgba(0,0,0,0.3)';
@@ -2217,7 +2641,7 @@ class Charger {
     ctx.fill();
 
     if (charge) {
-      ctx.fillStyle = 'rgba(255,140,66,0.18)';
+      ctx.fillStyle = withAlpha(accent, 0.18);
       for (let i = 1; i < 5; i++) {
         ctx.fillRect(x - i * 12 + (this.dir > 0 ? 0 : this.w), y + 8 + i * 3, 18, 3);
       }
@@ -2232,32 +2656,32 @@ class Charger {
     ctx.fillRect(x + this.w - 13, y + this.h - 6, 6, 4);
 
     // chassi
-    ctx.fillStyle = this.flash > 0 ? '#ffffff' : '#3a2418';
+    ctx.fillStyle = this.flash > 0 ? '#ffffff' : chassis;
     ctx.fillRect(x + 4, y + 6, this.w - 8, this.h - 14);
-    ctx.fillStyle = '#ff8c42';
+    ctx.fillStyle = accent;
     ctx.fillRect(x + 8, y + 9, this.w - 16, 4);
     ctx.fillStyle = '#20140e';
     ctx.fillRect(x + 10, y + 15, this.w - 20, 8);
     // ariete frontal
     ctx.fillStyle = '#1a100a';
     ctx.fillRect(this.dir > 0 ? x + this.w - 4 : x - 4, y + 12, 8, 14);
-    ctx.fillStyle = withAlpha('#ff8c42', 0.8);
+    ctx.fillStyle = withAlpha(accent, 0.8);
     ctx.fillRect(this.dir > 0 ? x + this.w - 3 : x - 3, y + 14, 6, 2);
     ctx.fillRect(this.dir > 0 ? x + this.w - 3 : x - 3, y + 20, 6, 2);
     // saia blindada
     ctx.fillStyle = '#20140e';
     ctx.fillRect(x + 6, y + this.h - 12, this.w - 12, 3);
-    ctx.fillStyle = withAlpha('#ff8c42', 0.35);
+    ctx.fillStyle = withAlpha(accent, 0.35);
     ctx.fillRect(x + 10, y + this.h - 11, 8, 1);
     ctx.fillRect(x + this.w - 18, y + this.h - 11, 8, 1);
     // escapamentos
     const rear = this.dir > 0 ? x + 7 : x + this.w - 11;
     ctx.fillStyle = '#18231a';
     ctx.fillRect(rear, y + 2, 4, 7);
-    ctx.fillStyle = withAlpha('#ff8c42', 0.6);
+    ctx.fillStyle = withAlpha(accent, 0.6);
     ctx.fillRect(rear + 1, y + 1, 2, 2);
     // núcleo central
-    ctx.fillStyle = withAlpha('#ff8c42', 0.85);
+    ctx.fillStyle = withAlpha(accent, 0.85);
     ctx.fillRect(x + this.w / 2 - 4, y + 18, 8, 4);
     ctx.fillStyle = '#ffe0b0';
     ctx.fillRect(x + this.w / 2 - 1, y + 19, 2, 2);
@@ -2310,11 +2734,19 @@ class Swooper {
     this.my = 0;
     this.onGround = false;
     this.hitWall = 0;
-    this.hp = Math.max(1, Math.round((opts.hp || 3) * diff.enemyHp));
+    this.variant = opts.variant || 'standard';
+    const V = {
+      bomber: { hp: 4, speed: 0.92, color: '#ff8c42' },
+      swarm: { hp: 2, speed: 1.35, color: '#6dff9e' }
+    }[this.variant] || {};
+    this.hp = Math.max(1, Math.round((opts.hp || V.hp || 3) * diff.enemyHp));
     this.maxHp = this.hp;
+    this.speedMul = V.speed || 1;
+    this.color = V.color || '#ff5d4a';
     this.aggro = diff.aggression;
     this.state = 'hover';
     this.timer = rand(0.4, 1.1);
+    this.bombTimer = rand(0.8, 1.8);
     this.phase = rand(0, TAU);
     this.anim = 0;
     this.flash = 0;
@@ -2342,6 +2774,11 @@ class Swooper {
       const ty = this.homeY + Math.sin(this.phase * 1.7) * 20;
       this.vx = lerp(this.vx, clamp((tx - this.x) * 2.4, -180, 180), clamp(dt * 3, 0, 1));
       this.vy = lerp(this.vy, clamp((ty - this.y) * 2.4, -160, 160), clamp(dt * 3, 0, 1));
+      this.bombTimer -= dt;
+      if (this.variant === 'bomber' && p && !p.dead && d < 520 && this.bombTimer <= 0) {
+        this.dropBomb(game);
+        this.bombTimer = 2.4 / this.aggro;
+      }
       if (p && !p.dead && d < 500 && this.timer <= 0) {
         this.state = 'windup';
         this.timer = 0.5 / this.aggro;
@@ -2351,7 +2788,7 @@ class Swooper {
         this.vy *= 0.2;
         Sfx.tone(760, 0.1, { type: 'square', vol: 0.04, slide: 200 });
         FX.burst(this.x + this.w / 2, this.y + this.h / 2, 8, {
-          color: '#ff5d4a', speedMax: 120, lifeMax: 0.3
+          color: this.color, speedMax: 120, lifeMax: 0.3
         });
       }
     } else if (this.state === 'windup') {
@@ -2359,7 +2796,7 @@ class Swooper {
       this.vy = approach(this.vy, 0, 1600 * dt);
       if (this.timer <= 0) {
         const ang = Math.atan2(this.targetY - (this.y + this.h / 2), this.targetX - (this.x + this.w / 2));
-        const spd = 610 * (game.diff ? game.diff.enemySpeed : 1);
+        const spd = 610 * (game.diff ? game.diff.enemySpeed : 1) * this.speedMul;
         this.vx = Math.cos(ang) * spd;
         this.vy = Math.sin(ang) * spd;
         this.state = 'dive';
@@ -2397,7 +2834,7 @@ class Swooper {
         p.parrySuccess();
         this.stagger(1);
       } else {
-        p.hurt(2, this.x + this.w / 2, this, true);
+        p.hurt(this.variant === 'swarm' ? 1 : 2, this.x + this.w / 2, this, true);
         this.state = 'return';
         this.timer = 0.8;
         this.vx *= -0.4;
@@ -2406,6 +2843,20 @@ class Swooper {
     }
 
     if (this.y > game.level.heightPx + 120) this.dead = true;
+  }
+
+  dropBomb(game) {
+    const p = game.player;
+    if (!p || p.dead) return;
+    const bx = this.x + this.w / 2;
+    const by = this.y + this.h - 2;
+    const ang = Math.atan2(p.cy - by, p.cx - bx);
+    game.projectiles.push(new Projectile(bx, by, Math.cos(ang) * 190, Math.sin(ang) * 80 - 40, 'enemy', {
+      color: '#ff8c42', r: 9, damage: 2, life: 4.5,
+      parryable: true, gravity: 720, kind: 'rock'
+    }));
+    FX.burst(bx, by, 6, { color: '#ff8c42', speedMax: 110, lifeMax: 0.3 });
+    Sfx.tone(240, 0.09, { type: 'square', vol: 0.045, slide: -90 });
   }
 
   stagger(seconds) {
@@ -2421,7 +2872,7 @@ class Swooper {
     this.hp -= n;
     this.flash = 0.16;
     FX.burst(this.x + this.w / 2, this.y + this.h / 2, 6, {
-      color: '#ff5d4a', speedMax: 180, lifeMax: 0.4
+      color: this.color, speedMax: 180, lifeMax: 0.4
     });
     if (this.hp <= 0) {
       this.dead = true;
@@ -2438,6 +2889,7 @@ class Swooper {
     const diving = this.state === 'dive';
     const windup = this.state === 'windup';
     const wing = Math.sin(this.anim) * 8;
+    const accent = this.color;
     ctx.save();
 
     ctx.fillStyle = 'rgba(0,0,0,0.22)';
@@ -2476,7 +2928,7 @@ class Swooper {
     // corpo
     ctx.fillStyle = this.flash > 0 ? '#ffffff' : '#3b2a1e';
     ctx.fillRect(x + 8, y + 8, this.w - 16, 18);
-    ctx.fillStyle = '#ff8c42';
+    ctx.fillStyle = accent;
     ctx.fillRect(x + 12, y + 11, this.w - 24, 3);
     ctx.fillStyle = '#1a110a';
     ctx.fillRect(x + 13, y + 16, this.w - 26, 6);
@@ -2501,7 +2953,7 @@ class Swooper {
     ctx.fill();
     // propulsor
     const thrust = diving ? 1 : 0.55;
-    ctx.fillStyle = withAlpha('#ff8c42', thrust * 0.7);
+    ctx.fillStyle = withAlpha(accent, thrust * 0.7);
     ctx.fillRect(cx - 3, y + 25, 6, 3 + (diving ? 3 : 0));
     // antena
     ctx.fillStyle = '#3b2a1e';
@@ -2541,29 +2993,29 @@ class Swooper {
 
 const BOSS_PATTERNS = {
   guardian: [
-    ['slam', 'charge', 'bash'],
-    ['slam', 'charge', 'bash', 'summon', 'shock'],
-    ['slam', 'summon', 'bash', 'charge', 'shock']
+    ['slam', 'charge', 'bash', 'quake'],
+    ['slam', 'charge', 'bash', 'summon', 'shock', 'quake', 'meteor'],
+    ['slam', 'summon', 'bash', 'charge', 'shock', 'quake', 'rush', 'meteor']
   ],
   hunter: [
-    ['fan', 'slash', 'blink'],
-    ['fan', 'slash', 'blink', 'rain', 'beam'],
-    ['slash', 'rain', 'fan', 'blink', 'beam']
+    ['fan', 'slash', 'blink', 'barrage'],
+    ['fan', 'slash', 'blink', 'rain', 'beam', 'laser', 'barrage'],
+    ['slash', 'rain', 'fan', 'blink', 'beam', 'laser', 'barrage', 'rush']
   ],
   bruiser: [
-    ['jump', 'spin', 'rocks'],
-    ['jump', 'spin', 'rocks', 'shock', 'slam'],
-    ['jump', 'rocks', 'shock', 'spin', 'slam']
+    ['jump', 'spin', 'rocks', 'quake'],
+    ['jump', 'spin', 'rocks', 'shock', 'slam', 'meteor', 'quake'],
+    ['jump', 'rocks', 'shock', 'spin', 'slam', 'meteor', 'quake', 'rush']
   ],
   trickster: [
-    ['fan', 'blink', 'clones'],
-    ['fan', 'blink', 'clones', 'rain', 'ring'],
-    ['clones', 'blink', 'fan', 'ring', 'rain']
+    ['fan', 'blink', 'clones', 'orbit'],
+    ['fan', 'blink', 'clones', 'rain', 'ring', 'orbit', 'barrage'],
+    ['clones', 'blink', 'fan', 'ring', 'rain', 'orbit', 'laser', 'barrage']
   ],
   director: [
-    ['fan', 'slash', 'summon', 'beam'],
-    ['ring', 'beam', 'summon', 'slash', 'rain'],
-    ['ring', 'beam', 'clones', 'rain', 'slash', 'fan']
+    ['fan', 'slash', 'summon', 'beam', 'laser'],
+    ['ring', 'beam', 'summon', 'slash', 'rain', 'meteor', 'orbit'],
+    ['ring', 'beam', 'clones', 'rain', 'slash', 'fan', 'laser', 'meteor', 'orbit', 'quake']
   ]
 };
 
@@ -2606,11 +3058,40 @@ class Boss {
     this.staggerTimer = 0;
     this.airborne = false;
     this.parried = false;
+    this.barrageLeft = 0;
+    this.barrageTimer = 0;
+    this.quakeLeft = 0;
+    this.quakeTimer = 0;
+    this.meteorTargets = [];
+    this.rushLeft = 0;
   }
 
   get cx() { return this.x + this.w / 2; }
   get cy() { return this.y + this.h / 2; }
   get bottom() { return this.y + this.h; }
+
+  arenaBounds(game) {
+    if (!game || !game.arena) return null;
+    const leftGate = game.bossGate;
+    const rightGate = game.exitGate;
+    const left = leftGate ? (leftGate.tx + leftGate.w) * TILE : game.arena.left * TILE;
+    const right = rightGate ? rightGate.tx * TILE : game.arena.right * TILE;
+    return { left, right };
+  }
+
+  arenaClamp(game) {
+    const b = this.arenaBounds(game);
+    if (!b) return;
+    const minX = b.left + 4;
+    const maxX = b.right - this.w - 4;
+    if (this.x < minX) {
+      this.x = minX;
+      if (this.vx < 0) this.vx = 0;
+    } else if (this.x > maxX) {
+      this.x = maxX;
+      if (this.vx > 0) this.vx = 0;
+    }
+  }
 
   reset(game) {
     const diff = (game && game.diff) || DIFFICULTIES[1];
@@ -2640,6 +3121,12 @@ class Boss {
     this.staggerTimer = 0;
     this.airborne = false;
     this.parried = false;
+    this.barrageLeft = 0;
+    this.barrageTimer = 0;
+    this.quakeLeft = 0;
+    this.quakeTimer = 0;
+    this.meteorTargets = [];
+    this.rushLeft = 0;
   }
 
   begin(state, timer) {
@@ -2663,9 +3150,25 @@ class Boss {
     this.parried = false;
     this.state = 'tele';
     this.timer = this.teleTime(this.attack);
+    this.prepareTelegraph(game);
     this.vx = approach(this.vx, 0, 3000);
     Sfx.tone(180, 0.16, { type: 'square', vol: 0.08, slide: -40 });
     FX.burst(this.cx, this.cy, 10, { color: this.color, speedMax: 140, lifeMax: 0.4 });
+  }
+
+  prepareTelegraph(game) {
+    this.meteorTargets = [];
+    if (this.attack !== 'meteor') return;
+    const p = game.player;
+    if (!p) return;
+    const b = this.arenaBounds(game) || { left: 64, right: game.level.widthPx - 64 };
+    const count = this.phase === 1 ? 3 : this.phase === 2 ? 4 : 6;
+    for (let i = 0; i < count; i++) {
+      this.meteorTargets.push(clamp(
+        p.cx + rand(-300, 300) + (i - count / 2) * 26,
+        b.left + 48, b.right - 48
+      ));
+    }
   }
 
   teleTime(attack) {
@@ -2673,7 +3176,9 @@ class Boss {
       slam: 0.5, charge: 0.4, bash: 0.32, summon: 0.54,
       fan: 0.38, slash: 0.28, blink: 0.24, rain: 0.48,
       jump: 0.44, spin: 0.4, rocks: 0.36, shock: 0.44,
-      clones: 0.48, ring: 0.44, beam: 0.48
+      clones: 0.48, ring: 0.44, beam: 0.48,
+      laser: 0.72, meteor: 0.62, barrage: 0.34, orbit: 0.5,
+      rush: 0.34, quake: 0.5
     }[attack] || 0.42;
     return Math.max(0.16, base / (this.aggro * (1 + (this.phase - 1) * 0.18)));
   }
@@ -2765,11 +3270,12 @@ class Boss {
     }
 
     moveBody(this, game.level, dt);
+    if (this.active && !game.bossDefeated) this.arenaClamp(game);
 
-    const contact = ['charge', 'bash', 'slash', 'spin', 'slam', 'jump'].includes(this.state);
+    const contact = ['charge', 'bash', 'slash', 'spin', 'slam', 'jump', 'rush', 'quake'].includes(this.state);
     if (contact && !this.parried) {
       const parryable = this.state === 'bash' || this.state === 'slash';
-      const heavy = this.state === 'charge' || this.state === 'slam' || this.state === 'jump';
+      const heavy = this.state === 'charge' || this.state === 'slam' || this.state === 'jump' || this.state === 'rush' || this.state === 'quake';
       this.contactDamage(game, parryable, heavy ? 2 : 1);
     }
 
@@ -2795,11 +3301,93 @@ class Boss {
         this.impact(game, 1.05);
         this.begin('recover', 0.3);
       }
+    } else if (this.state === 'barrage') {
+      this.barrageTimer -= dt;
+      if (this.barrageLeft > 0 && this.barrageTimer <= 0) {
+        this.fireBarrage(game);
+        this.barrageLeft--;
+        this.barrageTimer = this.phase === 3 ? 0.085 : 0.12;
+      }
+      if (this.barrageLeft <= 0) this.begin('recover', 0.3);
+    } else if (this.state === 'rush') {
+      if (this.timer <= 0 || this.hitWall) {
+        this.rushLeft--;
+        if (this.rushLeft > 0) {
+          this.dir *= -1;
+          this.vx = this.dir * (this.phase >= 3 ? 1020 : 900);
+          this.timer = 0.34;
+          game.shake(0.25);
+          FX.burst(this.cx, this.cy, 14, {
+            color: this.color, speedMax: 260, lifeMax: 0.4, shape: 'line',
+            angle: this.dir > 0 ? Math.PI : 0, spread: 0.7
+          });
+          Sfx.tone(180, 0.12, { type: 'sawtooth', vol: 0.08, slide: -60 });
+        } else {
+          this.begin('recover', 0.34);
+        }
+      }
+    } else if (this.state === 'quake') {
+      if (this.airborne && this.vy >= 0 && this.onGround) {
+        this.airborne = false;
+        this.impact(game, 1.5);
+        this.quakeTimer = 0.18;
+      }
+      if (!this.airborne) {
+        this.quakeTimer -= dt;
+        if (this.quakeLeft > 0 && this.quakeTimer <= 0) {
+          this.shockwaves(game, 1.2);
+          this.quakeLeft--;
+          this.quakeTimer = 0.24;
+          game.shake(0.45);
+          Sfx.noise(0.2, 0.12, { freq: 180 });
+          if (this.quakeLeft === 1) {
+            const b = this.arenaBounds(game) || { left: 64, right: game.level.widthPx - 64 };
+            for (let i = 0; i < 4; i++) {
+              const x = rand(b.left + 60, b.right - 60);
+              game.projectiles.push(new Projectile(x, 360, rand(-20, 20), 260, 'enemy', {
+                color: '#ff8c42', r: 9, damage: 1, life: 4,
+                parryable: true, gravity: 900, kind: 'meteor'
+              }));
+            }
+          }
+          if (this.quakeLeft <= 0) this.begin('recover', 0.4);
+        }
+      } else if (this.timer <= 0) {
+        this.airborne = false;
+        this.impact(game, 1.35);
+        this.begin('recover', 0.4);
+      }
     } else if (this.state === 'bash' || this.state === 'slash' || this.state === 'spin') {
       if (this.timer <= 0) this.begin('recover', 0.26);
     } else {
       this.begin('recover', 0.28);
     }
+  }
+
+  fireBarrage(game) {
+    const p = game.player;
+    if (!p || p.dead) return;
+    const projMul = game.diff ? game.diff.projSpeed : 1;
+    const ang = Math.atan2(p.cy - (this.cy - 10), p.cx - this.cx) + rand(-0.1, 0.1);
+    const spd = (430 + (this.phase - 1) * 45) * projMul;
+    const red = this.phase === 3;
+    game.projectiles.push(new Projectile(
+      this.cx + Math.cos(ang) * (this.w / 2 + 10),
+      this.cy - 10 + Math.sin(ang) * 24,
+      Math.cos(ang) * spd, Math.sin(ang) * spd,
+      'enemy',
+      {
+        color: red ? '#ff3355' : '#ffd24d',
+        r: red ? 7 : 6,
+        damage: red ? 2 : 1,
+        life: 4,
+        parryable: !red
+      }
+    ));
+    FX.burst(this.cx + Math.cos(ang) * (this.w / 2 + 8), this.cy - 10, 5, {
+      color: red ? '#ff3355' : '#ffd24d', speedMax: 130, lifeMax: 0.3
+    });
+    Sfx.tone(540, 0.05, { type: 'square', vol: 0.035, slide: -120 });
   }
 
   startAttack(game) {
@@ -2834,13 +3422,18 @@ class Boss {
         this.begin('bash', 0.3);
         Sfx.tone(260, 0.1, { type: 'square', vol: 0.08, slide: -60 });
         break;
-      case 'slash':
-        this.x = clamp(p.cx + (p.face > 0 ? -100 : 100) - this.w / 2, 64, game.level.widthPx - this.w - 64);
+      case 'slash': {
+        const b = this.arenaBounds(game);
+        let sx = p.cx + (p.face > 0 ? -100 : 100) - this.w / 2;
+        if (b) sx = clamp(sx, b.left + 4, b.right - this.w - 4);
+        else sx = clamp(sx, 64, game.level.widthPx - this.w - 64);
+        this.x = sx;
         this.vx = this.dir * 680;
         this.begin('slash', 0.28);
         FX.burst(this.cx, this.cy, 16, { color: this.color, speedMax: 240, lifeMax: 0.5 });
         Sfx.tone(520, 0.12, { type: 'sawtooth', vol: 0.08, slide: -180 });
         break;
+      }
       case 'fan': {
         const count = this.phase === 1 ? 5 : this.phase === 2 ? 7 : 9;
         const spread = 0.3;
@@ -2970,6 +3563,91 @@ class Boss {
         Sfx.tone(700, 0.18, { type: 'sawtooth', vol: 0.08, slide: -400 });
         break;
       }
+      case 'laser': {
+        const b = this.arenaBounds(game) || { left: 64, right: game.level.widthPx - 64 };
+        const rows = this.phase >= 3 ? [p.cy - 46, p.cy + 2] : [p.cy - 4];
+        rows.forEach((y, idx) => {
+          const dir = this.phase >= 3 ? (idx === 0 ? 1 : -1) : this.dir;
+          const startX = dir > 0 ? b.left + 16 : b.right - 16;
+          for (let i = 0; i < 14; i++) {
+            game.projectiles.push(new Projectile(
+              startX + dir * i * 34, y, dir * 980 * projMul, 0, 'enemy',
+              {
+                color: this.phase >= 3 ? '#ff3355' : '#7fe7ff',
+                r: 10, damage: 2, life: 3, parryable: false, kind: 'laser'
+              }
+            ));
+          }
+        });
+        game.shake(0.4);
+        Sfx.tone(880, 0.3, { type: 'sawtooth', vol: 0.09, slide: -620 });
+        this.begin('recover', 0.42);
+        break;
+      }
+      case 'meteor': {
+        const b = this.arenaBounds(game) || { left: 64, right: game.level.widthPx - 64 };
+        const count = this.phase === 1 ? 3 : this.phase === 2 ? 4 : 6;
+        if (this.meteorTargets.length === 0) {
+          for (let i = 0; i < count; i++) {
+            this.meteorTargets.push(clamp(
+              p.cx + rand(-300, 300) + (i - count / 2) * 26,
+              b.left + 48, b.right - 48
+            ));
+          }
+        }
+        for (const x of this.meteorTargets) {
+          game.projectiles.push(new Projectile(x, 360, rand(-30, 30), 240, 'enemy', {
+            color: '#ff8c42', r: 13, damage: 2, life: 5,
+            parryable: true, gravity: 900, kind: 'meteor'
+          }));
+        }
+        Sfx.tone(120, 0.4, { type: 'sawtooth', vol: 0.1, slide: 60 });
+        this.begin('recover', 0.46);
+        break;
+      }
+      case 'barrage':
+        this.barrageLeft = 5 + this.phase * 2;
+        this.barrageTimer = 0.08;
+        this.begin('barrage', 1.4);
+        game.shake(0.2);
+        Sfx.tone(360, 0.18, { type: 'square', vol: 0.07, slide: 120 });
+        break;
+      case 'orbit': {
+        const count = 3 + this.phase;
+        for (let i = 0; i < count; i++) {
+          game.projectiles.push(new Projectile(this.cx, this.cy - 10, 0, 0, 'enemy', {
+            color: this.phase === 3 ? '#ff5d7a' : '#b18cff',
+            r: 8, damage: 1, life: 6, parryable: true,
+            orbit: true, orbitAngle: (TAU * i) / count,
+            orbitRadius: 104, orbitTime: 0.8 + i * 0.07,
+            orbitSpeed: 3.4, launchSpeed: 400 * projMul
+          }));
+        }
+        Sfx.tone(520, 0.3, { type: 'triangle', vol: 0.08, slide: 220 });
+        this.begin('recover', 0.4);
+        break;
+      }
+      case 'rush':
+        this.rushLeft = this.phase >= 3 ? 4 : 3;
+        this.vx = this.dir * (this.phase >= 3 ? 1020 : 900);
+        this.begin('rush', 0.36);
+        game.shake(0.35);
+        Sfx.tone(140, 0.22, { type: 'sawtooth', vol: 0.11, slide: 80 });
+        FX.burst(this.cx, this.cy, 18, {
+          color: this.color, speedMax: 260, lifeMax: 0.5, shape: 'line',
+          angle: this.dir > 0 ? Math.PI : 0, spread: 0.8
+        });
+        break;
+      case 'quake':
+        this.vy = -780;
+        this.vx = 0;
+        this.airborne = true;
+        this.quakeLeft = this.phase >= 3 ? 4 : 3;
+        this.quakeTimer = 0;
+        this.begin('quake', 1.05);
+        game.shake(0.35);
+        Sfx.tone(100, 0.3, { type: 'sawtooth', vol: 0.12, slide: 60 });
+        break;
       default:
         this.begin('recover', 0.4);
     }
@@ -3012,8 +3690,13 @@ class Boss {
   blink(game) {
     const p = game.player;
     const arena = 270;
+    const b = this.arenaBounds(game);
     let x = this.cx < p.cx ? p.cx + arena : p.cx - arena;
-    x = clamp(x, 90, game.level.widthPx - 90);
+    if (b) {
+      x = clamp(x, b.left + this.w / 2 + 8, b.right - this.w / 2 - 8);
+    } else {
+      x = clamp(x, 90, game.level.widthPx - 90);
+    }
     FX.burst(this.cx, this.cy, 20, { color: this.color, speedMax: 260, lifeMax: 0.5 });
     this.x = x - this.w / 2;
     this.y = Math.min(this.y, game.level.heightPx - this.h - TILE * 4);
@@ -3329,6 +4012,106 @@ class Boss {
       ctx.moveTo(ex, ey);
       ctx.lineTo(px, py);
       ctx.stroke();
+    } else if (this.attack === 'laser') {
+      const b = this.arenaBounds(this.game) || { left: 0, right: this.game.level.widthPx };
+      const rows = this.phase >= 3 ? [py - 46, py + 2] : [py - 4];
+      const pulse = 0.5 + Math.sin(this.anim * 22) * 0.4;
+      const col = this.phase >= 3 ? '#ff3355' : '#7fe7ff';
+      rows.forEach((y) => {
+        ctx.strokeStyle = withAlpha(col, 0.35 + pulse * 0.45);
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(b.left - cam.x, y);
+        ctx.lineTo(b.right - cam.x, y);
+        ctx.stroke();
+        ctx.strokeStyle = withAlpha('#ffffff', 0.35);
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(b.left - cam.x, y);
+        ctx.lineTo(b.right - cam.x, y);
+        ctx.stroke();
+      });
+    } else if (this.attack === 'meteor') {
+      const gy = p.bottom - cam.y;
+      const pulse = 0.5 + Math.sin(this.anim * 18) * 0.35;
+      for (const tx of this.meteorTargets) {
+        const x = tx - cam.x;
+        ctx.strokeStyle = withAlpha('#ff8c42', 0.4 + pulse * 0.4);
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.ellipse(x, gy, 26 + pulse * 5, 9, 0, 0, TAU);
+        ctx.stroke();
+        ctx.fillStyle = withAlpha('#ff5d2a', 0.14 + pulse * 0.12);
+        ctx.beginPath();
+        ctx.ellipse(x, gy, 24, 8, 0, 0, TAU);
+        ctx.fill();
+      }
+    } else if (this.attack === 'barrage') {
+      const pulse = 0.5 + Math.sin(this.anim * 24) * 0.4;
+      ctx.strokeStyle = withAlpha('#ffd24d', 0.45 + pulse * 0.4);
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(px, py, 24 + pulse * 4, 0, TAU);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(px - 34, py);
+      ctx.lineTo(px - 12, py);
+      ctx.moveTo(px + 12, py);
+      ctx.lineTo(px + 34, py);
+      ctx.moveTo(px, py - 34);
+      ctx.lineTo(px, py - 12);
+      ctx.moveTo(px, py + 12);
+      ctx.lineTo(px, py + 34);
+      ctx.stroke();
+    } else if (this.attack === 'orbit') {
+      const ex = this.cx - cam.x;
+      const ey = this.cy - cam.y - 10;
+      const pulse = 0.5 + Math.sin(this.anim * 14) * 0.3;
+      ctx.strokeStyle = withAlpha('#b18cff', 0.35 + pulse * 0.35);
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(ex, ey, 104, 78, 0, 0, TAU);
+      ctx.stroke();
+      for (let i = 0; i < 3 + this.phase; i++) {
+        const a = this.anim * 2.5 + (TAU * i) / (3 + this.phase);
+        ctx.fillStyle = withAlpha('#b18cff', 0.8);
+        ctx.beginPath();
+        ctx.arc(ex + Math.cos(a) * 104, ey + Math.sin(a) * 78, 5, 0, TAU);
+        ctx.fill();
+      }
+    } else if (this.attack === 'rush') {
+      const b = this.arenaBounds(this.game) || { left: 0, right: this.game.level.widthPx };
+      const ex = this.cx - cam.x;
+      const ey = p.bottom - cam.y - 4;
+      const pulse = 0.5 + Math.sin(this.anim * 20) * 0.4;
+      ctx.strokeStyle = withAlpha(this.color, 0.35 + pulse * 0.4);
+      ctx.lineWidth = 3;
+      const dir = this.dir;
+      const endX = dir > 0 ? b.right - cam.x : b.left - cam.x;
+      ctx.beginPath();
+      ctx.moveTo(ex, ey);
+      ctx.lineTo(endX, ey);
+      ctx.stroke();
+      for (let i = 0; i < 4; i++) {
+        const ax = ex + dir * (40 + i * 46);
+        ctx.beginPath();
+        ctx.moveTo(ax - dir * 12, ey - 10);
+        ctx.lineTo(ax, ey);
+        ctx.lineTo(ax - dir * 12, ey + 10);
+        ctx.stroke();
+      }
+    } else if (this.attack === 'quake') {
+      const ex = this.cx - cam.x;
+      const ey = p.bottom - cam.y;
+      const pulse = 0.5 + Math.sin(this.anim * 16) * 0.4;
+      for (let i = 0; i < 3; i++) {
+        const rr = 30 + i * 28 + pulse * 8;
+        ctx.strokeStyle = withAlpha('#ffd24d', 0.5 - i * 0.12);
+        ctx.lineWidth = 3 - i * 0.6;
+        ctx.beginPath();
+        ctx.ellipse(ex, ey, rr, rr * 0.28, 0, 0, TAU);
+        ctx.stroke();
+      }
     }
     ctx.restore();
   }
@@ -3356,6 +4139,12 @@ class Projectile {
     this.dead = false;
     this.trail = 0;
     this.spin = rand(0, TAU);
+    this.orbit = !!opts.orbit;
+    this.orbitAngle = opts.orbitAngle || 0;
+    this.orbitRadius = opts.orbitRadius || 90;
+    this.orbitTime = opts.orbitTime || 0;
+    this.orbitSpeed = opts.orbitSpeed || 3;
+    this.launchSpeed = opts.launchSpeed || 380;
   }
 
   update(dt, game) {
@@ -3363,6 +4152,35 @@ class Projectile {
     this.life -= dt;
     if (this.life <= 0) {
       this.dead = true;
+      return;
+    }
+
+    if (this.orbit && this.orbitTime > 0) {
+      this.orbitTime -= dt;
+      this.orbitAngle += this.orbitSpeed * dt;
+      const b = game.boss && !game.boss.dead ? game.boss : null;
+      const cx = b ? b.cx : this.x;
+      const cy = b ? b.cy - 10 : this.y;
+      this.x = cx + Math.cos(this.orbitAngle) * this.orbitRadius;
+      this.y = cy + Math.sin(this.orbitAngle) * this.orbitRadius * 0.75;
+      this.trail -= dt;
+      if (this.trail <= 0) {
+        this.trail = 0.04;
+        FX.spawn(this.x, this.y, {
+          vx: rand(-20, 20), vy: rand(-20, 20),
+          life: 0.24, size: this.r * 0.55, color: this.color, glow: true
+        });
+      }
+      if (this.orbitTime <= 0) {
+        const p = game.player;
+        const ang = p && !p.dead
+          ? Math.atan2(p.cy - this.y, p.cx - this.x)
+          : this.orbitAngle + Math.PI;
+        this.vx = Math.cos(ang) * this.launchSpeed;
+        this.vy = Math.sin(ang) * this.launchSpeed;
+        FX.burst(this.x, this.y, 8, { color: this.color, speedMax: 180, lifeMax: 0.35 });
+        Sfx.tone(600, 0.08, { type: 'triangle', vol: 0.05, slide: 180 });
+      }
       return;
     }
 
@@ -3508,8 +4326,8 @@ class Projectile {
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(x - 2, y - 2, 4, 4);
     } else if (this.kind === 'rock') {
-      ctx.fillStyle = '#ff8c42';
-      ctx.shadowColor = '#ff8c42';
+      ctx.fillStyle = this.color;
+      ctx.shadowColor = this.color;
       ctx.shadowBlur = 10;
       ctx.save();
       ctx.translate(x, y);
@@ -3517,6 +4335,52 @@ class Projectile {
       ctx.fillRect(-this.r, -this.r * 0.8, this.r * 2, this.r * 1.6);
       ctx.fillStyle = '#ffd24d';
       ctx.fillRect(-this.r * 0.4, -this.r * 0.4, this.r * 0.8, this.r * 0.8);
+      ctx.restore();
+    } else if (this.kind === 'meteor') {
+      const ang = Math.atan2(this.vy, this.vx);
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(ang);
+      // cauda de fogo
+      const grd = ctx.createLinearGradient(-this.r * 5, 0, 0, 0);
+      grd.addColorStop(0, 'rgba(255,60,20,0)');
+      grd.addColorStop(0.55, withAlpha('#ff5d2a', 0.5));
+      grd.addColorStop(1, '#ffd24d');
+      ctx.fillStyle = grd;
+      ctx.beginPath();
+      ctx.moveTo(-this.r * 5, -this.r * 0.3);
+      ctx.lineTo(0, -this.r);
+      ctx.lineTo(0, this.r);
+      ctx.lineTo(-this.r * 5, this.r * 0.3);
+      ctx.closePath();
+      ctx.fill();
+      // núcleo
+      ctx.fillStyle = '#ff8c42';
+      ctx.shadowColor = '#ff5d2a';
+      ctx.shadowBlur = 18;
+      ctx.beginPath();
+      ctx.arc(0, 0, this.r, 0, TAU);
+      ctx.fill();
+      ctx.fillStyle = '#ffd24d';
+      ctx.beginPath();
+      ctx.arc(-this.r * 0.15, -this.r * 0.15, this.r * 0.6, 0, TAU);
+      ctx.fill();
+      ctx.fillStyle = '#fff6c8';
+      ctx.beginPath();
+      ctx.arc(-this.r * 0.2, -this.r * 0.2, this.r * 0.28, 0, TAU);
+      ctx.fill();
+      ctx.restore();
+    } else if (this.kind === 'laser') {
+      const ang = Math.atan2(this.vy, this.vx);
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(ang);
+      ctx.fillStyle = this.color;
+      ctx.shadowColor = this.color;
+      ctx.shadowBlur = 20;
+      ctx.fillRect(-this.r * 4, -this.r * 0.55, this.r * 8, this.r * 1.1);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-this.r * 3.2, -this.r * 0.16, this.r * 6.4, this.r * 0.32);
       ctx.restore();
     } else {
       ctx.fillStyle = this.color;

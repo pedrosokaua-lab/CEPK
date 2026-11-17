@@ -2,7 +2,7 @@
 
 **Um platformer de ação no Colégio Presidente Kennedy.**
 
-Você é **VEGA**, monitor de segurança do CEPK. Na madrugada em que o Sistema Verde assumiu a escola, portões se trancaram, câmeras começaram a caçar e todos os corredores viraram uma armadilha. Atravesse o pátio, os corredores, o ginásio, o laboratório e a diretoria para libertar o colégio.
+Você é um dos monitores de segurança do CEPK — **VEGA**, **LUNA**, **BRUNO** ou **NINA**. Na madrugada em que o Sistema Verde assumiu a escola, portões se trancaram, câmeras começaram a caçar e todos os corredores viraram uma armadilha. Atravesse o pátio, os corredores, o ginásio, o laboratório e a diretoria para libertar o colégio.
 
 ![gênero](https://img.shields.io/badge/g%C3%AAnero-plataforma%20%C2%B7%20a%C3%A7%C3%A3o-6dff9e)
 ![canvas](https://img.shields.io/badge/HTML5-Canvas-7fe7ff)
@@ -42,6 +42,19 @@ Depois acesse `http://localhost:8123`.
 | `M` | Ligar / desligar som |
 | `Esc` / `P` | Pausar |
 
+## Personagens
+
+Escolha o monitor no menu **PERSONAGEM**. Cada um tem atributos, retrato e paleta próprios, e a escolha fica salva no progresso:
+
+| Personagem | Perfil | Destaque |
+| --- | --- | --- |
+| **VEGA** | Monitor | Equilibrado e confiável, sem fraquezas |
+| **LUNA** | Atleta | +14% de velocidade, mas −1 de vida máxima |
+| **BRUNO** | Técnico | +2 de vida máxima e +18% de dano, porém mais lento |
+| **NINA** | Hacker | +35% de energia e +4% de velocidade, com dano um pouco menor |
+
+A seleção aparece em cartões animados com retrato, barras de atributos e descrição, e pode ser trocada também no menu de pausa.
+
 Armas:
 - **Bastão** — combo rápido de três golpes, com finalizador mais forte. Equilibrado e seguro.
 - **Estilingue** — distância. Gasta energia, mas acerta alvos fora do alcance do bastão.
@@ -54,6 +67,20 @@ Poderes:
 - **ADRENALINA (`F`)** — mais velocidade, salto e dano por 6 segundos.
 
 Nenhum poder magnético: o combate agora gira em torno de armas, posicionamento, dash, pulo duplo e parry.
+
+## Inimigos
+
+Cada fase mistura classes e variantes com silhuetas, cores e comportamentos próprios:
+
+| Classe | Variantes | Comportamento |
+| --- | --- | --- |
+| **Walker** | padrão, `runner`, `brute`, `bomber`, `shield` | Patrulha de solo; corre, aguenta dano, explode ao morrer ou bloqueia golpes frontais |
+| **Drone** | padrão, `sniper`, `sprayer` | Voo com tiro preciso ou rajadas em leque |
+| **Turret** | padrão, `mortar`, `laser` | Dispara projéteis em arco ou carrega um feixe horizontal |
+| **Charger** | padrão, `armored`, `berserk` | Investe em linha reta; versões com mais vida ou fúria ao levar dano |
+| **Swooper** | padrão, `bomber`, `swarm` | Ronda e mergulha; solta bombas ou ataca em enxame veloz |
+
+As fases 1 a 5 somam de 10 a 17 inimigos cada, sempre com várias variantes em cena — a Fase 5 chega a onze comportamentos diferentes.
 
 ## Parry
 
@@ -93,9 +120,11 @@ Ao entrar na área final de cada fase, a câmera trava em uma arena dedicada:
 
 - Um **gatilho** dispara a cutscene exclusiva do chefe (dois slides com arte própria).
 - O **portão de entrada** se fecha e o **portão de saída** permanece travado durante a luta.
+- Todas as arenas foram ampliadas para **24 tiles de largura (768px internos)**, com três pilares de cobertura e uma engrenagem suspensa no centro.
+- **Jogador e chefe ficam contidos na arena** durante o combate: nem investidas, teleportes, saltos ou recuos atravessam os portões.
 - A arena tem parede de fundo com painéis, treliça de teto, lâmpadas, **quatro refletores volumétricos**, holofote que segue o chefe, selo giratório, marca d'água com o nome do alvo e piso de combate com círculo, rachaduras e detritos.
 - Durante a luta, **luzes de emergência piscam**, um **lockdown vermelho** cobre a sala e uma linha de varredura percorre a arena.
-- Se VEGA cair, o chefe é resetado e a luta recomeça sem repetir a cutscene.
+- Se o jogador cair, o chefe é resetado e a luta recomeça sem repetir a cutscene.
 - Ao derrotar o chefe, o lockdown cessa, os portões se abrem e um **caminho luminoso com setas** aponta para a saída.
 
 ## Sala de saída
@@ -110,6 +139,8 @@ Depois de cada arena existe uma câmara de saída independente, com portal anima
 - **Cutscenes encenadas**: VEGA aparece em primeiro plano, com aura, rim light e arma; a câmera faz **push-in** com tremor sutil, flash de abertura e vinheta. Nos alertas de chefe há holofotes na cor do alvo, linhas de velocidade radiais, névoa baixa, retículo de mira, silhueta gigante do chefe, partículas de brasas, cabeçalho **ALVO PRIORITÁRIO** e letterbox animado.
 - **Inimigos detalhados**: Walkers com cinto, emblema, rádio e joelheiras; drones com braços de rotor, luzes de navegação e lente; torretas com pés estabilizadores, tambor e ventilação; Chargers com ariete, escapamentos e núcleo; Swoopers com nervuras nas asas, cauda e propulsor.
 - **Chefes** com placas de armadura, rebites, ombreiras e núcleo pulsante, além de silhuetas próprias em cada arena.
+- **Personagens e armas redesenhados**: cada monitor tem rosto, cabelo, jaqueta, emblema e silhueta próprios; o bastão, o estilingue e o martelo ganharam sprites detalhados com brilho, correias e núcleo de energia.
+- **HUD renovado**: retrato animado do personagem, corações com brilho, barra de energia com marcas, seletor de armas com glifos e teclas, slots de poderes e uma barra de chefe ornamentada com fases e nome do alvo.
 
 ## Chefes
 
@@ -125,11 +156,20 @@ Vida e ritmo dos chefes no modo Normal:
 
 | Chefe | Vida | Velocidade | Padrões principais |
 | --- | --- | --- | --- |
-| O Porteiro | 100 | 84 | investida, marretada, ondas de choque, reforços |
-| A Inspetora | 150 | 96 | leque de projéteis, lâminas, teleporte, chuva, feixe |
-| O Técnico | 210 | 92 | salto, giro, pedras, ondas, impacto |
-| A Coordenadora | 280 | 104 | clones, teleporte, leque, anel, chuva |
-| A Diretora | 420 | 112 | anel, feixe, reforços, clones, chuva e leque |
+| O Porteiro | 100 | 84 | investida, marretada, ondas de choque, reforços, terremoto, meteoros |
+| A Inspetora | 150 | 96 | leque, lâminas, teleporte, chuva, feixe, laser, barragem |
+| O Técnico | 210 | 92 | salto, giro, pedras, ondas, impacto, terremoto, meteoros |
+| A Coordenadora | 280 | 104 | clones, teleporte, leque, anel, chuva, órbita, laser |
+| A Diretora | 420 | 112 | anel, feixe, reforços, clones, chuva, leque, laser, meteoros, órbita, terremoto |
+
+Além dos ataques clássicos, cada chefe ganhou **seis novos golpes** distribuídos pelas três fases:
+
+- **Laser** — carrega um feixe horizontal que varre a arena; na fase 3 vira duas linhas.
+- **Meteoro** — marca colunas no chão e despeja projéteis em queda.
+- **Barragem** — rajada rápida de projéteis teleguiados em leque.
+- **Órbita** — projéteis circulam o chefe e depois disparam em todas as direções.
+- **Investida relâmpago (`rush`)** — avanço curto e violento com rastro de energia.
+- **Terremoto (`quake`)** — salto seguido de impacto que gera ondas de choque no piso.
 
 Os ataques especiais (pedras, feixes vermelhos e projéteis marcados) causam **2 de dano**; o contato comum continua em 1–2 para manter as lutas justas.
 
@@ -152,6 +192,7 @@ O jogo salva automaticamente no `localStorage`:
 - poderes desbloqueados;
 - crachás e núcleos coletados;
 - pistas de Kennedito coletadas;
+- personagem escolhido;
 - dificuldade escolhida.
 
 A chave nova é `codigo_verde_save_v1`. Saves antigos de `ferro9_save_v1` são lidos uma vez e migrados, mas poderes magnéticos antigos são descartados.

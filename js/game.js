@@ -37,6 +37,9 @@ class Game {
     this.difficulty = this.save ? clamp(this.save.difficulty ?? 1, 0, DIFFICULTIES.length - 1) : 1;
     this.diff = DIFFICULTIES[this.difficulty];
     this.selectedDifficulty = this.difficulty;
+    this.characterId = this.save ? getCharacter(this.save.character).id : 'vega';
+    this.character = getCharacter(this.characterId);
+    this.selectedCharacter = Math.max(0, CHARACTERS.findIndex((c) => c.id === this.characterId));
     this.cutsceneIndex = 0;
     this.cutsceneTime = 0;
     this.cutsceneReveal = 0;
@@ -101,10 +104,12 @@ class Game {
         clues: {},
         completed: [],
         tutorialDone: false,
+        character: this.characterId,
         difficulty: this.difficulty
       };
     }
     if (!this.save.clues) this.save.clues = {};
+    if (!CHARACTER_IDS.includes(this.save.character)) this.save.character = this.characterId;
     return this.save;
   }
 
@@ -112,6 +117,7 @@ class Game {
     const s = this.ensureSave();
     s.powers = [...this.powers];
     s.difficulty = this.difficulty;
+    s.character = this.characterId;
     writeSave(s);
   }
 
@@ -142,6 +148,7 @@ class Game {
 
     switch (this.state) {
       case 'menu': this.updateMenu(dt); break;
+      case 'characters': this.updateCharacterSelect(dt); break;
       case 'difficulty': this.updateDifficulty(dt); break;
       case 'levelselect': this.updateLevelSelect(dt); break;
       case 'help': this.updateHelp(dt); break;
@@ -165,6 +172,7 @@ class Game {
     const has = this.hasProgress();
     const items = [
       { label: has ? 'CONTINUAR' : 'INICIAR', action: 'start' },
+      { label: 'PERSONAGEM: ' + this.character.name, action: 'character' },
       { label: 'DIFICULDADE: ' + DIFFICULTIES[this.difficulty].name, action: 'difficulty' },
       { label: 'TREINAMENTO', action: 'tutorial' },
       { label: 'SELECIONAR FASE', action: 'levels' },
@@ -172,8 +180,8 @@ class Game {
     ];
     if (has) items.push({ label: 'APAGAR PROGRESSO', action: 'reset' });
 
-    const startY = 304;
-    const w = 396, h = 46, gap = 9;
+    const startY = 288;
+    const w = 396, h = 43, gap = 7;
     return items.map((it, i) => ({
       ...it,
       x: VIEW_W / 2 - w / 2,
@@ -207,6 +215,10 @@ class Game {
     if (action === 'start') {
       if (this.hasProgress()) this.continueGame();
       else this.startNewGame();
+    } else if (action === 'character') {
+      this.selectedCharacter = Math.max(0, CHARACTERS.findIndex((c) => c.id === this.characterId));
+      this.state = 'characters';
+      Sfx.tone(500, 0.06, { type: 'square', vol: 0.04 });
     } else if (action === 'difficulty') {
       this.selectedDifficulty = this.difficulty;
       this.state = 'difficulty';
@@ -227,6 +239,85 @@ class Game {
     }
   }
 
+  /* ------------------------------ PERSONAGENS ------------------------------ */
+
+  characterLayout() {
+    const w = 268, h = 384, gap = 16;
+    const total = w * CHARACTERS.length + gap * (CHARACTERS.length - 1);
+    const startX = (VIEW_W - total) / 2;
+    return CHARACTERS.map((ch, i) => ({
+      ch,
+      index: i,
+      x: startX + i * (w + gap),
+      y: 206,
+      w, h
+    }));
+  }
+
+  updateCharacterSelect() {
+    const cards = this.characterLayout();
+    this.characterRects = cards;
+
+    for (const c of cards) {
+      if (Input.hoverIn(c.x, c.y, c.w, c.h)) this.selectedCharacter = c.index;
+    }
+
+    if (Input.pressed('ArrowLeft', 'KeyA')) {
+      this.selectedCharacter = (this.selectedCharacter - 1 + CHARACTERS.length) % CHARACTERS.length;
+      Sfx.tone(420, 0.05, { type: 'square', vol: 0.03 });
+    }
+    if (Input.pressed('ArrowRight', 'KeyD')) {
+      this.selectedCharacter = (this.selectedCharacter + 1) % CHARACTERS.length;
+      Sfx.tone(420, 0.05, { type: 'square', vol: 0.03 });
+    }
+
+    if (Input.pressed('Escape')) {
+      this.state = 'menu';
+      Sfx.tone(280, 0.07, { type: 'square', vol: 0.04 });
+      return;
+    }
+
+    let pick = Input.pressed('Enter', 'Space') ? this.selectedCharacter : null;
+    for (const c of cards) {
+      if (Input.clickIn(c.x, c.y, c.w, c.h)) pick = c.index;
+    }
+
+    if (pick !== null) {
+      this.setCharacter(CHARACTERS[pick].id);
+      this.state = 'menu';
+    }
+  }
+
+  setCharacter(id) {
+    const ch = getCharacter(id);
+    this.characterId = ch.id;
+    this.character = ch;
+    this.selectedCharacter = Math.max(0, CHARACTERS.findIndex((c) => c.id === ch.id));
+    const s = this.ensureSave();
+    s.character = ch.id;
+    this.persist();
+    if (this.player) this.applyCharacterToPlayer();
+    Sfx.tone(520, 0.08, { type: 'triangle', vol: 0.08 });
+    Sfx.tone(780, 0.12, { type: 'triangle', vol: 0.07, delay: 0.07 });
+    this.toast('PERSONAGEM: ' + ch.name, ch.color, 2.2);
+  }
+
+  applyCharacterToPlayer() {
+    const p = this.player;
+    if (!p) return;
+    const ch = this.character || CHARACTERS[0];
+    const diff = this.diff || DIFFICULTIES[this.difficulty];
+    p.character = ch;
+    p.speedMul = ch.speed || 1;
+    p.damageMul = ch.damage || 1;
+    p.energyMul = ch.energy || 1;
+    p.maxEnergy = Math.round(100 * p.energyMul);
+    p.maxHp = Math.max(2, diff.playerHp + (ch.hpBonus || 0));
+    p.hp = Math.min(p.hp, p.maxHp);
+    if (p.hp <= 0) p.hp = p.maxHp;
+    p.energy = Math.min(p.energy, p.maxEnergy);
+  }
+
   startNewGame() {
     clearSave();
     this.save = {
@@ -237,6 +328,7 @@ class Game {
       clues: {},
       completed: [],
       tutorialDone: false,
+      character: this.characterId,
       difficulty: this.difficulty
     };
     this.powers.clear();
@@ -555,6 +647,9 @@ class Game {
     const diff = this.diff || DIFFICULTIES[this.difficulty];
     this.player.maxHp = diff.playerHp;
     this.player.hp = diff.playerHp;
+    this.applyCharacterToPlayer();
+    this.player.hp = this.player.maxHp;
+    this.player.energy = this.player.maxEnergy;
     this.checkpointPos = { x: this.player.cx, y: this.player.bottom };
     this.cam = { x: 0, y: 0, shake: 0 };
     this.cam.x = clamp(this.player.cx - VIEW_W / 2, 0, Math.max(0, level.widthPx - VIEW_W));
@@ -676,6 +771,15 @@ class Game {
     this.toast(this.boss.cfg.name + ' — LUTE!', this.boss.color, 2.4);
   }
 
+  arenaBounds() {
+    if (!this.arena) return null;
+    const leftGate = this.bossGate;
+    const rightGate = this.exitGate;
+    const left = leftGate ? (leftGate.tx + leftGate.w) * TILE : this.arena.left * TILE;
+    const right = rightGate ? rightGate.tx * TILE : this.arena.right * TILE;
+    return { left, right };
+  }
+
   /* ------------------------------ JOGO ------------------------------ */
 
   updatePlaying(dt) {
@@ -701,6 +805,22 @@ class Game {
     }
 
     p.update(dt);
+
+    // Contenção da arena: ninguém atravessa os portões durante a luta.
+    if (this.bossActive && !this.bossDefeated) {
+      const bounds = this.arenaBounds();
+      if (bounds) {
+        const minX = bounds.left + 2;
+        const maxX = bounds.right - p.w - 2;
+        if (p.x < minX) {
+          p.x = minX;
+          if (p.vx < 0) p.vx = 0;
+        } else if (p.x > maxX) {
+          p.x = maxX;
+          if (p.vx > 0) p.vx = 0;
+        }
+      }
+    }
 
     this.updatePowers(dt);
 
