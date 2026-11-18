@@ -58,6 +58,9 @@ class Game {
     this.checkpoints = [];
     this.springs = [];
     this.crumbles = [];
+    this.movers = [];
+    this.winds = [];
+    this.grapples = [];
     this.kennedito = null;
     this.kenneditoAlly = null;
     this.kenneditoRescued = false;
@@ -547,6 +550,9 @@ class Game {
     this.checkpoints = [];
     this.springs = [];
     this.crumbles = [];
+    this.movers = [];
+    this.winds = [];
+    this.grapples = [];
     this.kennedito = null;
     this.kenneditoAlly = null;
     this.kenneditoRescued = false;
@@ -602,6 +608,15 @@ class Game {
           break;
         case 'crumble':
           this.crumbles.push(new CrumblePlatform(e, this));
+          break;
+        case 'mover':
+          this.movers.push(new MovingPlatform(e, this));
+          break;
+        case 'wind':
+          this.winds.push(new WindZone(e));
+          break;
+        case 'grapple':
+          this.grapples.push(new GrapplePoint(e));
           break;
         case 'gear':
           this.pickups.push(new Pickup('gear', cx, e.ty * TILE + TILE / 2));
@@ -803,6 +818,10 @@ class Game {
         this.beginBossFight();
       }
     }
+
+    for (const m of this.movers) m.update(dt);
+    for (const wz of this.winds) wz.update(dt);
+    for (const gp of this.grapples) gp.update(dt);
 
     p.update(dt);
 

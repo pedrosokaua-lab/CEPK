@@ -56,6 +56,9 @@ class LevelBuilder {
   charger(tx, ty, data = {}) { return this.add('charger', tx, ty, data); }
   swooper(tx, ty, data = {}) { return this.add('swooper', tx, ty, data); }
   spring(tx, ty, data = {}) { return this.add('spring', tx, ty, data); }
+  mover(tx, ty, w = 3, data = {}) { return this.add('mover', tx, ty, { w, ...data }); }
+  wind(tx, ty, w = 3, h = 6, data = {}) { return this.add('wind', tx, ty, { w, h, ...data }); }
+  grapple(tx, ty, data = {}) { return this.add('grapple', tx, ty, data); }
   crumble(tx, ty, w = 3, data = {}) {
     this.solid(tx, ty, w, 1);
     return this.add('crumble', tx, ty, { w, ...data });
@@ -336,7 +339,7 @@ function tutorialLevel() {
 
   // 9) DASH ALTERNADO (L)
   b.gate(108, 11, 1, 7, 'dash_alt');
-  b.checkpoint(106, 17);
+  b.checkpoint(106.5, 17);
 
   // 10) PORTAL
   b.exit(110, 17);
@@ -465,12 +468,17 @@ function level1() {
   b.gear(60, 11);
   b.core(65, 14);
   b.drone(61, 9, { variant: 'sniper' });
-  b.enemy(57, 17, { variant: 'shield' });
-  b.enemy(68, 17, { variant: 'bomber' });
+  b.enemy(59, 17, { variant: 'shield' });
+  b.enemy(69, 17, { variant: 'bomber' });
   b.swooper(71, 9, { variant: 'swarm' });
   b.checkpoint(70, 17);
 
-  b.solid(77, 15, 3);
+  // Fosso largo: agora só atravessa com as plataformas móveis.
+  b.solid(76, 21, 5);
+  b.spikes(76, 20, 5);
+  b.mover(76, 15, 3, { axis: 'x', range: 7, speed: 1.35, phase: 0 });
+  b.mover(79, 11, 2, { axis: 'y', range: 5, speed: 1.8, phase: 1.4 });
+  b.gear(79, 8);
 
   b.ground(81, 20);
   b.laser(84, 13, 1, 5);
@@ -478,12 +486,17 @@ function level1() {
   b.solid(87, 14, 3);
   b.gear(88, 12);
   b.enemy(88, 17, { variant: 'brute' });
-  b.swooper(98, 9, { variant: 'bomber' });
+  b.swooper(103, 9, { variant: 'bomber' });
   b.charger(99, 17);
   b.spikes(95, 17, 3);
 
   // Pulo duplo com spring
-  b.spring(90, 17);  // New Spring for double jump training
+  b.spring(90, 17);
+
+  // Chaminé de salto de parede: a única saída é escalando as paredes.
+  b.solid(98, 9, 1, 5);
+  b.solid(101, 9, 1, 9);
+  b.gear(100, 7);
 
   b.ground(101, 41);
   b.solid(104, 14, 3);
@@ -626,21 +639,28 @@ function level2() {
   b.gear(61, 11);
   b.core(67, 14);
   b.drone(58, 9, { variant: 'sprayer' });
-  b.enemy(56, 17, { variant: 'brute' });
+  b.enemy(59, 17, { variant: 'brute' });
   b.enemy(64, 17, { variant: 'runner' });
-  b.checkpoint(69, 17);
+  b.checkpoint(71, 17);
   b.laser(72, 13, 1, 5);
   b.swooper(71, 8, { variant: 'bomber' });
+  b.power(73, 16, 'grapple');
   b.crate(74, 17);
   b.crate(75, 17);
 
-  b.solid(77, 21, 8);
-  b.spikes(77, 20, 8);
+  // Fosso do hall: largo demais para pulo duplo. Use o GANCHO.
+  b.solid(77, 21, 12);
+  b.spikes(77, 20, 12);
+  b.grapple(80, 8);
+  b.grapple(86, 7);
+  b.mover(82, 14, 3, { axis: 'y', range: 5, speed: 1.7, phase: 0.6 });
+  b.wind(84, 7, 3, 9, { forceY: -2050 });
 
-  b.ground(85, 22);
+  b.ground(89, 18);
   b.solid(88, 14, 4);
   b.gear(89, 12);
-  b.enemy(90, 17, { variant: 'shield' });
+  b.checkpoint(90, 17);
+  b.enemy(92, 17, { variant: 'shield' });
   b.charger(93, 17, { variant: 'armored' });
   b.drone(96, 10, { variant: 'sniper' });
   b.swooper(81, 9, { variant: 'bomber' });
@@ -659,7 +679,7 @@ function level2() {
   b.solid(114, 10, 38, 1);
   b.solid(151, 10, 1, 8);
   b.solid(118, 14, 3);
-  b.solid(128, 14, 3);
+  b.solid(130, 14, 3);
   b.solid(135, 14, 3);
   b.solid(149, 12, 1, 6);
   b.gear(136, 12);
@@ -772,7 +792,7 @@ function level3() {
   b.gear(39, 11);
   b.clue(40, 12, 'pista3');
   b.drone(35, 9, { variant: 'sniper' });
-  b.enemy(36, 17, { variant: 'brute' });
+  b.enemy(38, 17, { variant: 'brute' });
   b.spikes(42, 17, 2);
 
   b.solid(47, 16, 2);
@@ -792,16 +812,23 @@ function level3() {
   b.enemy(63, 17, { variant: 'shield' });
   b.enemy(69, 17, { variant: 'bomber' });
   b.swooper(74, 8, { variant: 'bomber' });
+  b.power(72, 16, 'glide');
   b.crate(74, 17);
   b.crate(75, 17);
   b.crate(76, 17);
 
-  b.solid(77, 21, 8);
-  b.spikes(77, 20, 8);
+  // Vão do ginásio: vento ascendente + PLANADOR para cruzar.
+  b.solid(77, 21, 14);
+  b.spikes(77, 20, 14);
+  b.wind(78, 6, 13, 13, { forceY: -2150, forceX: 520 });
+  b.mover(82, 14, 3, { axis: 'x', range: 7, speed: 1.5, phase: 0 });
+  b.mover(88, 11, 2, { axis: 'y', range: 5, speed: 1.9, phase: 1.1 });
+  b.grapple(84, 7);
+  b.grapple(89, 6);
   b.swooper(81, 9, { variant: 'swarm' });
 
-  b.ground(85, 24);
-  b.checkpoint(88, 17);
+  b.ground(91, 18);
+  b.checkpoint(92, 17);
   b.solid(90, 15, 5);
   b.solid(97, 12, 5);
   b.gear(91, 13);
@@ -810,7 +837,7 @@ function level3() {
   b.drone(103, 10, { variant: 'sprayer' });
   b.enemy(95, 17, { variant: 'runner' });
   b.enemy(101, 17, { variant: 'brute' });
-  b.charger(92, 17, { variant: 'armored' });
+  b.charger(94, 17, { variant: 'armored' });
   b.spikes(105, 17, 2);
   b.swooper(107, 8, { variant: 'swarm' });
 
@@ -932,6 +959,10 @@ function level4() {
   b.spikes(16, 20, 10);
   b.solid(21, 15, 3);
   b.gear(21, 13);
+  b.wind(17, 6, 8, 14, { forceY: -2300 });
+  b.mover(18, 14, 3, { axis: 'x', range: 6, speed: 1.6, phase: 0 });
+  b.mover(23, 10, 2, { axis: 'y', range: 5, speed: 1.9, phase: 0.8 });
+  b.grapple(21, 6);
 
   b.ground(26, 20);
   b.checkpoint(29, 17);
@@ -958,13 +989,18 @@ function level4() {
   b.drone(64, 8, { variant: 'sprayer' });
   b.drone(71, 10, { variant: 'sniper' });
   b.enemy(66, 17, { variant: 'brute' });
-  b.enemy(72, 17, { variant: 'bomber' });
+  b.enemy(70, 17, { variant: 'bomber' });
   b.spikes(75, 17, 3);
 
   b.solid(79, 15, 3);
   b.solid(83, 13, 2);
   b.gear(83, 11);
   b.swooper(80, 9, { variant: 'bomber' });
+  b.mover(82, 10, 3, { axis: 'y', range: 4, speed: 1.7, phase: 0.4 });
+  b.solid(85, 8, 1, 5);
+  b.solid(87, 8, 1, 10);
+  b.grapple(86, 6);
+  b.wind(78, 7, 9, 12, { forceY: -1850 });
 
   b.ground(88, 22);
   b.laser(91, 12, 1, 6);
@@ -983,6 +1019,11 @@ function level4() {
   b.solid(111, 15, 3);
   b.solid(115, 13, 2);
   b.gear(115, 11);
+  b.solid(110, 21, 10);
+  b.spikes(110, 20, 10);
+  b.mover(111, 14, 3, { axis: 'x', range: 8, speed: 1.5, phase: 0.2 });
+  b.mover(116, 10, 2, { axis: 'y', range: 5, speed: 1.8, phase: 1.3 });
+  b.grapple(114, 6);
 
   b.ground(120, 48);
   b.solid(124, 14, 3);
@@ -1094,7 +1135,7 @@ function level5() {
         ]
       }
     ],
-    hint: 'Combine PULSO, FOCO, ESCUDO e ADRENALINA. O parry é a chave.',
+    hint: 'Use GANCHO (G), PLANADOR (H), salto de parede e plataformas móveis. Combine os seis poderes.',
     boss: { name: 'A DIRETORA', hp: 156, speed: 82, color: '#ff5d7a', w: 140, h: 150, final: true, style: 'director' },
     arena: { left: 102, right: 128, trigger: 104, exit: 134 }
   });
@@ -1130,20 +1171,33 @@ function level5() {
   b.drone(53, 9, { variant: 'sniper' });
   b.swooper(45, 9, { variant: 'bomber' });
 
-  // Section with crumble platforms
+  // Torre final: chaminé de salto de parede + gancho.
   b.ground(56, 84);
-  b.solid(60, 14, 3);
-  b.solid(70, 14, 3);
-  b.solid(80, 14, 3);
+  b.checkpoint(57, 17);
+  b.solid(57, 6, 1, 6);
+  b.solid(60, 6, 1, 12);
+  b.grapple(59, 4);
+  b.gear(59, 3);
+
+  // Corredor de espinhos: plataformas móveis e vento.
+  b.spikes(66, 17, 7);
+  b.mover(65, 14, 4, { axis: 'x', range: 8, speed: 1.6, phase: 0 });
+  b.mover(71, 11, 3, { axis: 'y', range: 5, speed: 1.9, phase: 0.7 });
+  b.wind(73, 8, 4, 10, { forceY: -2200 });
+  b.grapple(75, 6);
+
   b.solid(90, 14, 3);
   b.gear(61, 12);
   b.gear(81, 12);
   b.core(91, 12);
-  b.turret(58, 17, { variant: 'mortar', range: 640 });
+  b.turret(62, 17, { variant: 'mortar', range: 640 });
   b.enemy(64, 17, { variant: 'bomber' });
   b.swooper(66, 8, { variant: 'swarm' });
-  b.charger(68, 17, { variant: 'armored' });
-  b.enemy(74, 17, { variant: 'runner' });
+  b.charger(74, 17, { variant: 'armored' });
+  b.enemy(77, 17, { variant: 'runner' });
+  b.mover(80, 12, 3, { axis: 'y', range: 6, speed: 1.6, phase: 1.2 });
+  b.grapple(81, 6);
+  b.wind(88, 6, 3, 10, { forceY: -2100 });
 
   // Kennedito cage at tile 94-112, position 17
   b.kennedito(94, 17);  // New Kennedito Cage
@@ -1151,12 +1205,12 @@ function level5() {
   // Crumble platforms before the cage
   b.crumble(82, 17, 5);  // Crumble section
   b.crumble(88, 17, 3);  // Another crumble section
-  b.enemy(88, 17, { variant: 'shield' });
+  b.enemy(88, 16, { variant: 'shield' });
   b.swooper(90, 8, { variant: 'bomber' });
 
   // Turret and charger before the cage
   b.turret(78, 17, { variant: 'laser', range: 620 });
-  b.charger(84, 17, { variant: 'berserk' });
+  b.charger(84, 16, { variant: 'berserk' });
 
   // Portão de resgate: só abre depois de libertar Kennedito.
   b.gate(99, 11, 1, 7, 'rescue');
@@ -1168,7 +1222,7 @@ function level5() {
   b.solid(102, 10, 38, 1);
   b.solid(139, 10, 1, 8);
   b.solid(106, 14, 3);
-  b.solid(116, 14, 3);
+  b.solid(118, 14, 3);
   b.solid(123, 14, 3);
   b.solid(137, 12, 1, 6);
   b.gear(124, 12);
@@ -1208,5 +1262,19 @@ const POWER_INFO = {
     color: '#ffd24d',
     key: 'F',
     desc: 'Aumenta velocidade, salto e dano por 6 segundos.'
+  },
+  grapple: {
+    name: 'GANCHO',
+    short: 'Gancho',
+    color: '#ff9ad5',
+    key: 'G',
+    desc: 'Dispara um gancho até 440px e puxa você para o ponto de ancoragem.'
+  },
+  glide: {
+    name: 'PLANADOR',
+    short: 'Planador',
+    color: '#8fd4ff',
+    key: 'H',
+    desc: 'Segure H no ar para planar, cair devagar e atravessar vãos largos.'
   }
 };

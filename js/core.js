@@ -11,7 +11,7 @@ const TAU = Math.PI * 2;
 
 const GAME_NAME = 'CÓDIGO VERDE';
 const GAME_SUBTITLE = 'COLÉGIO PRESIDENTE KENNEDY';
-const POWER_IDS = ['pulse', 'focus', 'shield', 'super'];
+const POWER_IDS = ['pulse', 'focus', 'shield', 'super', 'grapple', 'glide'];
 
 /* ------------------------------ DIFICULDADE ------------------------------ */
 
@@ -194,13 +194,15 @@ const WEAPONS = [
     short: 'Bastão',
     color: '#7fe7ff',
     melee: true,
-    damage: 2,
-    bossDamage: 4,
-    cd: 0.30,
-    range: 56,
+    damage: 3,
+    bossDamage: 6,
+    cd: 0.28,
+    range: 64,
     comboMax: 3,
     energy: 0,
-    desc: 'Combo rápido de três golpes. Equilibrado e seguro.'
+    chargeCost: 12,
+    chargeName: 'CORTE RADIAL',
+    desc: 'Combo rápido de três golpes. Segure J: giro 360° que reflete projéteis.'
   },
   {
     id: 'estilingue',
@@ -208,14 +210,16 @@ const WEAPONS = [
     short: 'Estilingue',
     color: '#ffd24d',
     melee: false,
-    damage: 2,
-    bossDamage: 4,
-    cd: 0.36,
+    damage: 3,
+    bossDamage: 6,
+    cd: 0.34,
     range: 0,
     comboMax: 1,
-    energy: 6,
-    speed: 820,
-    desc: 'Ataque à distância. Gasta energia, mas acerta de longe.'
+    energy: 5,
+    speed: 900,
+    chargeCost: 14,
+    chargeName: 'RAJADA TRIPLA',
+    desc: 'Tiro rápido e barato. Segure J: três projéteis em leque.'
   },
   {
     id: 'martelo',
@@ -223,13 +227,15 @@ const WEAPONS = [
     short: 'Martelo',
     color: '#ff8c42',
     melee: true,
-    damage: 5,
-    bossDamage: 9,
-    cd: 0.62,
-    range: 74,
+    damage: 7,
+    bossDamage: 13,
+    cd: 0.58,
+    range: 84,
     comboMax: 2,
     energy: 0,
-    desc: 'Lento e pesado. Quebra a guarda e arremessa inimigos.'
+    chargeCost: 20,
+    chargeName: 'IMPACTO SÍSMICO',
+    desc: 'Lento e brutal. Segure J: onda de choque que atravessa a arena.'
   }
 ];
 
@@ -254,6 +260,17 @@ function circleRect(cx, cy, r, rect) {
   const nx = clamp(cx, rect.x, rect.x + rect.w);
   const ny = clamp(cy, rect.y, rect.y + rect.h);
   return dist2(cx, cy, nx, ny) <= r * r;
+}
+
+// Linha de visão: usada pelo gancho e por feixes. Amostra o mapa em passos curtos.
+function segmentBlocked(level, x1, y1, x2, y2, step = 12) {
+  const d = Math.hypot(x2 - x1, y2 - y1);
+  const n = Math.max(1, Math.ceil(d / step));
+  for (let i = 1; i < n; i++) {
+    const t = i / n;
+    if (level.isSolid(x1 + (x2 - x1) * t, y1 + (y2 - y1) * t)) return true;
+  }
+  return false;
 }
 
 function roundRect(ctx, x, y, w, h, r) {

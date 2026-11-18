@@ -112,7 +112,7 @@ function drawGear(ctx, x, y, r, teeth, rot, color, lw = 3) {
   ctx.restore();
 }
 
-function drawPowerIcon(ctx, x, y, s, power, color, state) {
+function drawPowerIcon(ctx, x, y, s, power, color, state, showLabel = true) {
   const info = POWER_INFO[power] || { key: '?', name: power };
   const active = state === 'active';
   const unlocked = state !== 'locked';
@@ -144,12 +144,13 @@ function drawPowerIcon(ctx, x, y, s, power, color, state) {
       size: 17, align: 'center', color, glow: active ? color : null, glowSize: 8
     });
   }
-  drawText(ctx, info.name, x + s / 2, y + s + 13, {
-    size: 9, align: 'center', color: unlocked ? 'rgba(210,245,220,0.8)' : 'rgba(160,190,170,0.4)'
-  });
+  if (showLabel) {
+    drawText(ctx, info.name, x + s / 2, y + s + 13, {
+      size: 9, align: 'center', color: unlocked ? 'rgba(210,245,220,0.8)' : 'rgba(160,190,170,0.4)'
+    });
+  }
   ctx.restore();
 }
-
 function drawCharacterFace(ctx, ch, x, y, s, t = 0) {
   const u = s / 16;
   const px = (gx, gy, gw, gh, color) => {
@@ -2414,6 +2415,9 @@ Game.prototype.drawGameScene = function (ctx) {
   this.drawGates(ctx, cam);
   if (this.level.tutorial) this.drawTutorialWorld(ctx);
 
+  for (const wz of this.winds) wz.render(ctx, cam);
+  for (const m of this.movers) m.render(ctx, cam);
+  for (const gp of this.grapples) gp.render(ctx, cam);
   for (const cp of this.checkpoints) cp.render(ctx, cam);
   if (this.exit) this.exit.render(ctx, cam);
   for (const cr of this.crumbles) cr.render(ctx, cam);
@@ -2432,7 +2436,7 @@ Game.prototype.drawGameScene = function (ctx) {
   ctx.globalCompositeOperation = 'lighter';
   for (const ring of this.pulseRings) {
     const a = clamp(ring.life / ring.max, 0, 1);
-    ctx.strokeStyle = withAlpha('#6dff9e', a * 0.8);
+    ctx.strokeStyle = withAlpha(ring.color || '#6dff9e', a * 0.8);
     ctx.lineWidth = 3 + a * 4;
     ctx.beginPath();
     ctx.arc(ring.x - cam.x, ring.y - cam.y, ring.r, 0, TAU);
@@ -2665,12 +2669,19 @@ Game.prototype.drawHUD = function (ctx) {
     drawText(ctx, w.melee ? 'CORPO A CORPO' : `TIRO · ${w.energy} ENERGIA`, x + 48, wy + 41, {
       size: 8, color: 'rgba(170,210,185,0.58)'
     });
+    if (selected && p.chargeTime > 0.05) {
+      const cw = Math.min(1, p.chargeTime / 0.55);
+      ctx.fillStyle = 'rgba(3,10,16,0.9)';
+      ctx.fillRect(x + 4, wy + 48, 134, 3);
+      ctx.fillStyle = cw >= 1 ? '#ffd24d' : w.color;
+      ctx.fillRect(x + 4, wy + 48, 134 * Math.min(1, p.chargeTime / 0.55), 3);
+    }
     ctx.restore();
   }
 
   /* ------- poderes ------- */
   const pw = 46;
-  const powers = ['pulse', 'focus', 'shield', 'super'];
+  const powers = ['pulse', 'focus', 'shield', 'super', 'grapple', 'glide'];
   const px = VIEW_W - 24 - powers.length * (pw + 10) + 10;
   drawText(ctx, 'PODERES', px, wy - 12, { size: 9, color: 'rgba(180,220,190,0.6)' });
   powers.forEach((id, i) => {
@@ -2680,6 +2691,8 @@ Game.prototype.drawHUD = function (ctx) {
     if (id === 'focus' && p.focus) state = 'active';
     if (id === 'shield' && p.shield) state = 'active';
     if (id === 'super' && p.superActive) state = 'active';
+    if (id === 'grapple' && p.grappleTimer > 0) state = 'active';
+    if (id === 'glide' && p.glideActive) state = 'active';
     drawPowerIcon(ctx, px + i * (pw + 10), wy, pw, id, info.color, state);
   });
 
@@ -3218,55 +3231,58 @@ Game.prototype.renderHelp = function (ctx) {
   const controls = [
     ['A / D  ·  ← / →', 'Andar'],
     ['SHIFT', 'Impulso (dash) · segure para correr'],
-    ['ESPAÇO / W / ↑', 'Pular · aperte 2× para pulo duplo'],
+    ['ESPAÇO / W / ↑', 'Pular · 2× pulo duplo · na parede = salto de parede'],
     ['J  ·  CLIQUE ESQ.', 'Atacar na direção da mira (8 lados)'],
+    ['J (SEGURE)', 'Ataque carregado: giro, rajada tripla ou impacto sísmico'],
     ['E  ·  CLIQUE DIR.', 'Parry: aparar ataques verdes'],
     ['1 / 2 / 3', 'Bastão · Estilingue · Martelo'],
     ['Q', 'PULSO (após desbloquear)'],
     ['K', 'FOCO (segure)'],
     ['R', 'ESCUDO (segure)'],
     ['F', 'ADRENALINA'],
+    ['G', 'GANCHO: puxa até a âncora rosa mais próxima'],
+    ['H', 'PLANADOR (segure no ar)'],
     ['M  ·  ESC / P', 'Som · Pausar']
   ];
   controls.forEach((row, i) => {
-    const y = 174 + i * 29;
-    drawText(ctx, row[0], 90, y, { size: 10, color: '#ffd24d' });
-    drawText(ctx, row[1], 300, y, { size: 10, color: 'rgba(205,235,215,0.78)' });
+    const y = 168 + i * 24;
+    drawText(ctx, row[0], 90, y, { size: 9, color: '#ffd24d' });
+    drawText(ctx, row[1], 300, y, { size: 9, color: 'rgba(205,235,215,0.78)' });
   });
 
-  drawText(ctx, 'PARRY', 90, 540, { size: 13, color: '#6dff9e' });
+  drawText(ctx, 'PARRY', 90, 526, { size: 13, color: '#6dff9e' });
   const parryLines = wrapTextLines(ctx, 'Aperte E pouco antes do impacto. Os primeiros instantes são um PARRY PERFEITO: reflete tudo em volta, atordoa mais e recarrega o dash. Ataques vermelhos não podem ser aparados: use o dash ou o escudo.', 340, 10);
   parryLines.forEach((line, i) => {
-    drawText(ctx, line, 90, 562 + i * 15, { size: 10, color: 'rgba(185,225,195,0.7)' });
+    drawText(ctx, line, 90, 548 + i * 15, { size: 10, color: 'rgba(185,225,195,0.7)' });
   });
 
-  drawText(ctx, 'ARMAS', 486, 142, { size: 15, color: '#7fe7ff' });
+  drawText(ctx, 'ARMAS', 620, 142, { size: 15, color: '#7fe7ff' });
   WEAPONS.forEach((w, i) => {
     const y = 180 + i * 100;
-    drawKeycap(ctx, String(i + 1), 486, y - 10, w.color, true, 0.95);
-    drawText(ctx, w.name, 526, y, { size: 14, color: w.color });
-    const lines = wrapTextLines(ctx, w.desc, 300, 10);
+    drawKeycap(ctx, String(i + 1), 620, y - 10, w.color, true, 0.95);
+    drawText(ctx, w.name, 660, y, { size: 14, color: w.color });
+    const lines = wrapTextLines(ctx, w.desc, 240, 10);
     lines.forEach((line, j) => {
-      drawText(ctx, line, 526, y + 20 + j * 14, { size: 10, color: 'rgba(195,225,205,0.68)' });
+      drawText(ctx, line, 660, y + 20 + j * 14, { size: 10, color: 'rgba(195,225,205,0.68)' });
     });
   });
-  drawText(ctx, 'Dica: martelo arremessa caixas e quebra a guarda.', 486, 500, {
+  drawText(ctx, 'Dica: segure J para o ataque carregado de cada arma.', 620, 500, {
     size: 9, color: 'rgba(255,210,77,0.65)'
   });
 
-  drawText(ctx, 'PODERES', 878, 142, { size: 15, color: '#7fe7ff' });
-  const powers = ['pulse', 'focus', 'shield', 'super'];
+  drawText(ctx, 'PODERES', 920, 142, { size: 15, color: '#7fe7ff' });
+  const powers = ['pulse', 'focus', 'shield', 'super', 'grapple', 'glide'];
   powers.forEach((id, i) => {
     const info = POWER_INFO[id];
-    const y = 174 + i * 84;
-    drawPowerIcon(ctx, 878, y, 38, id, info.color, 'ready');
-    drawText(ctx, info.name, 928, y + 10, { size: 13, color: info.color });
-    const lines = wrapTextLines(ctx, info.desc, 260, 9);
+    const y = 172 + i * 70;
+    drawPowerIcon(ctx, 920, y, 34, id, info.color, 'ready', false);
+    drawText(ctx, info.name, 966, y + 9, { size: 12, color: info.color });
+    const lines = wrapTextLines(ctx, info.desc, 250, 8);
     lines.slice(0, 2).forEach((line, j) => {
-      drawText(ctx, line, 928, y + 28 + j * 13, { size: 9, color: 'rgba(190,225,200,0.65)' });
+      drawText(ctx, line, 966, y + 26 + j * 12, { size: 8, color: 'rgba(190,225,200,0.65)' });
     });
   });
-  drawText(ctx, 'Dificuldade ajusta vida, dano, velocidade e agressividade.', 878, 520, {
+  drawText(ctx, 'Dificuldade ajusta vida, dano, velocidade e agressividade.', 920, 604, {
     size: 9, color: 'rgba(180,220,190,0.55)'
   });
 
@@ -5085,8 +5101,8 @@ Game.prototype.renderPause = function (ctx) {
     });
   });
 
-  drawText(ctx, 'Q PULSO · K FOCO · R ESCUDO · F ADRENALINA · E PARRY · SHIFT DASH', VIEW_W / 2, 628, {
-    size: 10, align: 'center', color: 'rgba(175,220,190,0.5)'
+  drawText(ctx, 'Q PULSO · K FOCO · R ESCUDO · F ADRENALINA · G GANCHO · H PLANADOR · E PARRY · SHIFT DASH', VIEW_W / 2, 628, {
+    size: 9, align: 'center', color: 'rgba(175,220,190,0.5)'
   });
   drawText(ctx, 'ESC / P CONTINUAR', VIEW_W / 2, 660, {
     size: 10, align: 'center', color: 'rgba(175,220,190,0.4)'
