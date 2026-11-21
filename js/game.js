@@ -66,6 +66,8 @@ class Game {
     this.bossSpawn = null;
     this.bossDefeated = false;
     this.bossActive = false;
+    this.bossPendingReset = false;
+    this.bossReenterTimer = 0;
     this.arena = null;
     this.bossGate = null;
     this.exitGate = null;
@@ -561,6 +563,8 @@ class Game {
     this.bossSpawn = null;
     this.bossDefeated = false;
     this.bossActive = false;
+    this.bossPendingReset = false;
+    this.bossReenterTimer = 0;
     this.toasts = [];
     this.pulseRings = [];
     this.parryFlash = 0;
@@ -766,6 +770,8 @@ class Game {
     if (!this.boss || this.boss.dead) return;
     this.state = 'playing';
     this.bossActive = true;
+    this.bossPendingReset = false;
+    this.bossReenterTimer = 0;
     this.boss.active = true;
     this.boss.state = 'idle';
     this.boss.timer = 0.9;
@@ -798,6 +804,16 @@ class Game {
     level.update(dt);
     this.hurtFlash = Math.max(0, this.hurtFlash - dt);
     this.stats.time += dt;
+
+    // Se o jogador demorar mais de 12s para voltar, o chefe recupera a vida.
+    if (this.bossPendingReset && !this.bossActive && this.boss && !this.bossDefeated) {
+      this.bossReenterTimer += dt;
+      if (this.bossReenterTimer > 12) {
+        this.boss.reset(this);
+        this.bossPendingReset = false;
+        this.bossReenterTimer = 0;
+      }
+    }
 
     const p = this.player;
 
@@ -1135,10 +1151,13 @@ class Game {
     for (const cr of this.crumbles) cr.reset(this);
     this.projectiles = this.projectiles.filter((pr) => pr.owner === 'player');
 
-    // Se o chefe ainda está de pé, reinicia a luta sem repetir a cutscene.
+    // O chefe mantém a vida ao morrer. Só recupera se você demorar a voltar.
     if (this.boss && this.bossIntroDone && !this.bossDefeated) {
-      this.boss.reset(this);
       this.bossActive = false;
+      this.bossPendingReset = true;
+      this.bossReenterTimer = 0;
+      this.boss.state = 'idle';
+      this.boss.vx = 0;
       if (this.bossGate) this.level.openGate(this.bossGate);
       if (this.exitGate) this.level.closeGate(this.exitGate);
       if (this.exit) this.exit.open = false;

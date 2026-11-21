@@ -338,7 +338,7 @@ function level1() {
     name: 'Pátio Central',
     short: 'Pátio',
     subtitle: 'Onde o sinal começou',
-    width: 142,
+    width: 172,
     height: 22,
     theme: THEMES.school,
     musicRoot: 55,
@@ -411,12 +411,12 @@ function level1() {
     ],
     hint: 'SHIFT dá o impulso. E faz o parry. Use os dois para atravessar o pátio.',
     boss: { name: 'O PORTEIRO', hp: 48, speed: 62, color: '#6dff9e', w: 116, h: 122, style: 'guardian' },
-    arena: { left: 107, right: 133, trigger: 109, exit: 138, ceiling: 11 }
+    arena: { left: 107, right: 141, trigger: 109, exit: 146, ceiling: 11 }
   });
 
   b.ground(0, 20);
   b.spawn(2, 17);
-  b.enemy(12, 17, { variant: 'runner' });
+  b.enemy(22, 17, { variant: 'runner' });
   b.solid(4, 14, 3);
   b.gear(5, 12);
   b.solid(9, 13, 3);
@@ -424,7 +424,7 @@ function level1() {
   b.crate(14, 17);
   b.crate(15, 17);
   b.crate(16, 17);
-  b.enemy(17, 17, { variant: 'samurai' });
+  b.enemy(26, 17, { variant: 'samurai' });
 
   // fosso do jardim: um salto longo e limpo, sem plataforma no meio
   b.solid(21, 21, 7);
@@ -480,16 +480,16 @@ function level1() {
 
   // Arena do chefe + sala de saída
   b.gate(107, 11, 2, 7, 'boss_arena', false);
-  b.gate(133, 11, 2, 7, 'boss_exit', true);
-  b.solid(107, 10, 35, 1);
-  b.solid(141, 10, 1, 8);
+  b.gate(141, 11, 2, 7, 'boss_exit', true);
+  b.solid(107, 10, 43, 1);
+  b.solid(149, 10, 1, 8);
   b.solid(111, 14, 3);
   b.solid(120, 14, 3);
   b.solid(127, 14, 3);
-  b.solid(140, 12, 1, 6);
+  b.solid(148, 12, 1, 6);
   b.gear(130, 12);
-  b.boss(117, 17, { name: 'O PORTEIRO', hp: 100, speed: 84, color: '#6dff9e', w: 116, h: 122, style: 'guardian' });
-  b.exit(138, 17);
+  b.boss(121, 17, { name: 'O PORTEIRO', hp: 100, speed: 84, color: '#6dff9e', w: 116, h: 122, style: 'guardian' });
+  b.exit(162, 17);
 
   return b.build();
 }
@@ -502,7 +502,7 @@ function level2() {
     name: 'Corredores',
     short: 'Corredores',
     subtitle: 'Depois do último sinal',
-    width: 152,
+    width: 172,
     height: 22,
     theme: THEMES.hall,
     musicRoot: 58,
@@ -575,19 +575,19 @@ function level2() {
     ],
     hint: 'SHIFT dá o impulso e E faz o parry. Use o dash para escapar dos leques.',
     boss: { name: 'A INSPETORA', hp: 64, speed: 72, color: '#ffd24d', w: 112, h: 126, style: 'hunter' },
-    arena: { left: 114, right: 140, trigger: 116, exit: 146, ceiling: 11 }
+    arena: { left: 114, right: 148, trigger: 116, exit: 154, ceiling: 11 }
   });
 
   b.ground(0, 17);
   b.spawn(2, 17);
-  b.enemy(13, 17, { variant: 'brute' });
+  b.enemy(24, 17, { variant: 'brute' });
   b.solid(8, 14, 4);
   b.gear(9, 12);
-  b.enemy(12, 17, { variant: 'runner' });
+  b.enemy(22, 17, { variant: 'runner' });
   b.crate(14, 17);
   b.crate(15, 17);
   b.crate(16, 17);
-  b.enemy(17, 17, { variant: 'samurai' });
+  b.enemy(26, 17, { variant: 'samurai' });
 
   b.solid(17, 21, 8);
   b.spikes(17, 20, 8);
@@ -644,16 +644,16 @@ function level2() {
 
   // Arena do chefe + sala de saída
   b.gate(114, 11, 2, 7, 'boss_arena', false);
-  b.gate(140, 11, 2, 7, 'boss_exit', true);
-  b.solid(114, 10, 38, 1);
-  b.solid(151, 10, 1, 8);
+  b.gate(156, 11, 2, 7, 'boss_exit', true);
+  b.solid(114, 10, 46, 1);
+  b.solid(159, 10, 1, 8);
   b.solid(118, 14, 3);
   b.solid(130, 14, 3);
   b.solid(135, 14, 3);
-  b.solid(149, 12, 1, 6);
+  b.solid(157, 12, 1, 6);
   b.gear(136, 12);
-  b.boss(126, 17, { name: 'A INSPETORA', hp: 150, speed: 96, color: '#ffd24d', w: 112, h: 126, style: 'hunter' });
-  b.exit(146, 17);
+  b.boss(130, 17, { name: 'A INSPETORA', hp: 150, speed: 96, color: '#ffd24d', w: 112, h: 126, style: 'hunter' });
+  b.exit(162, 17);
 
   return b.build();
 }
@@ -666,7 +666,7 @@ function level3() {
     name: 'Ginásio',
     short: 'Ginásio',
     subtitle: 'Jogo decisivo',
-    width: 162,
+    width: 172,
     height: 22,
     theme: THEMES.gym,
     musicRoot: 62,
@@ -739,17 +739,17 @@ function level3() {
     ],
     hint: 'SHIFT dá o impulso. Use o dash para atravessar os vãos e escapar dos saltos.',
     boss: { name: 'O TÉCNICO', hp: 80, speed: 68, color: '#ff8c42', w: 124, h: 136, style: 'bruiser' },
-    arena: { left: 122, right: 148, trigger: 124, exit: 154, ceiling: 11 }
+    arena: { left: 122, right: 156, trigger: 124, exit: 162, ceiling: 11 }
   });
 
   b.ground(0, 20);
   b.spawn(2, 17);
-  b.enemy(13, 17, { variant: 'runner' });
+  b.enemy(24, 17, { variant: 'runner' });
   b.solid(4, 14, 4);
   b.gear(5, 12);
-  b.enemy(12, 17, { variant: 'runner' });
-  b.enemy(15, 17, { variant: 'stalker' });
-  b.turret(17, 17, { variant: 'laser', range: 600 });
+  b.enemy(22, 17, { variant: 'runner' });
+  b.enemy(28, 17, { variant: 'stalker' });
+  b.turret(32, 17, { variant: 'laser', range: 600 });
 
   b.solid(22, 15, 3);
   b.gear(23, 13);
@@ -807,16 +807,16 @@ function level3() {
 
   // Arena do chefe + sala de saída
   b.gate(122, 11, 2, 7, 'boss_arena', false);
-  b.gate(148, 11, 2, 7, 'boss_exit', true);
-  b.solid(122, 10, 40, 1);
-  b.solid(161, 10, 1, 8);
+  b.gate(156, 11, 2, 7, 'boss_exit', true);
+  b.solid(122, 10, 48, 1);
+  b.solid(169, 10, 1, 8);
   b.solid(125, 14, 3);
   b.solid(137, 14, 3);
   b.solid(144, 14, 3);
-  b.solid(158, 12, 1, 6);
+  b.solid(166, 12, 1, 6);
   b.gear(145, 12);
-  b.boss(134, 17, { name: 'O TÉCNICO', hp: 210, speed: 92, color: '#ff8c42', w: 124, h: 136, style: 'bruiser' });
-  b.exit(154, 17);
+  b.boss(138, 17, { name: 'O TÉCNICO', hp: 210, speed: 92, color: '#ff8c42', w: 124, h: 136, style: 'bruiser' });
+  b.exit(162, 17);
 
   return b.build();
 }
@@ -829,7 +829,7 @@ function level4() {
     name: 'Laboratório',
     short: 'Laboratório',
     subtitle: 'Experimentos do CEPK',
-    width: 168,
+    width: 178,
     height: 22,
     theme: THEMES.lab,
     musicRoot: 65,
@@ -902,15 +902,15 @@ function level4() {
     ],
     hint: 'SHIFT dá o impulso e E faz o parry. Use o dash para cruzar os feixes.',
     boss: { name: 'A COORDENADORA', hp: 98, speed: 76, color: '#b18cff', w: 120, h: 132, style: 'trickster' },
-    arena: { left: 128, right: 154, trigger: 130, exit: 160, ceiling: 11 }
+    arena: { left: 128, right: 162, trigger: 130, exit: 168, ceiling: 11 }
   });
 
   b.ground(0, 16);
   b.spawn(2, 17);
-  b.charger(12, 17);
+  b.charger(22, 17);
   b.solid(8, 14, 3);
   b.gear(9, 12);
-  b.enemy(11, 17, { variant: 'runner' });
+  b.enemy(26, 17, { variant: 'runner' });
 
   b.solid(16, 21, 10);
   b.spikes(16, 20, 10);
@@ -971,16 +971,16 @@ function level4() {
 
   // Arena do chefe + sala de saída
   b.gate(128, 11, 2, 7, 'boss_arena', false);
-  b.gate(154, 11, 2, 7, 'boss_exit', true);
-  b.solid(128, 10, 40, 1);
-  b.solid(167, 10, 1, 8);
+  b.gate(162, 11, 2, 7, 'boss_exit', true);
+  b.solid(128, 10, 48, 1);
+  b.solid(175, 10, 1, 8);
   b.solid(132, 14, 3);
   b.solid(143, 14, 3);
   b.solid(150, 14, 3);
-  b.solid(164, 12, 1, 6);
+  b.solid(172, 12, 1, 6);
   b.gear(151, 12);
-  b.boss(140, 17, { name: 'A COORDENADORA', hp: 280, speed: 104, color: '#b18cff', w: 120, h: 132, style: 'trickster' });
-  b.exit(160, 17);
+  b.boss(144, 17, { name: 'A COORDENADORA', hp: 280, speed: 104, color: '#b18cff', w: 120, h: 132, style: 'trickster' });
+  b.exit(168, 17);
 
   return b.build();
 }
@@ -993,7 +993,7 @@ function level5() {
     name: 'Diretoria',
     short: 'Diretoria',
     subtitle: 'A sala da diretora',
-    width: 140,
+    width: 150,
     height: 22,
     theme: THEMES.office,
     musicRoot: 52,
@@ -1076,15 +1076,15 @@ function level5() {
     ],
     hint: 'Salto de parede, plataformas móveis e dash abrem o caminho até a diretoria.',
     boss: { name: 'A DIRETORA', hp: 156, speed: 82, color: '#ff5d7a', w: 140, h: 150, final: true, style: 'director' },
-    arena: { left: 102, right: 128, trigger: 104, exit: 134, ceiling: 11 }
+    arena: { left: 102, right: 136, trigger: 104, exit: 142, ceiling: 11 }
   });
 
   b.ground(0, 16);
   b.spawn(2, 17);
-  b.enemy(12, 17, { variant: 'brute' });
+  b.enemy(24, 17, { variant: 'brute' });
   b.gear(5, 15);
-  b.enemy(16, 17, { variant: 'runner' });
-  b.drone(18, 10, { variant: 'sniper' });
+  b.enemy(28, 17, { variant: 'runner' });
+  b.drone(30, 10, { variant: 'sniper' });
   b.laser(14, 12, 1, 6);
 
   b.ground(16, 10);
@@ -1149,16 +1149,16 @@ function level5() {
 
   // Arena final + sala de saída
   b.gate(102, 11, 2, 7, 'boss_arena', false);
-  b.gate(128, 11, 2, 7, 'boss_exit', true);
-  b.solid(102, 10, 38, 1);
-  b.solid(139, 10, 1, 8);
+  b.gate(136, 11, 2, 7, 'boss_exit', true);
+  b.solid(102, 10, 46, 1);
+  b.solid(147, 10, 1, 8);
   b.solid(106, 14, 3);
   b.solid(118, 14, 3);
   b.solid(123, 14, 3);
-  b.solid(137, 12, 1, 6);
+  b.solid(145, 12, 1, 6);
   b.gear(124, 12);
-  b.boss(114, 17, { name: 'A DIRETORA', hp: 420, speed: 112, color: '#ff5d7a', w: 140, h: 150, final: true, style: 'director' });
-  b.exit(134, 17);
+  b.boss(118, 17, { name: 'A DIRETORA', hp: 420, speed: 112, color: '#ff5d7a', w: 140, h: 150, final: true, style: 'director' });
+  b.exit(142, 17);
 
   return b.build();
 }

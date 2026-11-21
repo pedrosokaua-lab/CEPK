@@ -214,7 +214,7 @@ const WEAPONS = [
     cd: 0.34,
     range: 0,
     comboMax: 1,
-    energy: 5,
+    energy: 0,
     speed: 900,
     chargeCost: 14,
     chargeName: 'RAJADA TRIPLA',

@@ -309,6 +309,14 @@ class Player {
     if (!mouseFresh && Math.abs(this.attackAimX) > 0.1) this.face = this.attackAimX > 0 ? 1 : -1;
     this.attackAngle = Math.atan2(this.attackAimY, this.attackAimX);
 
+    // O boneco segue o mouse quando as teclas de movimento não estão pressionadas.
+    let mouseDir = 0;
+    if (mouseFresh && game.cam && !left && !right) {
+      const targetX = m.x + game.cam.x;
+      const diff = targetX - this.cx;
+      if (Math.abs(diff) > 18) mouseDir = diff > 0 ? 1 : -1;
+    }
+
     if (this.dashTimer <= 0) {
       if (left && !right) {
         this.vx -= accel * dt;
@@ -316,6 +324,9 @@ class Player {
       } else if (right && !left) {
         this.vx += accel * dt;
         if (!mouseFresh) this.face = 1;
+      } else if (mouseDir !== 0) {
+        this.vx += mouseDir * accel * dt;
+        this.face = mouseDir;
       } else {
         this.vx = approach(this.vx, 0, (this.onGround ? 3100 : 540) * dt);
       }
@@ -323,13 +334,15 @@ class Player {
     }
 
     /* ------- impulso ------- */
-    if (Input.pressed('ShiftLeft', 'ShiftRight', 'KeyL') && this.dashCd <= 0 && (this.onGround || this.airDash > 0)) {
+    if (Input.pressed('ShiftLeft', 'ShiftRight', 'KeyL') && this.dashCd <= 0 && (this.onGround || this.airDash > 0) && this.energy >= 15) {
+      this.energy -= 15;
       if (!this.onGround) this.airDash--;
       this.dashTimer = 0.16;
       this.dashCd = 0.65;
       this.justDashed = true;
       this.invuln = Math.max(this.invuln, 0.22);
       const dashDir = (left && !right) ? -1 : (right && !left) ? 1 : this.face;
+      this.dashDir = dashDir;
       this.vx = dashDir * 720 * this.speedMul;
       this.vy = 0;
       Sfx.tone(300, 0.14, { type: 'sawtooth', vol: 0.08, slide: 260 });
@@ -341,13 +354,21 @@ class Player {
     }
 
     if (this.dashTimer > 0) {
-      this.vx = this.face * 720 * this.speedMul;
+      this.vx = (this.dashDir || this.face) * 720 * this.speedMul;
       this.vy = Math.min(this.vy, 30);
     }
 
     /* ------- pulo / pulo duplo / parede ------- */
     const jumpDown = Input.isDown('Space', 'KeyW', 'ArrowUp');
     if (Input.pressed('Space', 'KeyW', 'ArrowUp')) this.jumpBuf = 0.13;
+    // Seguindo o mouse: se o cursor está bem acima e há obstáculo/buraco, pula sozinho.
+    if (mouseFresh && game.cam && this.onGround && this.dashTimer <= 0) {
+      const dy = m.y - (this.cy - game.cam.y);
+      const aheadX = this.face > 0 ? this.x + this.w + 8 : this.x - 8;
+      const groundAhead = game.level.isSolid(aheadX, this.y + this.h + 10);
+      const wallAhead = game.level.isSolid(aheadX, this.y + this.h - 12);
+      if (dy < -70 && (wallAhead || !groundAhead)) this.jumpBuf = 0.13;
+    }
     this.jumpBuf -= dt;
 
     if (this.onGround) {
@@ -387,7 +408,8 @@ class Player {
         FX.burst(this.cx, this.bottom, 7, {
           color: '#6dff9e', speedMax: 180, lifeMax: 0.5, gravity: 500
         });
-      } else if (this.jumpsLeft > 0) {
+      } else if (this.jumpsLeft > 0 && this.energy >= 12) {
+        this.energy -= 12;
         this.vy = -610;
         this.jumpsLeft--;
         this.jumpBuf = 0;
@@ -456,7 +478,7 @@ class Player {
     }
 
     const regen = game.diff ? game.diff.energyRegen : 1;
-    this.energy = Math.min(this.maxEnergy, this.energy + 10 * regen * this.energyMul * dt);
+    this.energy = Math.min(this.maxEnergy, this.energy + 5 * regen * this.energyMul * dt);
 
     /* ------- física ------- */
     this.prevVy = this.vy;
@@ -4062,17 +4084,29 @@ class Boss {
 
   blink(game) {
     const p = game.player;
-    const arena = 270;
     const b = this.arenaBounds(game);
-    let x = this.cx < p.cx ? p.cx + arena : p.cx - arena;
-    if (b) {
-      x = clamp(x, b.left + this.w / 2 + 8, b.right - this.w / 2 - 8);
-    } else {
-      x = clamp(x, 90, game.level.widthPx - 90);
+    const margin = this.w / 2 + 28;
+    const lo = b ? b.left + margin : 90;
+    const hi = b ? b.right - margin : game.level.widthPx - 90;
+    const room = Math.max(0, hi - lo);
+    const offset = clamp(room * 0.45, 160, 340);
+    let x = this.cx < p.cx ? p.cx + offset : p.cx - offset;
+    x = clamp(x, lo, hi);
+    // Se cair perto do jogador ou dentro de parede, tenta o lado oposto.
+    const blocked = (tx) => {
+      const footY = this.y + this.h - 6;
+      return game.level.isSolid(tx - this.w / 2, footY) ||
+        game.level.isSolid(tx + this.w / 2, footY) ||
+        (p && Math.abs(tx - p.cx) < 110);
+    };
+    if (blocked(x)) {
+      const other = x < p.cx ? Math.min(hi, p.cx + offset) : Math.max(lo, p.cx - offset);
+      if (!blocked(other)) x = other;
     }
     FX.burst(this.cx, this.cy, 20, { color: this.color, speedMax: 260, lifeMax: 0.5 });
     this.x = x - this.w / 2;
     this.y = Math.min(this.y, game.level.heightPx - this.h - TILE * 4);
+    this.arenaClamp(game);
     FX.burst(this.cx, this.cy, 20, { color: this.color, speedMax: 260, lifeMax: 0.5 });
     Sfx.tone(700, 0.16, { type: 'sine', vol: 0.08, slide: -420 });
   }

@@ -29,17 +29,17 @@ Depois acesse `http://localhost:8123`.
 | Tecla | Ação |
 | --- | --- |
 | `A` / `D` ou `←` / `→` | Andar |
-| `Shift` | Segurar para correr; tocar para **dash** (impulso) |
-| `Espaço` / `W` / `↑` | Pular; aperte de novo no ar para **pulo duplo** |
+| `Shift` | Segurar para correr; tocar para **dash** (gasta 15 de energia) |
+| `Espaço` / `W` / `↑` | Pular; aperte de novo no ar para **pulo duplo** (gasta 12 de energia) |
 | `L` | **Dash alternativo** (impulso no ar) |
-| `Mouse` | **Mira livre** — golpes e tiros seguem o cursor mesmo enquanto você anda/corre (WASD/setas continuam funcionando) |
+| `Mouse` | **O boneco segue o cursor** — ele anda até onde você aponta, e golpes e tiros também miram no mouse (WASD/setas continuam funcionando) |
 | `J` ou clique esquerdo | Atacar na direção do cursor; **segure 0,55s** para o ataque carregado |
 | `E` | **Parry** — clique no instante do impacto (janela de 0.16s, perfeita de 0.08s) |
 | `1` / `2` / `3` | Trocar de arma |
 | `M` | Ligar / desligar som |
 | `Esc` / `P` | Pausar |
 
-**Parkour:** o combate e a travessia usam apenas armas, dash, parry, pulo duplo e salto de parede. Não há poderes nem plataformas móveis: cada vão tem uma rota clara, com no máximo um apoio no meio.
+**Parkour:** o combate e a travessia usam apenas armas, dash, parry, pulo duplo e salto de parede. **Dash e pulo duplo gastam energia**, que recupera devagar; o **estilingue é gratuito**. Não há poderes nem plataformas móveis: cada vão tem uma rota clara, com no máximo um apoio no meio.
 
 ## Personagens
 
@@ -114,8 +114,8 @@ Ao entrar na área final de cada fase, a câmera trava em uma arena dedicada:
 - Um **gatilho** dispara a cutscene exclusiva do chefe (dois slides com arte própria).
 - **O chefe e a arena ficam escondidos até essa cutscene.** O chefe só é criado quando a luta começa; antes disso, a área é um corredor comum.
 - Ao fim da cutscene, o **portão de entrada** se fecha e o **portão de saída** permanece travado durante a luta.
-- Todas as arenas foram ampliadas para **24 tiles de largura (768px internos)**, com três pilares de cobertura e uma engrenagem suspensa no centro.
-- **Jogador e chefe ficam contidos na arena** durante o combate: nem investidas, teleportes, saltos, recuos ou atordoamentos atravessam os portões. A contenção é reaplicada depois de cada atualização de física.
+- Todas as arenas foram ampliadas para **34 tiles de largura (1088px internos)**, com três pilares de cobertura e muito espaço para investidas e teleportes.
+- **Jogador e chefe ficam contidos na arena** durante o combate: nem investidas, teleportes, saltos, recuos ou atordoamentos atravessam os portões. Os teleportes foram ajustados para não travarem nos cantos, com margem extra e verificação de parede. A contenção é reaplicada depois de cada atualização de física.
 - A arena tem parede de fundo com painéis, treliça de teto, lâmpadas, **quatro refletores volumétricos**, holofote que segue o chefe, selo giratório, marca d'água com o nome do alvo e piso de combate com círculo, rachaduras e detritos.
 - Durante a luta, **luzes de emergência piscam**, um **lockdown vermelho** cobre a sala e uma linha de varredura percorre a arena.
 - Se o jogador cair, o chefe é resetado e a luta recomeça sem repetir a cutscene.
