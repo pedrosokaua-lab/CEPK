@@ -416,7 +416,12 @@ function level1() {
 
   b.ground(0, 20);
   b.spawn(2, 17);
-  b.enemy(22, 17, { variant: 'runner' });
+  b.enemy(16, 17, { variant: 'runner' });
+  b.enemy(36, 17, { variant: 'brute' });
+  b.enemy(56, 17, { variant: 'shield' });
+  b.enemy(78, 17, { variant: 'stalker' });
+  b.enemy(100, 17, { variant: 'samurai' });
+  b.drone(68, 9, { variant: 'sniper' });
   b.solid(4, 14, 3);
   b.gear(5, 12);
   b.solid(9, 13, 3);
@@ -424,7 +429,6 @@ function level1() {
   b.crate(14, 17);
   b.crate(15, 17);
   b.crate(16, 17);
-  b.enemy(26, 17, { variant: 'samurai' });
 
   // fosso do jardim: um salto longo e limpo, sem plataforma no meio
   b.solid(21, 21, 7);
@@ -432,12 +436,10 @@ function level1() {
   b.gear(25, 13);
 
   b.ground(28, 18);
-  b.turret(32, 17, { variant: 'mortar', hp: 3, damage: 1, range: 620 });
   b.solid(33, 13, 5);
   b.gear(35, 11);
   b.clue(36, 12, 'pista1');
   b.checkpoint(36, 17);
-  b.enemy(41, 17, { variant: 'stalker' });
   b.spikes(43, 17, 2);
 
   b.solid(47, 15, 2);
@@ -449,9 +451,6 @@ function level1() {
   b.solid(64, 16, 4);
   b.gear(60, 11);
   b.core(65, 14);
-  b.drone(61, 9, { variant: 'sniper' });
-  b.enemy(59, 17, { variant: 'shield' });
-  b.enemy(71, 17, { variant: 'brute' });
 
   // Fosso largo: só o salto, sem mover nem ledge.
   b.solid(76, 21, 5);
@@ -463,8 +462,6 @@ function level1() {
   b.laser(92, 13, 1, 5);
   b.solid(87, 14, 3);
   b.gear(88, 12);
-  b.enemy(88, 17, { variant: 'brute' });
-  b.charger(103, 17, { variant: 'armored' });
   b.spikes(95, 17, 3);
 
   // Crachá no chão, sem escada de plataformas.
@@ -572,14 +569,17 @@ function level2() {
 
   b.ground(0, 17);
   b.spawn(2, 17);
-  b.enemy(24, 17, { variant: 'brute' });
+  b.enemy(16, 17, { variant: 'brute' });
+  b.enemy(38, 17, { variant: 'shield' });
+  b.enemy(62, 17, { variant: 'samurai' });
+  b.enemy(86, 17, { variant: 'stalker' });
+  b.enemy(108, 17, { variant: 'runner' });
+  b.drone(96, 10, { variant: 'sniper' });
   b.solid(8, 14, 4);
   b.gear(9, 12);
-  b.enemy(22, 17, { variant: 'runner' });
   b.crate(14, 17);
   b.crate(15, 17);
   b.crate(16, 17);
-  b.enemy(26, 17, { variant: 'samurai' });
 
   b.solid(17, 21, 8);
   b.spikes(17, 20, 8);
@@ -588,15 +588,11 @@ function level2() {
   b.checkpoint(28, 17);
   b.solid(30, 15, 5);
   b.gear(31, 13);
-  b.drone(34, 11, { variant: 'sniper' });
-  b.enemy(40, 17, { variant: 'stalker' });
   b.laser(37, 12, 1, 6);
-  b.enemy(35, 17, { variant: 'shield' });
   b.spikes(44, 17, 2);
 
   b.solid(47, 15, 2);
   b.gear(47, 13);
-  b.enemy(49, 17, { variant: 'brute' });
 
   b.ground(52, 25);
   b.solid(54, 16, 4);
@@ -605,10 +601,7 @@ function level2() {
   b.solid(66, 16, 4);
   b.gear(61, 11);
   b.core(67, 14);
-  b.drone(58, 9, { variant: 'sprayer' });
-  b.enemy(59, 17, { variant: 'brute' });
   b.laser(72, 13, 1, 5);
-  b.charger(71, 17);
   b.crate(74, 17);
   b.crate(75, 17);
 
@@ -621,15 +614,12 @@ function level2() {
   b.ground(89, 18);
   b.solid(88, 14, 4);
   b.gear(89, 12);
-  b.enemy(92, 17, { variant: 'shield' });
-  b.charger(93, 17, { variant: 'armored' });
   b.spikes(98, 17, 2);
   b.laser(101, 13, 1, 5);
   b.checkpoint(103, 17);
 
   b.ground(107, 45);
   b.solid(110, 14, 3);
-  b.turret(109, 17, { variant: 'mortar', hp: 3, damage: 1, range: 620 });
 
   // Arena do chefe + sala de saída
   b.gate(114, 11, 2, 7, 'boss_arena', false);
@@ -730,9 +720,12 @@ function level3() {
   b.spawn(2, 17);
   b.solid(4, 14, 4);
   b.gear(5, 12);
-  b.enemy(22, 17, { variant: 'runner' });
-  b.enemy(28, 17, { variant: 'stalker' });
-  b.turret(32, 17, { variant: 'laser', range: 600 });
+  b.enemy(16, 17, { variant: 'runner' });
+  b.enemy(38, 17, { variant: 'brute' });
+  b.enemy(62, 17, { variant: 'shield' });
+  b.enemy(86, 17, { variant: 'bomber' });
+  b.enemy(108, 17, { variant: 'brute' });
+  b.drone(96, 9, { variant: 'sniper' });
 
   b.solid(22, 15, 3);
   b.gear(23, 13);
@@ -743,8 +736,6 @@ function level3() {
   b.solid(38, 13, 4);
   b.gear(39, 11);
   b.clue(40, 12, 'pista3');
-  b.drone(35, 9, { variant: 'sniper' });
-  b.enemy(38, 17, { variant: 'brute' });
   b.spikes(42, 17, 2);
 
   b.solid(47, 16, 2);
@@ -759,9 +750,6 @@ function level3() {
   b.gear(62, 12);
   b.solid(67, 14, 3);
   b.gear(68, 12);
-  b.enemy(63, 17, { variant: 'shield' });
-  b.enemy(69, 17, { variant: 'bomber' });
-  b.charger(74, 17, { variant: 'armored' });
   b.crate(74, 17);
   b.crate(75, 17);
   b.crate(76, 17);
@@ -776,10 +764,6 @@ function level3() {
   b.checkpoint(92, 17);
   b.solid(97, 12, 4);
   b.core(98, 10);
-  b.drone(94, 8, { variant: 'sniper' });
-  b.enemy(103, 17, { variant: 'shield' });
-  b.enemy(101, 17, { variant: 'brute' });
-  b.charger(94, 17, { variant: 'armored' });
   b.spikes(105, 17, 2);
 
   b.ground(109, 53);
@@ -882,10 +866,14 @@ function level4() {
 
   b.ground(0, 16);
   b.spawn(2, 17);
-  b.charger(22, 17);
+  b.enemy(15, 17, { variant: 'runner' });
+  b.enemy(38, 17, { variant: 'shield' });
+  b.enemy(62, 17, { variant: 'brute' });
+  b.enemy(86, 17, { variant: 'bomber' });
+  b.enemy(108, 17, { variant: 'samurai' });
+  b.drone(96, 9, { variant: 'sniper' });
   b.solid(8, 14, 3);
   b.gear(9, 12);
-  b.enemy(26, 17, { variant: 'runner' });
 
   b.solid(16, 21, 10);
   b.spikes(16, 20, 10);
@@ -897,9 +885,6 @@ function level4() {
   b.laser(38, 12, 1, 6);
   b.solid(34, 14, 3);
   b.gear(35, 12);
-  b.turret(33, 17, { variant: 'mortar', hp: 3, damage: 1, range: 620 });
-  b.enemy(41, 17, { variant: 'shield' });
-  b.drone(37, 9, { variant: 'sniper' });
 
   b.solid(47, 15, 3);
   b.gear(47, 13);
@@ -909,9 +894,6 @@ function level4() {
   b.solid(73, 16, 4);
   b.gear(62, 14);
   b.core(74, 14);
-  b.enemy(64, 17, { variant: 'shield' });
-  b.drone(71, 10, { variant: 'sniper' });
-  b.enemy(66, 17, { variant: 'brute' });
   b.spikes(75, 17, 3);
 
   // Vão do laboratório: uma plataforma central.
@@ -923,9 +905,6 @@ function level4() {
   b.laser(98, 12, 1, 6);
   b.solid(94, 14, 3);
   b.gear(95, 12);
-  b.charger(92, 17, { variant: 'armored' });
-  b.enemy(97, 17, { variant: 'bomber' });
-  b.charger(108, 17);
   b.checkpoint(104, 17);
 
   // Pista 4/4 — pegada de Kennedito
@@ -1048,23 +1027,23 @@ function level5() {
 
   b.ground(0, 16);
   b.spawn(2, 17);
-  b.enemy(24, 17, { variant: 'brute' });
+  b.enemy(15, 17, { variant: 'brute' });
+  b.enemy(35, 17, { variant: 'runner' });
+  b.enemy(55, 17, { variant: 'shield' });
+  b.enemy(75, 17, { variant: 'stalker' });
+  b.enemy(95, 17, { variant: 'bomber' });
+  b.drone(45, 9, { variant: 'sniper' });
   b.gear(5, 15);
-  b.enemy(28, 17, { variant: 'runner' });
-  b.drone(30, 10, { variant: 'sniper' });
   b.laser(14, 12, 1, 6);
 
   b.ground(16, 10);
   b.solid(18, 15, 4);
   b.gear(19, 13);
   b.checkpoint(22, 17);
-  b.enemy(24, 17, { variant: 'runner' });
 
   b.ground(26, 10);
   b.laser(28, 12, 1, 6);
   b.laser(33, 12, 1, 6);
-  b.enemy(30, 17, { variant: 'shield' });
-  b.enemy(31, 17, { variant: 'brute' });
   b.gear(30, 15);
 
   b.ground(36, 10);
@@ -1073,8 +1052,6 @@ function level5() {
 
   b.ground(46, 10);
   b.laser(48, 12, 1, 6);
-  b.drone(53, 9, { variant: 'sniper' });
-  b.charger(45, 17);
 
   // Torre final: chaminé de salto de parede com apoios.
   b.ground(56, 84);
@@ -1091,9 +1068,6 @@ function level5() {
   b.gear(61, 12);
   b.gear(81, 12);
   b.core(91, 12);
-  b.turret(62, 17, { variant: 'mortar', range: 640 });
-  b.enemy(64, 17, { variant: 'bomber' });
-  b.charger(74, 17, { variant: 'armored' });
   b.solid(80, 13, 3);
 
   // Kennedito cage at tile 94-112, position 17
@@ -1101,12 +1075,8 @@ function level5() {
 
   // Uma única passagem de plataformas quebradiças antes da gaiola
   b.crumble(82, 17, 5);
-  b.enemy(88, 16, { variant: 'shield' });
-  b.enemy(90, 17, { variant: 'shield' });
 
   // Turret and charger before the cage
-  b.turret(78, 17, { variant: 'laser', range: 620 });
-  b.charger(84, 16, { variant: 'berserk' });
 
   // Portão de resgate: só abre depois de libertar Kennedito.
   b.gate(99, 11, 1, 7, 'rescue');
