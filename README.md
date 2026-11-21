@@ -105,6 +105,8 @@ Aperte **E** pouco antes do impacto. Os primeiros instantes são um **PARRY PERF
 4. **Laboratório** — reatores, lasers e vãos com no máximo uma plataforma de apoio.
 5. **Diretoria** — o confronto final com o Sistema Verde, torre de salto de parede e o resgate de Kennedito.
 
+Depois da última fase, uma **cena de final animada** mostra o amanhecer sobre a escola, o portão aberto, VEGA e Kennedito, as estatísticas da partida e a mensagem **OBRIGADO POR JOGAR**.
+
 Cada fase tem história, cutscene animada, checkpoints, colecionáveis, desafios de plataforma, **arena de chefe** e **sala de saída** próprias. O parkour usa poucas plataformas e nenhuma plataforma móvel: o desafio vem de vãos longos, saltos duplos, dash e leitura do cenário — sem empilhamento de mecânicas. **Todos os vãos e o fim da sala do chefe agora têm piso e espinhos**: não existe mais buraco que leve ao void.
 
 ## Arenas de chefe

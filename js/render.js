@@ -5240,87 +5240,141 @@ Game.prototype.formatTime = function (seconds) {
 
 Game.prototype.renderVictory = function (ctx) {
   const t = this.time;
-  const g = ctx.createLinearGradient(0, 0, 0, VIEW_H);
-  g.addColorStop(0, '#071a0e');
-  g.addColorStop(0.45, '#1f5c32');
-  g.addColorStop(0.72, '#7dbb56');
-  g.addColorStop(1, '#d9ff9a');
-  ctx.fillStyle = g;
+  const pulse = 0.5 + Math.sin(t * 1.6) * 0.5;
+
+  // amanhecer
+  const sky = ctx.createLinearGradient(0, 0, 0, VIEW_H);
+  sky.addColorStop(0, '#06121d');
+  sky.addColorStop(0.38, '#163a4b');
+  sky.addColorStop(0.66, '#6fa27a');
+  sky.addColorStop(1, '#e8ffc0');
+  ctx.fillStyle = sky;
   ctx.fillRect(0, 0, VIEW_W, VIEW_H);
 
-  // sol
-  const sun = ctx.createRadialGradient(VIEW_W / 2, 400, 20, VIEW_W / 2, 400, 420);
-  sun.addColorStop(0, 'rgba(255,245,190,0.8)');
-  sun.addColorStop(0.4, 'rgba(255,220,120,0.24)');
-  sun.addColorStop(1, 'rgba(255,220,120,0)');
-  ctx.fillStyle = sun;
+  // sol nascendo
+  const sx = VIEW_W / 2, sy = 452;
+  const halo = ctx.createRadialGradient(sx, sy, 10, sx, sy, 460);
+  halo.addColorStop(0, 'rgba(255,246,190,0.85)');
+  halo.addColorStop(0.35, 'rgba(255,214,120,0.28)');
+  halo.addColorStop(1, 'rgba(255,214,120,0)');
+  ctx.fillStyle = halo;
   ctx.fillRect(0, 0, VIEW_W, VIEW_H);
-  ctx.fillStyle = '#fff2b0';
+  ctx.fillStyle = '#fff3b8';
+  ctx.shadowColor = '#ffe9a0';
+  ctx.shadowBlur = 40;
   ctx.beginPath();
-  ctx.arc(VIEW_W / 2, 410, 64 + Math.sin(t * 0.8) * 3, 0, TAU);
+  ctx.arc(sx, sy + 30 + Math.sin(t * 0.7) * 3, 70, 0, TAU);
   ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // nuvens em movimento
+  for (let i = 0; i < 6; i++) {
+    const cx = (i * 260 + t * (7 + i * 2)) % (VIEW_W + 300) - 150;
+    const cy = 110 + (i % 3) * 58 + Math.sin(t * 0.4 + i) * 6;
+    ctx.fillStyle = `rgba(230,250,235,${0.05 + (i % 2) * 0.04})`;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, 110, 18, 0, 0, TAU);
+    ctx.fill();
+  }
 
   // escola ao fundo
-  ctx.fillStyle = 'rgba(14,48,26,0.8)';
-  ctx.fillRect(210, 310, 860, 230);
-  ctx.fillStyle = 'rgba(28,84,44,0.8)';
-  ctx.fillRect(232, 330, 816, 210);
+  ctx.fillStyle = 'rgba(10,32,40,0.9)';
+  ctx.fillRect(180, 316, 920, 226);
+  ctx.fillStyle = 'rgba(18,52,58,0.92)';
+  ctx.fillRect(204, 336, 872, 206);
   for (let i = 0; i < 12; i++) {
-    ctx.fillStyle = 'rgba(255,245,190,0.28)';
-    ctx.fillRect(250 + i * 66, 356, 34, 28);
-    ctx.fillRect(250 + i * 66, 406, 34, 28);
+    ctx.fillStyle = (i + Math.floor(t * 0.5)) % 5 === 0
+      ? 'rgba(120,200,170,0.35)' : 'rgba(255,242,190,0.34)';
+    ctx.fillRect(224 + i * 70, 360, 36, 30);
+    ctx.fillRect(224 + i * 70, 410, 36, 30);
   }
-  ctx.fillStyle = 'rgba(10,34,18,0.9)';
-  ctx.fillRect(VIEW_W / 2 - 50, 440, 100, 100);
+  ctx.fillStyle = 'rgba(7,24,30,0.95)';
+  ctx.fillRect(sx - 52, 446, 104, 96);
 
-  // portão aberto
-  ctx.strokeStyle = 'rgba(230,255,210,0.8)';
-  ctx.lineWidth = 5;
-  ctx.strokeRect(VIEW_W / 2 - 120, 430, 240, 170);
-  ctx.fillStyle = 'rgba(230,255,210,0.12)';
-  ctx.fillRect(VIEW_W / 2 - 116, 434, 232, 162);
+  // portão aberto com luz
+  ctx.strokeStyle = 'rgba(235,255,215,0.85)';
+  ctx.lineWidth = 6;
+  ctx.strokeRect(sx - 124, 432, 248, 172);
+  const gateGlow = ctx.createLinearGradient(sx, 436, sx, 600);
+  gateGlow.addColorStop(0, 'rgba(255,250,205,0.32)');
+  gateGlow.addColorStop(1, 'rgba(180,255,160,0.06)');
+  ctx.fillStyle = gateGlow;
+  ctx.fillRect(sx - 118, 438, 236, 160);
+  ctx.strokeStyle = 'rgba(235,255,215,0.35)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(sx - 118, 438, 236, 160);
 
-  // folhas
-  for (let i = 0; i < 40; i++) {
-    const lx = (i * 173 + t * (22 + (i % 4) * 10)) % (VIEW_W + 80) - 40;
-    const ly = 100 + ((i * 97 + Math.sin(t * 0.8 + i) * 80) % 560);
-    drawLeaf(ctx, lx, ly, 5 + (i % 3) * 2, t * 0.6 + i, i % 3 ? '#d9ff9a' : '#6dff9e', 0.4);
+  // VEGA e Kennedito de silhueta na frente do portão
+  const drawHero = (hx, hy, scale, color) => {
+    ctx.save();
+    ctx.translate(hx, hy);
+    ctx.scale(scale, scale);
+    ctx.fillStyle = 'rgba(4,14,16,0.92)';
+    ctx.fillRect(-9, -46, 18, 34);
+    ctx.fillRect(-12, -14, 10, 16);
+    ctx.fillRect(2, -14, 10, 16);
+    ctx.beginPath();
+    ctx.arc(0, -54, 11, Math.PI, TAU);
+    ctx.fill();
+    ctx.fillStyle = color;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 12;
+    ctx.fillRect(-5, -56, 10, 3);
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  };
+  drawHero(sx - 44, 592, 1.25, '#b6ff9a');
+  drawHero(sx + 46, 596, 1.05, '#ffd24d');
+
+  // folhas e faíscas
+  for (let i = 0; i < 46; i++) {
+    const lx = (i * 149 + t * (18 + (i % 5) * 8)) % (VIEW_W + 80) - 40;
+    const ly = 90 + ((i * 97 + Math.sin(t * 0.7 + i) * 70) % 550);
+    drawLeaf(ctx, lx, ly, 4 + (i % 3) * 2, t * 0.6 + i,
+      i % 4 === 0 ? '#ffd24d' : i % 3 ? '#d9ff9a' : '#7fe7ff', 0.45);
   }
 
-  ctx.fillStyle = 'rgba(2,12,6,0.42)';
+  ctx.fillStyle = 'rgba(2,10,8,0.46)';
   ctx.fillRect(0, 0, VIEW_W, VIEW_H);
-  drawScanlines(ctx, 0.07);
+  drawScanlines(ctx, 0.06);
 
-  drawText(ctx, 'CÓDIGO VERDE', VIEW_W / 2, 96, {
-    size: 16, align: 'center', color: 'rgba(230,255,210,0.7)'
+  // textos finais
+  drawText(ctx, 'CÓDIGO VERDE', VIEW_W / 2, 78, {
+    size: 14, align: 'center', color: 'rgba(230,255,210,0.65)'
   });
-  drawText(ctx, 'ESCOLA LIVRE', VIEW_W / 2, 172, {
-    size: 58, align: 'center', color: '#f4ffe0', glow: '#d9ff9a', glowSize: 26
+  drawText(ctx, 'ESCOLA LIVRE', VIEW_W / 2, 146, {
+    size: 56, align: 'center', color: '#f6ffe8', glow: '#d9ff9a', glowSize: 26
   });
-  drawText(ctx, 'O Sistema Verde caiu. O CEPK voltou a respirar.', VIEW_W / 2, 224, {
-    size: 14, align: 'center', color: 'rgba(235,255,220,0.82)'
+  drawText(ctx, 'O Sistema Verde caiu. O CEPK voltou a respirar.', VIEW_W / 2, 196, {
+    size: 14, align: 'center', color: 'rgba(235,255,220,0.85)'
   });
+
+  // agradecimento em destaque
+  ctx.save();
+  ctx.globalAlpha = 0.82 + pulse * 0.18;
+  drawText(ctx, 'OBRIGADO POR JOGAR', VIEW_W / 2, 256, {
+    size: 38, align: 'center', color: '#ffd24d', glow: '#ff9a4d', glowSize: 22
+  });
+  ctx.restore();
+  ctx.fillStyle = withAlpha('#ffd24d', 0.55);
+  ctx.fillRect(VIEW_W / 2 - 150, 280, 300, 2);
 
   const stats = this.completeStats;
   if (stats) {
-    drawPanel(ctx, VIEW_W / 2 - 260, 270, 520, 92, {
+    drawPanel(ctx, VIEW_W / 2 - 280, 618, 560, 54, {
       fill: 'rgba(3,16,10,0.72)', stroke: 'rgba(217,255,154,0.3)', radius: 10
     });
-    drawText(ctx, `CRACHÁS ${stats.gears}   ·   NÚCLEOS ${stats.cores}   ·   PISTAS ${this.cluesFound.size}/4   ·   TEMPO ${this.formatTime(stats.time)}`, VIEW_W / 2, 304, {
-      size: 12, align: 'center', color: '#ffd24d'
-    });
-    drawText(ctx, `DIFICULDADE: ${DIFFICULTIES[this.difficulty].name}`, VIEW_W / 2, 332, {
-      size: 10, align: 'center', color: 'rgba(220,250,220,0.6)'
+    drawText(ctx, `CRACHÁS ${stats.gears}   ·   NÚCLEOS ${stats.cores}   ·   PISTAS ${this.cluesFound.size}/4   ·   TEMPO ${this.formatTime(stats.time)}   ·   ${DIFFICULTIES[this.difficulty].name}`, VIEW_W / 2, 645, {
+      size: 11, align: 'center', color: '#ffd24d'
     });
   }
 
   const endChar = this.character || CHARACTERS[0];
-  drawText(ctx, endChar.name + ' · ' + endChar.role, VIEW_W / 2, 646, {
-    size: 11, align: 'center', color: 'rgba(230,255,210,0.6)'
+  drawText(ctx, endChar.name + ' · ' + endChar.role, VIEW_W / 2, 692, {
+    size: 10, align: 'center', color: 'rgba(230,255,210,0.6)'
   });
-  drawText(ctx, 'ENTER / CLIQUE PARA VOLTAR AO MENU', VIEW_W / 2, 678, {
-    size: 11, align: 'center', color: withAlpha('#f4ffe0', 0.55 + Math.sin(t * 4) * 0.2)
+  drawText(ctx, 'ENTER / CLIQUE PARA VOLTAR AO MENU', VIEW_W / 2, 710, {
+    size: 10, align: 'center', color: withAlpha('#f4ffe0', 0.55 + Math.sin(t * 4) * 0.2)
   });
 };
-
 
