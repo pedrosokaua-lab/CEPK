@@ -853,6 +853,27 @@ class Game {
       }
     }
 
+    // Parede invisível sobre a sala do chefe: nunca dá para ficar em cima do teto.
+    if (this.arena) {
+      const a = this.arena;
+      const left = a.left * TILE;
+      const right = a.right * TILE + TILE * 4;
+      const ceiling = (a.ceiling || 11) * TILE;
+      if (p.cx >= left && p.cx <= right && p.y < ceiling) {
+        p.y = ceiling;
+        if (p.vy < 0) p.vy = 0;
+      }
+      // Barreira depois do portal de saída: o mapa termina logo ali.
+      const gate = this.exitGate;
+      if (gate) {
+        const wallX = (this.exit ? this.exit.x + this.exit.w : gate.tx * TILE + gate.w * TILE) + TILE;
+        if (p.x + p.w > wallX) {
+          p.x = wallX - p.w;
+          if (p.vx > 0) p.vx = 0;
+        }
+      }
+    }
+
     this.updateEffects(dt);
 
     for (const c of this.crates) {
