@@ -1952,6 +1952,8 @@ class Walker {
     ctx.ellipse(x + 19, y + 39, 17, 4, 0, 0, TAU);
     ctx.fill();
 
+    const sprite = !this.training && typeof Sprites !== 'undefined' && Sprites.drawEnemy(ctx, this, x, y, 'walker');
+    if (!sprite) {
     if (this.training) {
       // boneco de treino
       ctx.fillStyle = '#5c8a28';
@@ -2122,6 +2124,7 @@ class Walker {
       ctx.fillRect(sx + 2, y + 11 + bob, 2, 6);
       ctx.fillStyle = withAlpha('#7fe7ff', 0.3);
       ctx.fillRect(sx - 1, y + 6 + bob, 8, 2);
+    }
     }
 
     if (charging) {
@@ -2302,7 +2305,7 @@ class Drone {
       parryable: true,
       life: this.parryTrainer ? 4 : this.variant === 'sniper' ? 3.5 : 3,
       kind: this.variant === 'sniper' ? 'laser' : 'orb'
-    }));
+    }, 'drone', this.variant));
     this.muzzle = 0.12;
     Sfx.tone(this.parryTrainer ? 640 : this.variant === 'sniper' ? 760 : 520, 0.07, {
       type: 'square', vol: 0.045, slide: -160
@@ -2351,6 +2354,8 @@ class Drone {
     ctx.ellipse(x + 18, y + 42, 14, 4, 0, 0, TAU);
     ctx.fill();
 
+    const sprite = typeof Sprites !== 'undefined' && Sprites.drawEnemy(ctx, this, x, y, 'drone');
+    if (!sprite) {
     ctx.strokeStyle = 'rgba(127,255,240,0.35)';
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -2439,6 +2444,7 @@ class Drone {
     ctx.moveTo(x + 18 + Math.cos(spin) * 10, y + 1 + bob);
     ctx.lineTo(x + 18 - Math.cos(spin) * 10, y + 1 + bob);
     ctx.stroke();
+    }
 
     if (this.mode === 'aim' && this.game && this.game.player && !this.game.player.dead) {
       const p = this.game.player;
@@ -2581,7 +2587,7 @@ class Turret {
       game.projectiles.push(new Projectile(bx, by, vx, vy, 'enemy', {
         color: '#ff8c42', r: 10, damage: 2, parryable: true, life: 4.5,
         gravity: 760, kind: 'rock'
-      }));
+      }, 'turret', this.variant));
       this.charge = 0;
       this.flash = 0.1;
       FX.burst(bx, by, 10, { color: '#ff8c42', speedMax: 160, lifeMax: 0.35 });
@@ -2592,7 +2598,7 @@ class Turret {
       const spd = 840 * projMul;
       game.projectiles.push(new Projectile(bx, by, Math.cos(this.angle) * spd, Math.sin(this.angle) * spd, 'enemy', {
         color: '#ff5d7a', r: 7, damage: 2, parryable: false, life: 2.6, kind: 'laser'
-      }));
+      }, 'turret', this.variant));
       this.charge = 0;
       this.flash = 0.1;
       FX.burst(bx, by, 12, { color: '#ff5d7a', speedMax: 220, lifeMax: 0.35 });
@@ -2606,7 +2612,7 @@ class Turret {
       damage: this.damage,
       parryable: true,
       life: 3.2
-    }));
+    }, 'turret', this.variant));
     this.charge = 0;
     this.flash = 0.1;
     FX.burst(bx, by, 8, { color: this.color, speedMax: 150, lifeMax: 0.3 });
@@ -2645,6 +2651,8 @@ class Turret {
     ctx.ellipse(cx, y + this.h + 2, 22, 5, 0, 0, TAU);
     ctx.fill();
 
+    const sprite = typeof Sprites !== 'undefined' && Sprites.drawEnemy(ctx, this, x, y, 'turret');
+    if (!sprite) {
     // base
     ctx.fillStyle = '#1b2b22';
     ctx.fillRect(x + 3, y + this.h - 14, this.w - 6, 14);
@@ -2688,6 +2696,7 @@ class Turret {
     // luz de status
     ctx.fillStyle = this.charge > 0 ? '#ff5d6c' : '#6dff9e';
     ctx.fillRect(x + 4, y + 10, 2, 2);
+    }
 
     // cano
     ctx.save();
@@ -2887,6 +2896,8 @@ class Charger {
     ctx.ellipse(x + this.w / 2, y + this.h + 2, 22, 5, 0, 0, TAU);
     ctx.fill();
 
+    const sprite = typeof Sprites !== 'undefined' && Sprites.drawEnemy(ctx, this, x, y, 'charger');
+    if (!sprite) {
     if (charge) {
       ctx.fillStyle = withAlpha(accent, 0.18);
       for (let i = 1; i < 5; i++) {
@@ -2951,6 +2962,7 @@ class Charger {
     ctx.fillStyle = windup ? '#ffd24d' : '#6dff9e';
     ctx.fillRect(x + 10, y, 3, 3);
     ctx.fillRect(x + this.w - 13, y, 3, 3);
+    }
 
     if (this.hp < this.maxHp) {
       const bw = 36;
@@ -3101,7 +3113,7 @@ class Swooper {
     game.projectiles.push(new Projectile(bx, by, Math.cos(ang) * 190, Math.sin(ang) * 80 - 40, 'enemy', {
       color: '#ff8c42', r: 9, damage: 2, life: 4.5,
       parryable: true, gravity: 720, kind: 'rock'
-    }));
+    }, 'swooper', this.variant));
     FX.burst(bx, by, 6, { color: '#ff8c42', speedMax: 110, lifeMax: 0.3 });
     Sfx.tone(240, 0.09, { type: 'square', vol: 0.045, slide: -90 });
   }
@@ -3144,6 +3156,8 @@ class Swooper {
     ctx.ellipse(cx, y + this.h + 6, 18, 4, 0, 0, TAU);
     ctx.fill();
 
+    const sprite = typeof Sprites !== 'undefined' && Sprites.drawEnemy(ctx, this, x, y, 'swooper');
+    if (!sprite) {
     // asas
     ctx.fillStyle = this.flash > 0 ? '#ffffff' : '#3a2418';
     ctx.beginPath();
@@ -3207,6 +3221,7 @@ class Swooper {
     ctx.fillRect(cx + 10, y + 2, 2, 6);
     ctx.fillStyle = diving ? '#ff3355' : '#ffd24d';
     ctx.fillRect(cx + 9, y, 4, 2);
+    }
 
     // olho
     ctx.fillStyle = diving ? '#ff3355' : windup ? '#ffd24d' : '#7ffff0';
@@ -3599,7 +3614,7 @@ class Boss {
               game.projectiles.push(new Projectile(x, 360, rand(-20, 20), 260, 'enemy', {
                 color: '#ff8c42', r: 9, damage: 1, life: 4,
                 parryable: true, gravity: 900, kind: 'meteor'
-              }));
+              }, this.style));
             }
           }
           if (this.quakeLeft <= 0) this.begin('recover', 0.4);
@@ -3614,6 +3629,10 @@ class Boss {
     } else {
       this.begin('recover', 0.28);
     }
+  }
+
+  shot(opts) {
+    return typeof Sprites !== 'undefined' ? Sprites.bossShot(this.style, opts) : opts;
   }
 
   fireBarrage(game) {
@@ -3634,7 +3653,7 @@ class Boss {
         damage: red ? 2 : 1,
         life: 4,
         parryable: !red
-      }
+      }, this.style
     ));
     FX.burst(this.cx + Math.cos(ang) * (this.w / 2 + 8), this.cy - 10, 5, {
       color: red ? '#ff3355' : '#ffd24d', speedMax: 130, lifeMax: 0.3
@@ -3705,7 +3724,7 @@ class Boss {
               life: 4,
               parryable: !red,
               damage: red ? 2 : 1
-            }
+            }, this.style
           ));
         }
         this.begin('recover', 0.3);
@@ -3733,7 +3752,7 @@ class Boss {
           const y = Math.max(60, this.y - rand(100, 360));
           game.projectiles.push(new Projectile(
             x, y, rand(-40, 40), 520 * projMul, 'enemy',
-            { color: this.color, r: 8, damage: 1, life: 4, parryable: true, gravity: 260 }
+            { color: this.color, r: 8, damage: 1, life: 4, parryable: true, gravity: 260 }, this.style
           ));
           FX.burst(x, y, 5, { color: this.color, speedMax: 90, lifeMax: 0.3 });
         }
@@ -3754,7 +3773,7 @@ class Boss {
             this.cx, this.cy - 20,
             Math.cos(ang) * rand(320, 450), -rand(480, 620),
             'enemy',
-            { color: '#ff8c42', r: 10, damage: 2, life: 4, parryable: true, gravity: 950, kind: 'rock' }
+            { color: '#ff8c42', r: 10, damage: 2, life: 4, parryable: true, gravity: 950, kind: 'rock' }, this.style
           ));
         }
         this.begin('recover', 0.38);
@@ -3776,7 +3795,7 @@ class Boss {
             {
               color: '#b18cff', r: 8, damage: 1, life: 4,
               parryable: true, homing: 1.8
-            }
+            }, this.style
           ));
         }
         this.begin('recover', 0.34);
@@ -3794,7 +3813,7 @@ class Boss {
             this.cx, this.cy - 10,
             Math.cos(ang) * spd, Math.sin(ang) * spd,
             'enemy',
-            { color: this.color, r: 7, life: 5, parryable: true, damage: 1 }
+            { color: this.color, r: 7, life: 5, parryable: true, damage: 1 }, this.style
           ));
         }
         this.begin('recover', 0.34);
@@ -3808,7 +3827,7 @@ class Boss {
           game.projectiles.push(new Projectile(
             this.cx + this.dir * (this.w / 2 + 10), y,
             this.dir * 840 * projMul, 0, 'enemy',
-            { color: this.phase === 3 ? '#ff3355' : '#ffd24d', r: 8, damage: this.phase === 3 ? 2 : 1, life: 3, parryable: this.phase < 3 }
+            { color: this.phase === 3 ? '#ff3355' : '#ffd24d', r: 8, damage: this.phase === 3 ? 2 : 1, life: 3, parryable: this.phase < 3 }, this.style
           ));
         }
         this.begin('recover', 0.34);
@@ -3827,7 +3846,7 @@ class Boss {
               {
                 color: this.phase >= 3 ? '#ff3355' : '#7fe7ff',
                 r: 10, damage: 2, life: 3, parryable: false, kind: 'laser'
-              }
+              }, this.style
             ));
           }
         });
@@ -3851,7 +3870,7 @@ class Boss {
           game.projectiles.push(new Projectile(x, 360, rand(-30, 30), 240, 'enemy', {
             color: '#ff8c42', r: 13, damage: 2, life: 5,
             parryable: true, gravity: 900, kind: 'meteor'
-          }));
+          }, this.style));
         }
         Sfx.tone(120, 0.4, { type: 'sawtooth', vol: 0.1, slide: 60 });
         this.begin('recover', 0.46);
@@ -3873,7 +3892,7 @@ class Boss {
             orbit: true, orbitAngle: (TAU * i) / count,
             orbitRadius: 104, orbitTime: 0.8 + i * 0.07,
             orbitSpeed: 3.4, launchSpeed: 400 * projMul
-          }));
+          }, this.style));
         }
         Sfx.tone(520, 0.3, { type: 'triangle', vol: 0.08, slide: 220 });
         this.begin('recover', 0.4);
@@ -3924,7 +3943,7 @@ class Boss {
         this.cx + dir * this.w * 0.34,
         this.bottom - 18,
         dir * spd, 0, 'enemy',
-        { color: this.color, r: 13, life: 1.8, damage: 1, wave: true, parryable: true }
+        { color: this.color, r: 13, life: 1.8, damage: 1, wave: true, parryable: true }, this.style
       ));
     }
   }
@@ -4009,6 +4028,8 @@ class Boss {
     ctx.ellipse(x + this.w / 2, y + this.h + 4, this.w * 0.45, 8, 0, 0, TAU);
     ctx.fill();
 
+    const sprite = typeof Sprites !== 'undefined' && Sprites.drawBoss(ctx, this, x, y, alpha);
+    if (!sprite) {
     // pernas
     ctx.fillStyle = dark;
     ctx.fillRect(x + this.w * 0.18, y + this.h - 34, this.w * 0.22, 34);
@@ -4089,6 +4110,7 @@ class Boss {
       ctx.fillRect(x + this.w / 2 - 15 + this.dir * 3, y + 14 + bob, 6, 4);
       ctx.fillRect(x + this.w / 2 + 6 + this.dir * 3, y + 14 + bob, 6, 4);
       ctx.shadowBlur = 0;
+    }
     }
 
     // fase 2/3 aura
@@ -4568,7 +4590,7 @@ class Boss {
 /* ------------------------------ PROJÉTEIS ------------------------------ */
 
 class Projectile {
-  constructor(x, y, vx, vy, owner, opts = {}) {
+  constructor(x, y, vx, vy, owner, opts = {}, style = null, variant = null) {
     this.x = x;
     this.y = y;
     this.vx = vx;
@@ -4593,6 +4615,10 @@ class Projectile {
     this.orbitTime = opts.orbitTime || 0;
     this.orbitSpeed = opts.orbitSpeed || 3;
     this.launchSpeed = opts.launchSpeed || 380;
+    if (owner === 'enemy' && style && typeof Sprites !== 'undefined') {
+      if (Sprites.BOSS_SPRITES[style]) Sprites.styleBossProjectile(this, style);
+      else Sprites.styleEnemyProjectile(this, style, variant);
+    }
   }
 
   update(dt, game) {
@@ -4811,6 +4837,61 @@ class Projectile {
       ctx.beginPath();
       ctx.arc(-this.r * 0.2, -this.r * 0.2, this.r * 0.28, 0, TAU);
       ctx.fill();
+      ctx.restore();
+    } else if (this.kind === 'blade') {
+      const ang = Math.atan2(this.vy, this.vx);
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(ang);
+      ctx.fillStyle = this.color;
+      ctx.shadowColor = this.color;
+      ctx.shadowBlur = 16;
+      ctx.beginPath();
+      ctx.moveTo(this.r * 2.2, 0);
+      ctx.lineTo(0, -this.r * 0.8);
+      ctx.lineTo(-this.r * 1.4, 0);
+      ctx.lineTo(0, this.r * 0.8);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-this.r * 0.2, -this.r * 0.18, this.r * 1.6, this.r * 0.36);
+      ctx.restore();
+    } else if (this.kind === 'web') {
+      ctx.strokeStyle = this.color;
+      ctx.shadowColor = this.color;
+      ctx.shadowBlur = 12;
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 6; i++) {
+        const a = this.spin + (TAU * i) / 6;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + Math.cos(a) * this.r * 1.45, y + Math.sin(a) * this.r * 1.45);
+        ctx.stroke();
+      }
+      ctx.beginPath();
+      ctx.arc(x, y, this.r * 0.85, 0, TAU);
+      ctx.stroke();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(x, y, this.r * 0.32, 0, TAU);
+      ctx.fill();
+    } else if (this.kind === 'rune') {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(this.spin);
+      ctx.strokeStyle = this.color;
+      ctx.shadowColor = this.color;
+      ctx.shadowBlur = 16;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(-this.r, -this.r, this.r * 2, this.r * 2);
+      ctx.beginPath();
+      ctx.moveTo(-this.r, 0);
+      ctx.lineTo(this.r, 0);
+      ctx.moveTo(0, -this.r);
+      ctx.lineTo(0, this.r);
+      ctx.stroke();
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-2, -2, 4, 4);
       ctx.restore();
     } else if (this.kind === 'laser') {
       const ang = Math.atan2(this.vy, this.vx);
