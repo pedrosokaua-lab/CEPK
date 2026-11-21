@@ -420,6 +420,7 @@ function level1() {
 
   b.ground(0, 20);
   b.spawn(2, 17);
+  b.enemy(7, 17, { variant: 'runner' });
   b.solid(4, 14, 3);
   b.gear(5, 12);
   b.solid(9, 13, 3);
@@ -427,6 +428,7 @@ function level1() {
   b.crate(14, 17);
   b.crate(15, 17);
   b.crate(16, 17);
+  b.enemy(17, 17, { variant: 'runner' });
 
   // fosso do jardim: um salto longo e limpo, sem plataforma no meio
   b.solid(21, 21, 7);
@@ -441,7 +443,7 @@ function level1() {
   b.checkpoint(36, 17);
   b.enemy(41, 17, { variant: 'runner' });
   b.spikes(43, 17, 2);
-  b.drone(44, 10, { variant: 'sprayer' });
+  b.enemy(44, 17, { variant: 'runner' });
 
   b.solid(47, 15, 2);
   b.gear(47, 13);
@@ -455,7 +457,7 @@ function level1() {
   b.drone(61, 9, { variant: 'sniper' });
   b.enemy(59, 17, { variant: 'shield' });
   b.enemy(69, 17, { variant: 'bomber' });
-  b.swooper(71, 9, { variant: 'swarm' });
+  b.enemy(71, 17, { variant: 'brute' });
   b.checkpoint(70, 17);
 
   // Fosso largo: só o salto, sem mover nem ledge.
@@ -469,7 +471,7 @@ function level1() {
   b.solid(87, 14, 3);
   b.gear(88, 12);
   b.enemy(88, 17, { variant: 'brute' });
-  b.swooper(103, 9, { variant: 'bomber' });
+  b.charger(103, 17, { variant: 'armored' });
   b.charger(99, 17);
   b.spikes(95, 17, 3);
 
@@ -583,12 +585,14 @@ function level2() {
 
   b.ground(0, 17);
   b.spawn(2, 17);
+  b.enemy(6, 17, { variant: 'brute' });
   b.solid(8, 14, 4);
   b.gear(9, 12);
   b.enemy(12, 17, { variant: 'runner' });
   b.crate(14, 17);
   b.crate(15, 17);
   b.crate(16, 17);
+  b.enemy(17, 17, { variant: 'runner' });
 
   b.solid(17, 21, 8);
   b.spikes(17, 20, 8);
@@ -598,7 +602,7 @@ function level2() {
   b.solid(30, 15, 5);
   b.gear(31, 13);
   b.drone(34, 11, { variant: 'sniper' });
-  b.drone(40, 9, { variant: 'sprayer' });
+  b.enemy(40, 17, { variant: 'runner' });
   b.laser(37, 12, 1, 6);
   b.enemy(35, 17, { variant: 'shield' });
   b.enemy(42, 17, { variant: 'bomber' });
@@ -606,7 +610,7 @@ function level2() {
 
   b.solid(47, 15, 2);
   b.gear(47, 13);
-  b.swooper(49, 9, { variant: 'swarm' });
+  b.enemy(49, 17, { variant: 'brute' });
 
   b.ground(52, 25);
   b.solid(54, 16, 4);
@@ -620,7 +624,7 @@ function level2() {
   b.enemy(64, 17, { variant: 'runner' });
   b.checkpoint(71, 17);
   b.laser(72, 13, 1, 5);
-  b.swooper(71, 8, { variant: 'bomber' });
+  b.charger(71, 17);
   b.crate(74, 17);
   b.crate(75, 17);
 
@@ -748,10 +752,11 @@ function level3() {
 
   b.ground(0, 20);
   b.spawn(2, 17);
+  b.enemy(7, 17, { variant: 'runner' });
   b.solid(4, 14, 4);
   b.gear(5, 12);
   b.enemy(12, 17, { variant: 'runner' });
-  b.drone(15, 10, { variant: 'sprayer' });
+  b.enemy(15, 17, { variant: 'runner' });
   b.turret(17, 17, { variant: 'laser', range: 600 });
 
   b.solid(22, 15, 3);
@@ -770,7 +775,7 @@ function level3() {
   b.solid(47, 16, 2);
   b.solid(50, 13, 2);
   b.gear(50, 11);
-  b.swooper(45, 9, { variant: 'swarm' });
+  b.enemy(45, 17, { variant: 'bomber' });
 
   b.ground(53, 24);
   b.checkpoint(56, 17);
@@ -783,7 +788,7 @@ function level3() {
   b.gear(68, 12);
   b.enemy(63, 17, { variant: 'shield' });
   b.enemy(69, 17, { variant: 'bomber' });
-  b.swooper(74, 8, { variant: 'bomber' });
+  b.charger(74, 17, { variant: 'armored' });
   b.crate(74, 17);
   b.crate(75, 17);
   b.crate(76, 17);
@@ -799,12 +804,12 @@ function level3() {
   b.solid(97, 12, 4);
   b.core(98, 10);
   b.drone(94, 8, { variant: 'sniper' });
-  b.drone(103, 10, { variant: 'sprayer' });
+  b.enemy(103, 17, { variant: 'shield' });
   b.enemy(95, 17, { variant: 'runner' });
   b.enemy(101, 17, { variant: 'brute' });
   b.charger(94, 17, { variant: 'armored' });
   b.spikes(105, 17, 2);
-  b.swooper(107, 8, { variant: 'swarm' });
+  b.enemy(107, 17, { variant: 'runner' });
 
   b.ground(109, 53);
   b.solid(112, 14, 3);
@@ -912,6 +917,7 @@ function level4() {
 
   b.ground(0, 16);
   b.spawn(2, 17);
+  b.charger(6, 17);
   b.solid(8, 14, 3);
   b.gear(9, 12);
   b.enemy(11, 17, { variant: 'runner' });
@@ -929,7 +935,7 @@ function level4() {
   b.turret(33, 17, { variant: 'mortar', hp: 3, damage: 1, range: 620 });
   b.enemy(41, 17, { variant: 'shield' });
   b.drone(37, 9, { variant: 'sniper' });
-  b.swooper(44, 9, { variant: 'swarm' });
+  b.enemy(44, 17, { variant: 'runner' });
 
   b.solid(47, 15, 3);
   b.gear(47, 13);
@@ -940,7 +946,7 @@ function level4() {
   b.solid(73, 16, 4);
   b.gear(62, 14);
   b.core(74, 14);
-  b.drone(64, 8, { variant: 'sprayer' });
+  b.enemy(64, 17, { variant: 'shield' });
   b.drone(71, 10, { variant: 'sniper' });
   b.enemy(66, 17, { variant: 'brute' });
   b.enemy(70, 17, { variant: 'bomber' });
@@ -957,8 +963,8 @@ function level4() {
   b.gear(95, 12);
   b.charger(92, 17, { variant: 'armored' });
   b.enemy(97, 17, { variant: 'bomber' });
-  b.drone(102, 9, { variant: 'sprayer' });
-  b.swooper(108, 8, { variant: 'swarm' });
+  b.enemy(102, 17, { variant: 'runner' });
+  b.charger(108, 17);
   b.checkpoint(104, 17);
 
   // Pista 4/4 — pegada de Kennedito
@@ -1087,6 +1093,7 @@ function level5() {
 
   b.ground(0, 16);
   b.spawn(2, 17);
+  b.enemy(6, 17, { variant: 'brute' });
   b.gear(5, 15);
   b.enemy(9, 17, { variant: 'runner' });
   b.drone(12, 10, { variant: 'sniper' });
@@ -1096,13 +1103,13 @@ function level5() {
   b.solid(18, 15, 4);
   b.gear(19, 13);
   b.checkpoint(22, 17);
-  b.swooper(24, 9, { variant: 'swarm' });
+  b.enemy(24, 17, { variant: 'runner' });
 
   b.ground(26, 10);
   b.laser(28, 12, 1, 6);
   b.laser(33, 12, 1, 6);
   b.enemy(30, 17, { variant: 'shield' });
-  b.drone(31, 8, { variant: 'sprayer' });
+  b.enemy(31, 17, { variant: 'brute' });
   b.gear(30, 15);
 
   b.ground(36, 10);
@@ -1114,7 +1121,7 @@ function level5() {
   b.laser(48, 12, 1, 6);
   b.checkpoint(51, 17);
   b.drone(53, 9, { variant: 'sniper' });
-  b.swooper(45, 9, { variant: 'bomber' });
+  b.charger(45, 17);
 
   // Torre final: chaminé de salto de parede com apoios.
   b.ground(56, 84);
@@ -1144,7 +1151,7 @@ function level5() {
   // Uma única passagem de plataformas quebradiças antes da gaiola
   b.crumble(82, 17, 5);
   b.enemy(88, 16, { variant: 'shield' });
-  b.swooper(90, 8, { variant: 'bomber' });
+  b.enemy(90, 17, { variant: 'shield' });
 
   // Turret and charger before the cage
   b.turret(78, 17, { variant: 'laser', range: 620 });

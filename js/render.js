@@ -5,7 +5,10 @@
    Estética pixel-art com tiles de 32px e cenários escolares.
    ============================================================ */
 
+let CUTSCENE_SILENT = false;
+
 function drawText(ctx, str, x, y, opts = {}) {
+  if (CUTSCENE_SILENT) return;
   const {
     size = 20, color = '#ffffff', align = 'left', baseline = 'middle',
     font = 'Consolas, monospace', weight = 'bold', alpha = 1, glow = null, glowSize = 14
@@ -2530,13 +2533,23 @@ Game.prototype.drawHUD = function (ctx) {
   if (this.level.tutorial) this.drawTutorialHUD(ctx);
 
   if (p.dead) {
-    ctx.fillStyle = 'rgba(2,8,5,0.55)';
+    const k = clamp(p.deadTimer / 1.25, 0, 1);
+    const g = ctx.createRadialGradient(VIEW_W / 2, VIEW_H / 2, 120, VIEW_W / 2, VIEW_H / 2, 760);
+    g.addColorStop(0, 'rgba(30,4,14,0.35)');
+    g.addColorStop(1, 'rgba(2,4,8,0.92)');
+    ctx.fillStyle = g;
     ctx.fillRect(0, 0, VIEW_W, VIEW_H);
-    drawText(ctx, 'SINAL PERDIDO', VIEW_W / 2, VIEW_H / 2 - 10, {
-      size: 38, align: 'center', color: '#ff5d6c', glow: '#ff5d6c', glowSize: 18
+    for (let i = 0; i < 8; i++) {
+      ctx.fillStyle = `rgba(255,93,108,${0.06 + 0.1 * Math.abs(Math.sin(this.time * 12 + i))})`;
+      ctx.fillRect(0, (i * 97 + (1 - k) * 180) % VIEW_H, VIEW_W, 2);
+    }
+    drawText(ctx, 'SINAL PERDIDO', VIEW_W / 2, VIEW_H / 2 - 12, {
+      size: 44, align: 'center', color: '#ff5d6c', glow: '#ff5d6c', glowSize: 22
     });
-    drawText(ctx, 'Reiniciando no Ãºltimo checkpoint...', VIEW_W / 2, VIEW_H / 2 + 34, {
-      size: 13, align: 'center', color: 'rgba(220,240,230,0.7)'
+    ctx.fillStyle = 'rgba(255,93,108,0.8)';
+    ctx.fillRect(VIEW_W / 2 - 140, VIEW_H / 2 + 30, 280 * k, 3);
+    drawText(ctx, 'REESTABELECENDO...', VIEW_W / 2, VIEW_H / 2 + 54, {
+      size: 10, align: 'center', color: 'rgba(220,240,230,0.6)'
     });
   }
 };
@@ -2613,6 +2626,17 @@ Game.prototype.render = function () {
     case 'victory':
       this.renderVictory(ctx);
       break;
+  }
+
+  if (this.hurtFlash > 0) {
+    const a = clamp(this.hurtFlash / 0.42, 0, 1);
+    const g = ctx.createRadialGradient(VIEW_W / 2, VIEW_H / 2, 210, VIEW_W / 2, VIEW_H / 2, 720);
+    g.addColorStop(0, 'rgba(255,60,80,0)');
+    g.addColorStop(1, `rgba(255,40,70,${0.55 * a})`);
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+    ctx.fillStyle = `rgba(255,230,230,${0.12 * a * Math.random()})`;
+    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
   }
 };
 
@@ -3498,6 +3522,53 @@ function drawCutsceneHero(ctx, x, groundY, t, color) {
   ctx.lineTo(x + 24, groundY - 70 + bob);
   ctx.stroke();
 
+  ctx.restore();
+}
+
+function drawCutsceneCreatures(ctx, t, boss, accent) {
+  ctx.save();
+  // olho gigante observando ao fundo
+  const ex = VIEW_W * 0.5 + Math.sin(t * 0.3) * 60;
+  const ey = 210 + Math.sin(t * 0.5) * 8;
+  ctx.fillStyle = 'rgba(4,8,12,0.75)';
+  ctx.beginPath(); ctx.ellipse(ex, ey, 86, 52, 0, 0, TAU); ctx.fill();
+  ctx.strokeStyle = withAlpha(accent, 0.35);
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.ellipse(ex, ey, 86, 52, 0, 0, TAU); ctx.stroke();
+  ctx.fillStyle = accent;
+  ctx.shadowColor = accent; ctx.shadowBlur = 24;
+  ctx.beginPath(); ctx.arc(ex + Math.sin(t * 0.8) * 8, ey, 12 + Math.sin(t * 2) * 2, 0, TAU); ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // criaturas caminhando em silhueta
+  for (let i = 0; i < 5; i++) {
+    const speed = 26 + i * 7;
+    const x = ((t * speed + i * 310) % (VIEW_W + 240)) - 120;
+    const y = 560 + Math.sin(t * 3 + i) * 2;
+    const s = 0.75 + (i % 3) * 0.16;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(s, s);
+    ctx.fillStyle = 'rgba(6,12,16,0.9)';
+    ctx.fillRect(-12, -34, 24, 32);
+    ctx.beginPath(); ctx.arc(0, -38, 13, Math.PI, TAU); ctx.fill();
+    ctx.fillRect(-14, -2, 8, 6);
+    ctx.fillRect(6, -2, 8, 6);
+    ctx.fillStyle = boss ? '#ffd24d' : '#9dffbd';
+    ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 8;
+    ctx.fillRect(-7, -40, 5, 3);
+    ctx.fillRect(3, -40, 5, 3);
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  }
+
+  // vaga-lumes / faíscas
+  for (let i = 0; i < 14; i++) {
+    const px = (i * 137 + Math.sin(t * 0.7 + i) * 40 + VIEW_W) % VIEW_W;
+    const py = 180 + ((i * 97 + t * (12 + (i % 4) * 5)) % 380);
+    ctx.fillStyle = withAlpha(i % 3 ? accent : '#d9ff6d', 0.3 + 0.4 * Math.abs(Math.sin(t * 2 + i)));
+    ctx.fillRect(px, py, 3, 3);
+  }
   ctx.restore();
 }
 
@@ -4506,6 +4577,7 @@ Game.prototype.renderCutscene = function (ctx) {
   const level = this.level;
   const slide = this.cutsceneSlide();
   if (!level || !slide) return;
+  CUTSCENE_SILENT = true;
   const t = this.cutsceneTime;
   const boss = this.cutsceneMode === 'boss';
   const bossCfg = level.bossCfg || null;
@@ -4644,6 +4716,7 @@ Game.prototype.renderCutscene = function (ctx) {
   ctx.save();
   ctx.translate(driftX, driftY);
   this.drawCutsceneMotif(ctx, slide.motif, t);
+  drawCutsceneCreatures(ctx, t, boss, accent);
   ctx.restore();
 
   // VEGA em primeiro plano, entrando pela direita
@@ -4811,12 +4884,6 @@ Game.prototype.renderCutscene = function (ctx) {
   });
 
   const total = this.cutsceneText(slide).length;
-  const ratio = clamp(this.cutsceneReveal / Math.max(1, total), 0, 1);
-  ctx.fillStyle = 'rgba(220,255,230,0.12)';
-  ctx.fillRect(64, VIEW_H - 68, 320, 3);
-  ctx.fillStyle = accent;
-  ctx.fillRect(64, VIEW_H - 68, 320 * ratio, 3);
-
   if (this.cutsceneReveal >= total) {
     const a = 0.45 + Math.sin(t * 5) * 0.25;
     drawText(ctx, 'ENTER / CLIQUE PARA CONTINUAR', VIEW_W - 64, VIEW_H - 34, {
@@ -4837,6 +4904,7 @@ Game.prototype.renderCutscene = function (ctx) {
     ctx.fillStyle = i === this.cutsceneIndex ? accent : withAlpha(accent, 0.22);
     ctx.fillRect(x, VIEW_H - 30, dotW, 4);
   }
+  CUTSCENE_SILENT = false;
 };
 
 Game.prototype.renderStory = function (ctx) {

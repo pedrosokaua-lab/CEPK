@@ -22,6 +22,7 @@ class Game {
     this.tutorialParries = 0;
     this.pulseRings = [];
     this.parryFlash = 0;
+    this.hurtFlash = 0;
     this.hitStop = 0;
 
     this.usedMelee = false;
@@ -563,6 +564,7 @@ class Game {
     this.toasts = [];
     this.pulseRings = [];
     this.parryFlash = 0;
+    this.hurtFlash = 0;
     this.hitStop = 0;
     this.tutorialParries = 0;
     this.weaponIndex = 0;
@@ -794,6 +796,7 @@ class Game {
       dt *= 0.18;
     }
     level.update(dt);
+    this.hurtFlash = Math.max(0, this.hurtFlash - dt);
     this.stats.time += dt;
 
     const p = this.player;

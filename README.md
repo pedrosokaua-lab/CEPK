@@ -72,7 +72,7 @@ Cada fase mistura classes e variantes com silhuetas, cores e comportamentos pró
 
 As fases 1 a 5 somam de 10 a 17 inimigos cada, sempre com várias variantes em cena — a Fase 5 chega a onze comportamentos diferentes.
 
-**Aparência:** os inimigos voltaram ao desenho procedural original (por classe e variante). Apenas os chefes usam sprites pixel-art, com projéteis condizentes com a criatura: lâminas, teias, runas e pedras.
+**Aparência:** inimigos e chefes voltaram a ser desenhados por código. As skins dos cinco chefes foram refeitas do zero — armadura com espada e escudo, assassina de capa e adagas, ogro com martelo, necromante com cajado e rainha-aranha com coroa e patas. Os projéteis continuam combinando com a criatura: lâminas, martelos, runas, teias e garras.
 
 ## Parry
 
@@ -122,16 +122,16 @@ Ao entrar na área final de cada fase, a câmera trava em uma arena dedicada:
 
 ## Sala de saída
 
-Depois de cada arena existe uma câmara de saída independente, com portal animado, moldura de metal, colunas laterais, anéis de energia, partículas, iluminação no piso e a placa **SAÍDA**. Enquanto o chefe estiver de pé, o portal aparece bloqueado com correntes e luz vermelha. O corredor entre o portão e o portal é **largo e sem pilares**, e os portões têm dois tiles de largura para garantir a passagem depois da vitória.
+Depois de cada arena existe uma câmara de saída independente com uma **porta/entrada** de moldura de pedra e metal, faixa de luz no piso e placa **SAÍDA** — não é mais um portal. Enquanto o chefe estiver de pé, a porta aparece trancada com luz vermelha e a placa **TRAVADA**. O corredor entre o portão e a saída é largo e sem pilares.
 
 ## Direção de arte
 
 - **Paletas por ambiente**: pátio em azul-noite com janelas âmbar, corredores em teal e terrazzo, ginásio em madeira e vinho, laboratório em aço azul e diretoria em vinho e dourado. O verde fica reservado ao Sistema Verde e à identidade do HUD.
 - **Piso contínuo**: superfícies desenhadas por trechos, com juntas de laje alinhadas ao mundo, rachaduras, manchas, poças, ralos, musgo e materiais próprios por tema — sem a antiga grade de blocos.
 - **Cenários** com parallax em camadas, skyline, fachada escolar contínua com janelas acesas/apagadas/quebradas, calhas, ar-condicionado, caixa d'água, relógio, cerca, postes e cones de luz. Interiores com armários, quadros de avisos, tanques de laboratório, racks, estantes, janelas com chuva e arquibancadas.
-- **Cutscenes animadas e enxutas**: **uma fala curta por slide**, com VEGA entrando em cena, câmera com push-in e tremor, flash, vinheta e muitas partículas. Nos alertas de chefe a silhueta entra deslizando, os holofotes varrem, as linhas de velocidade giram e o retículo pulsa — cabeçalho **ALVO PRIORITÁRIO** e letterbox animado.
+- **Cutscenes mudas, estilo Hollow Knight**: **sem nenhum texto**. Em vez de falas, criaturas em silhueta caminham, um olho gigante observa, vaga-lumes sobem e o cenário se move com push-in, tremor, flash e vinheta. Nos alertas de chefe a silhueta entra deslizando e os holofotes varrem.
 - **Inimigos** com silhuetas, cores e animações próprias por classe e variante, desenhadas por código — sem sprites externos.
-- **Chefes com sprites e armas próprias**: o **Porteiro** empunha a espada da Armadura Animada (arcos de espada e pedras azuladas); a **Inspetora** usa suas duas adagas (leques de lâminas); o **Técnico** gira o martelo do Ogro Bruto (marteladas e rochas); a **Coordenadora** lança runas pelo cajado da Necromante; a **Diretora** ataca com as garras da Rainha-Aranha (teias, anéis e rajadas). A arma é desenhada na mão do sprite e acompanha o ataque.
+- **Chefes refeitos do zero e armas próprias**: o **Porteiro** é um cavaleiro de armadura com elmo, capa e espada; a **Inspetora**, uma assassina encapuzada de duas adagas; o **Técnico**, um ogro com martelo e ombreiras; a **Coordenadora**, uma necromante com cajado e runas; a **Diretora**, uma rainha-aranha com coroa e patas articuladas. A arma é desenhada na mão e acompanha o movimento.
 - **Personagens e armas redesenhados**: cada monitor tem rosto, cabelo, jaqueta, emblema e silhueta próprios; o bastão, o estilingue e o martelo ganharam sprites detalhados com brilho, correias e núcleo de energia.
 - **HUD minimalista**: só retrato, corações, energia e a arma equipada; durante a luta aparece apenas a barra do chefe com as fases. O tutorial mantém seu lembrete de controle.
 
@@ -192,20 +192,20 @@ A chave nova é `codigo_verde_save_v1`. Saves antigos de `ferro9_save_v1` são l
 ## Tecnologia
 
 - HTML5 Canvas 2D com resolução interna de 1280×720.
-- Tiles de 32px e visual pixel-art: cenários, inimigos, HUD e efeitos desenhados por código, com sprites locais apenas para os chefes.
+- Tiles de 32px e visual pixel-art: cenários, inimigos, chefes, HUD e efeitos desenhados por código.
 - Física própria de plataforma, colisão por eixos e limites de mundo.
 - Áudio procedural com Web Audio API.
-- Zero dependências e zero build: todos os sprites são arquivos locais em `assets/`, sem bibliotecas ou serviços externos.
+- Zero dependências e zero build: nenhuma biblioteca, serviço externo ou asset obrigatório.
 
 ## Estrutura
 
 ```text
 index.html
 css/style.css
-assets/          — folhas de sprites dos chefes
+assets/          — folhas de sprites originais (referência, não usadas na arte final)
 js/core.js       — constantes, utilidades, input, áudio, partículas, save
 js/level.js      — construtor de fases, temas, tutorial, níveis e histórias
-js/sprites.js    — carregamento das folhas, mapeamento e estilo dos ataques
+js/sprites.js    — paletas e estilo dos projéteis dos chefes
 js/entities.js   — VEGA, armas, dash, parry, inimigos, chefes, projéteis e pickups
 js/game.js       — estados, fluxo de telas, tutorial, arena do chefe e câmera
 js/render.js     — cenários, HUD, menus, cutscenes e telas de fim
