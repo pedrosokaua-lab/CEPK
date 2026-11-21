@@ -479,11 +479,9 @@ function level1() {
   b.gate(107, 11, 2, 7, 'boss_arena', false);
   b.gate(133, 11, 2, 7, 'boss_exit', true);
   b.solid(107, 10, 35, 1);
-  b.solid(141, 10, 1, 8);
-  b.solid(140, 12, 1, 6);
   b.gear(130, 12);
   b.boss(117, 17, { name: 'O PORTEIRO', hp: 100, speed: 84, color: '#6dff9e', w: 116, h: 122, style: 'guardian' });
-  b.exit(154, 17);
+  b.exit(138, 17);
 
   return b.build();
 }
@@ -635,13 +633,11 @@ function level2() {
 
   // Arena do chefe + sala de saída
   b.gate(114, 11, 2, 7, 'boss_arena', false);
-  b.gate(148, 11, 2, 7, 'boss_exit', true);
+  b.gate(140, 11, 2, 7, 'boss_exit', true);
   b.solid(114, 10, 38, 1);
-  b.solid(151, 10, 1, 8);
-  b.solid(149, 12, 1, 6);
   b.gear(136, 12);
   b.boss(126, 17, { name: 'A INSPETORA', hp: 150, speed: 96, color: '#ffd24d', w: 112, h: 126, style: 'hunter' });
-  b.exit(154, 17);
+  b.exit(146, 17);
 
   return b.build();
 }
@@ -793,8 +789,6 @@ function level3() {
   b.gate(122, 11, 2, 7, 'boss_arena', false);
   b.gate(148, 11, 2, 7, 'boss_exit', true);
   b.solid(122, 10, 40, 1);
-  b.solid(161, 10, 1, 8);
-  b.solid(158, 12, 1, 6);
   b.gear(145, 12);
   b.boss(134, 17, { name: 'O TÉCNICO', hp: 210, speed: 92, color: '#ff8c42', w: 124, h: 136, style: 'bruiser' });
   b.exit(154, 17);
@@ -951,8 +945,6 @@ function level4() {
   b.gate(128, 11, 2, 7, 'boss_arena', false);
   b.gate(154, 11, 2, 7, 'boss_exit', true);
   b.solid(128, 10, 40, 1);
-  b.solid(167, 10, 1, 8);
-  b.solid(164, 12, 1, 6);
   b.gear(151, 12);
   b.boss(140, 17, { name: 'A COORDENADORA', hp: 280, speed: 104, color: '#b18cff', w: 120, h: 132, style: 'trickster' });
   b.exit(160, 17);
@@ -1124,8 +1116,6 @@ function level5() {
   b.gate(102, 11, 2, 7, 'boss_arena', false);
   b.gate(128, 11, 2, 7, 'boss_exit', true);
   b.solid(102, 10, 38, 1);
-  b.solid(139, 10, 1, 8);
-  b.solid(137, 12, 1, 6);
   b.gear(124, 12);
   b.boss(114, 17, { name: 'A DIRETORA', hp: 420, speed: 112, color: '#ff5d7a', w: 140, h: 150, final: true, style: 'director' });
   b.exit(134, 17);
