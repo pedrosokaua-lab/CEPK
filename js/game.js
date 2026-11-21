@@ -697,7 +697,7 @@ class Game {
   }
 
   cutsceneText(slide) {
-    return slide ? slide.lines.slice(0, 2).join(' ') : '';
+    return slide ? (slide.hint || slide.lines.slice(0, 2).join(' ')) : '';
   }
 
   updateCutscene(dt) {

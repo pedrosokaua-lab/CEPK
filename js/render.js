@@ -4741,6 +4741,91 @@ Game.prototype.drawCutsceneMotif = function (ctx, motif, t) {
   ctx.restore();
 };
 
+function drawCutsceneKennedito(ctx, x, y, t, scale) {
+  const bob = Math.sin(t * 2.4) * 5;
+  const blink = Math.sin(t * 1.1) > 0.94 ? 0.18 : 1;
+  ctx.save();
+  ctx.translate(x, y + bob);
+  ctx.scale(scale, scale);
+
+  // halo
+  const halo = ctx.createRadialGradient(0, -30, 4, 0, -30, 90);
+  halo.addColorStop(0, 'rgba(182,255,154,0.20)');
+  halo.addColorStop(1, 'rgba(182,255,154,0)');
+  ctx.fillStyle = halo;
+  ctx.fillRect(-100, -130, 200, 200);
+
+  // antenna
+  ctx.strokeStyle = '#8fe08a';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(0, -48);
+  ctx.quadraticCurveTo(8 + Math.sin(t * 2) * 6, -70, 4, -84);
+  ctx.stroke();
+  ctx.fillStyle = '#e8ff9a';
+  ctx.shadowColor = '#d9ff6d';
+  ctx.shadowBlur = 14;
+  ctx.beginPath();
+  ctx.arc(4, -86, 5 + Math.sin(t * 4) * 1.5, 0, TAU);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // bracos
+  ctx.strokeStyle = '#96e68f';
+  ctx.lineWidth = 7;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(-30, 4);
+  ctx.lineTo(-48, 18 + Math.sin(t * 3) * 6);
+  ctx.moveTo(30, 4);
+  ctx.lineTo(48, 14 + Math.cos(t * 3) * 6);
+  ctx.stroke();
+
+  // corpo
+  ctx.fillStyle = '#9ae893';
+  ctx.beginPath();
+  ctx.ellipse(0, 4, 42, 38, 0, 0, TAU);
+  ctx.fill();
+  ctx.strokeStyle = '#5fae63';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  ctx.fillStyle = withAlpha('#ffffff', 0.18);
+  ctx.beginPath();
+  ctx.ellipse(-11, -8, 18, 13, -0.4, 0, TAU);
+  ctx.fill();
+
+  // oculos de olhos grandes
+  ctx.fillStyle = '#f4fff0';
+  ctx.beginPath();
+  ctx.arc(-15, -6, 14, 0, TAU);
+  ctx.arc(15, -6, 14, 0, TAU);
+  ctx.fill();
+  ctx.strokeStyle = '#2d5e3a';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.fillStyle = '#0d1f18';
+  ctx.beginPath();
+  ctx.arc(-12 + Math.sin(t * 0.8) * 2, -5, 5 * blink, 0, TAU);
+  ctx.arc(18 + Math.sin(t * 0.8) * 2, -5, 5 * blink, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(-14, -8, 2, 2);
+  ctx.fillRect(16, -8, 2, 2);
+
+  // boca
+  ctx.strokeStyle = '#2d5e3a';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(0, 15, 9, 0.25, Math.PI - 0.25);
+  ctx.stroke();
+
+  // pes
+  ctx.fillStyle = '#6cbf6c';
+  ctx.fillRect(-24, 34, 16, 8);
+  ctx.fillRect(8, 34, 16, 8);
+  ctx.restore();
+}
+
 Game.prototype.renderCutscene = function (ctx) {
   const level = this.level;
   const slide = this.cutsceneSlide();
@@ -4894,6 +4979,15 @@ Game.prototype.renderCutscene = function (ctx) {
   drawCutsceneHero(ctx, 0, 0, t, boss ? accent : '#6dff9e');
   ctx.restore();
 
+  // Kennedito aparece para guiar o jogador nas cutscenes
+  if (slide.speaker === 'KENNEDITO') {
+    const appear = clamp(t / 0.5, 0, 1);
+    ctx.save();
+    ctx.globalAlpha = appear;
+    drawCutsceneKennedito(ctx, 214 - (1 - appear) * 60, 470, t, 1.06);
+    ctx.restore();
+  }
+
   // partículas cinematográficas
   ctx.save();
   const pcount = boss ? 72 : 36;
@@ -5042,7 +5136,7 @@ Game.prototype.renderCutscene = function (ctx) {
   ctx.restore();
 
   // quem fala
-  const speaker = boss && bossCfg ? bossCfg.name : 'VEGA';
+  const speaker = slide.speaker || (boss && bossCfg ? bossCfg.name : 'VEGA');
   drawText(ctx, speaker.toUpperCase(), 68, boxY + 18, {
     size: 10, color: accent2, glow: accent2, glowSize: 6
   });

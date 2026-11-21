@@ -352,6 +352,8 @@ function level1() {
     cutscene: [
       {
         title: 'O SINAL',
+        speaker: 'KENNEDITO',
+        hint: 'VEGA! Acorde! O Sistema Verde tomou a escola. Precisamos sair daqui.',
         motif: 'gate',
         lines: [
           'O colégio amanhece vazio.',
@@ -361,6 +363,8 @@ function level1() {
       },
       {
         title: 'PÁTIO',
+        speaker: 'KENNEDITO',
+        hint: 'Siga pelo patio. A e D para andar, ESPACO para pular.',
         motif: 'courtyard',
         lines: [
           'Grama, quadras e árvores. Tudo parado.',
@@ -370,6 +374,8 @@ function level1() {
       },
       {
         title: 'O CAMINHO',
+        speaker: 'KENNEDITO',
+        hint: 'Use o pulo duplo e o dash (SHIFT) para cruzar os vaos. O movimento abre as portas.',
         motif: 'module',
         lines: [
           'As portas se fecharam uma a uma.',
@@ -379,6 +385,8 @@ function level1() {
       },
       {
         title: 'RONDA TURRET',
+        speaker: 'KENNEDITO',
+        hint: 'A torre dispara tiros verdes. Aperte E no impacto para aparar e devolver.',
         motif: 'turret',
         lines: [
           'Uma torre verde surgiu no perímetro.',
@@ -390,6 +398,8 @@ function level1() {
     bossCutscene: [
       {
         title: 'O PORTEIRO',
+        speaker: 'KENNEDITO',
+        hint: 'O Porteiro trancou o portao. Observe o aviso antes de cada golpe!',
         tag: 'CHEFE 1/5',
         motif: 'bossGuardian',
         lines: [
@@ -400,6 +410,8 @@ function level1() {
       },
       {
         title: 'GUARDIÃO DO PÁTIO',
+        speaker: 'KENNEDITO',
+        hint: 'Ataque com J, apare com E e use o dash. A saida abre quando ele cair.',
         tag: 'ARENA DE COMBATE',
         motif: 'bossArena',
         lines: [
@@ -508,6 +520,8 @@ function level2() {
     cutscene: [
       {
         title: 'CORREDORES',
+        speaker: 'KENNEDITO',
+        hint: 'Os corredores estao vigiados. Mire com o mouse e atire com J.',
         motif: 'hall',
         lines: [
           'Armários verdes se alinham até o fim do corredor.',
@@ -517,6 +531,8 @@ function level2() {
       },
       {
         title: 'O SISTEMA',
+        speaker: 'KENNEDITO',
+        hint: 'O Sistema te observa. Aparar os tiros e o melhor caminho.',
         motif: 'observation',
         lines: [
           'Telas mostram sua ficha escolar.',
@@ -526,6 +542,8 @@ function level2() {
       },
       {
         title: 'A RONDA',
+        speaker: 'KENNEDITO',
+        hint: 'Espere a abertura e avance. O dash da um instante de invencibilidade.',
         motif: 'observation',
         lines: [
           'Drones cruzam o corredor em padrões fixos.',
@@ -535,6 +553,8 @@ function level2() {
       },
       {
         title: 'CORRIDOR CARREGADOR',
+        speaker: 'KENNEDITO',
+        hint: 'Carregadores atacam em linha reta. Desvie ou apare no momento certo.',
         motif: 'charger',
         lines: [
           'Um corredor bloqueado por um Carregador.',
@@ -546,6 +566,8 @@ function level2() {
     bossCutscene: [
       {
         title: 'A INSPETORA',
+        speaker: 'KENNEDITO',
+        hint: 'A Inspetora e rapida com as laminas. Use dash e parry.',
         tag: 'CHEFE 2/5',
         motif: 'bossHunter',
         lines: [
@@ -556,6 +578,8 @@ function level2() {
       },
       {
         title: 'CORREDOR SEM SAÍDA',
+        speaker: 'KENNEDITO',
+        hint: 'Nao fique parado. Ataque entre os golpes dela para abrir a saida.',
         tag: 'ARENA DE COMBATE',
         motif: 'bossArena',
         lines: [
@@ -659,6 +683,8 @@ function level3() {
     cutscene: [
       {
         title: 'GINÁSIO',
+        speaker: 'KENNEDITO',
+        hint: 'A quadra virou armadilha. Pule com cuidado e observe o chao.',
         motif: 'gym',
         lines: [
           'A quadra verde brilha sob os refletores.',
@@ -668,6 +694,8 @@ function level3() {
       },
       {
         title: 'TREINO',
+        speaker: 'KENNEDITO',
+        hint: 'Treine o golpe carregado: segure J para liberar o ataque forte.',
         motif: 'training',
         lines: [
           'Máquinas de treino ganharam vida.',
@@ -677,6 +705,8 @@ function level3() {
       },
       {
         title: 'ARQUIBANCADA',
+        speaker: 'KENNEDITO',
+        hint: 'As arquibancadas escondem inimigos. Olhe para cima antes de avancar.',
         motif: 'training',
         lines: [
           'As arquibancadas escondem refletores e armadilhas.',
@@ -686,6 +716,8 @@ function level3() {
       },
       {
         title: 'SWOOPER NO GINÁSIO',
+        speaker: 'KENNEDITO',
+        hint: 'Swoopers mergulham do alto. Espere o mergulho e contra-atague.',
         motif: 'swooper',
         lines: [
           'Um Swooper patrulha o galpão.',
@@ -697,6 +729,8 @@ function level3() {
     bossCutscene: [
       {
         title: 'O TÉCNICO',
+        speaker: 'KENNEDITO',
+        hint: 'O Tecnico e pesado e gira. Desvie das rochas e responda com o martelo.',
         tag: 'CHEFE 3/5',
         motif: 'bossBruiser',
         lines: [
@@ -707,6 +741,8 @@ function level3() {
       },
       {
         title: 'QUADRA FECHADA',
+        speaker: 'KENNEDITO',
+        hint: 'O placar marca o fim do treino. O Tecnico cai e a ala tecnica abre.',
         tag: 'ARENA DE COMBATE',
         motif: 'bossArena',
         lines: [
@@ -809,6 +845,8 @@ function level4() {
     cutscene: [
       {
         title: 'LABORATÓRIO',
+        speaker: 'KENNEDITO',
+        hint: 'O laboratorio esta cheio de lasers. Cronometre o dash.',
         motif: 'lab',
         lines: [
           'Bancadas, vidrarias e quadros verdes.',
@@ -818,6 +856,8 @@ function level4() {
       },
       {
         title: 'PROJETO VEGA',
+        speaker: 'KENNEDITO',
+        hint: 'O Projeto VEGA e voce. Mostre que o Sistema nao te controla.',
         motif: 'project',
         lines: [
           'Sua ficha aparece em todos os monitores.',
@@ -827,6 +867,8 @@ function level4() {
       },
       {
         title: 'REATOR',
+        speaker: 'KENNEDITO',
+        hint: 'Os reatores alimentam as defesas. Desvie dos feixes e avance.',
         motif: 'module',
         lines: [
           'O reator principal ainda pulsa no fim do corredor.',
@@ -836,6 +878,8 @@ function level4() {
       },
       {
         title: 'PISTA 4/4: PEGADA VERDE',
+        speaker: 'KENNEDITO',
+        hint: 'Pistas de Kennedito... acho que ele passou por aqui. Siga o rastro!',
         motif: 'clue',
         lines: [
           'Uma pegada verde marca o caminho.',
@@ -847,6 +891,8 @@ function level4() {
     bossCutscene: [
       {
         title: 'A COORDENADORA',
+        speaker: 'KENNEDITO',
+        hint: 'A Coordenadora lanca runas e clones. Aparar e contra-atacar.',
         tag: 'CHEFE 4/5',
         motif: 'bossTrickster',
         lines: [
@@ -857,6 +903,8 @@ function level4() {
       },
       {
         title: 'PROTOCOLO DE CONTENÇÃO',
+        speaker: 'KENNEDITO',
+        hint: 'Quebre os clones, desvie das runas e derrube a Coordenadora.',
         tag: 'ARENA DE COMBATE',
         motif: 'bossArena',
         lines: [
