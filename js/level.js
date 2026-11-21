@@ -415,6 +415,7 @@ function level1() {
   });
 
   b.ground(0, 20);
+  b.solid(20, 21, 1); b.spikes(20, 20, 1);
   b.spawn(2, 17);
   b.enemy(16, 17, { variant: 'runner' });
   b.enemy(36, 17, { variant: 'brute' });
@@ -436,6 +437,7 @@ function level1() {
   b.gear(25, 13);
 
   b.ground(28, 18);
+  b.solid(46, 21, 6); b.spikes(46, 20, 6);
   b.solid(33, 13, 5);
   b.gear(35, 11);
   b.clue(36, 12, 'pista1');
@@ -468,6 +470,7 @@ function level1() {
   b.gear(97, 15);
 
   b.ground(101, 41);
+  b.ground(142, 20);
   b.solid(104, 14, 3);
   b.gear(105, 12);
   b.checkpoint(104, 17);
@@ -585,6 +588,7 @@ function level2() {
   b.spikes(17, 20, 8);
 
   b.ground(25, 22);
+  b.solid(47, 21, 5); b.spikes(47, 20, 5);
   b.checkpoint(28, 17);
   b.solid(30, 15, 5);
   b.gear(31, 13);
@@ -619,6 +623,7 @@ function level2() {
   b.checkpoint(103, 17);
 
   b.ground(107, 45);
+  b.ground(152, 10);
   b.solid(110, 14, 3);
 
   // Arena do chefe + sala de saída
@@ -717,6 +722,7 @@ function level3() {
   });
 
   b.ground(0, 20);
+  b.solid(20, 21, 7); b.spikes(20, 20, 7);
   b.spawn(2, 17);
   b.solid(4, 14, 4);
   b.gear(5, 12);
@@ -731,6 +737,7 @@ function level3() {
   b.gear(23, 13);
 
   b.ground(27, 18);
+  b.solid(45, 21, 8); b.spikes(45, 20, 8);
   b.checkpoint(30, 17);
   b.solid(32, 16, 4);
   b.solid(38, 13, 4);
@@ -880,6 +887,7 @@ function level4() {
   b.gear(21, 13);
 
   b.ground(26, 20);
+  b.solid(46, 21, 10); b.spikes(46, 20, 10);
   b.checkpoint(29, 17);
   b.laser(32, 12, 1, 6);
   b.laser(38, 12, 1, 6);
@@ -890,6 +898,7 @@ function level4() {
   b.gear(47, 13);
 
   b.ground(56, 22);
+  b.solid(78, 21, 10); b.spikes(78, 20, 10);
   b.solid(61, 16, 4);
   b.solid(73, 16, 4);
   b.gear(62, 14);
