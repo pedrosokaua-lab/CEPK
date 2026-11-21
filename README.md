@@ -71,7 +71,7 @@ Cada fase mistura classes e variantes com silhuetas, cores e comportamentos pró
 | **Charger** | padrão, `armored`, `berserk` | Investe em linha reta; versões com mais vida ou fúria ao levar dano |
 | **Swooper** | padrão, `bomber`, `swarm` | Ronda e mergulha; solta bombas ou ataca em enxame veloz |
 
-Cada fase da 1 à 5 tem **apenas 6 inimigos**, bem espalhados pelo mapa (mínimo de 10 tiles entre eles) e longe do ponto inicial — nada de combates em grupo apertado.
+Cada fase da 1 à 5 tem **apenas 6 inimigos**, bem espalhados pelo mapa (mínimo de 10 tiles entre eles) e longe do ponto inicial — nada de combates em grupo apertado. Se um inimigo cair em um fosso ou ficar preso nos espinhos, ele é automaticamente resgatado para o chão firme mais próximo e volta a patrulhar, sem morrer sozinho.
 
 **Aparência:** inimigos e chefes voltaram a ser desenhados por código. As skins dos cinco chefes foram refeitas do zero — armadura com espada e escudo, assassina de capa e adagas, ogro com martelo, necromante com cajado e rainha-aranha com coroa e patas. Os projéteis continuam combinando com a criatura: lâminas, martelos, runas, teias e garras.
 

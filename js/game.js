@@ -882,7 +882,10 @@ class Game {
     }
     this.resolveCrates();
 
-    for (const e of this.enemies) e.update(dt, this);
+    for (const e of this.enemies) {
+      e.update(dt, this);
+      this.rescueEnemy(e);
+    }
     if (this.boss) this.boss.update(dt, this);
 
     this.handleCrateImpacts();
@@ -1134,6 +1137,42 @@ class Game {
 
   shake(n) {
     this.cam.shake = Math.min(1.4, Math.max(this.cam.shake, n));
+  }
+
+  // Impede que inimigos caiam no void ou fiquem presos nos espinhos.
+  rescueEnemy(e) {
+    if (!e || e.dead && !(e.y > this.level.heightPx)) return;
+    const L = this.level;
+    const groundY = 18 * TILE;
+    const inHazard = L.hazardRect(e.x + 3, e.y + 3, e.w - 6, e.h - 6);
+    const tooLow = e.y > groundY + TILE * 2;
+    if (!inHazard && !tooLow) return;
+
+    const tx0 = clamp(Math.floor((e.x + e.w / 2) / TILE), 1, L.w - 2);
+    let best = -1;
+    for (let d = 0; d <= 24; d++) {
+      for (const s of [-1, 1]) {
+        const tx = tx0 + s * d;
+        if (tx < 1 || tx >= L.w - 1) continue;
+        if (L.tile(tx, 18) !== TILE_SOLID) continue;
+        if (L.tile(tx, 17) === TILE_SPIKE || L.tile(tx, 17) === TILE_LASER) continue;
+        best = tx;
+        break;
+      }
+      if (best >= 0) break;
+    }
+    if (best < 0) return;
+    e.x = best * TILE + TILE / 2 - e.w / 2;
+    e.y = groundY - e.h;
+    e.vx = 0;
+    e.vy = 0;
+    e.dead = false;
+    if (typeof e.dir === 'number') e.dir *= -1;
+    if (typeof e.state === 'string') e.state = 'patrol';
+    if (e instanceof Drone || e instanceof Swooper) {
+      e.y = groundY - e.h - 90;
+      if (typeof e.homeY === 'number') e.homeY = e.y;
+    }
   }
 
   killPlayer() {
