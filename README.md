@@ -32,7 +32,8 @@ Depois acesse `http://localhost:8123`.
 | `Shift` | Segurar para correr; tocar para **dash** (impulso) |
 | `Espaço` / `W` / `↑` | Pular; aperte de novo no ar para **pulo duplo** |
 | `L` | **Dash alternativo** (impulso no ar) |
-| `J` ou clique esquerdo | Atacar com a arma equipada (8 direções); **segure 0,55s** para o ataque carregado |
+| `Mouse` | **Mira livre** — golpes e tiros seguem o cursor (WASD/setas continuam funcionando) |
+| `J` ou clique esquerdo | Atacar na direção do cursor; **segure 0,55s** para o ataque carregado |
 | `E` | **Parry** — aparar ataques verdes e projéteis (janela perfeita de 0.14s) |
 | `1` / `2` / `3` | Trocar de arma |
 | `M` | Ligar / desligar som |
@@ -129,7 +130,7 @@ Depois de cada arena existe uma câmara de saída independente com uma **porta/e
 - **Paletas por ambiente**: pátio em azul-noite com janelas âmbar, corredores em teal e terrazzo, ginásio em madeira e vinho, laboratório em aço azul e diretoria em vinho e dourado. O verde fica reservado ao Sistema Verde e à identidade do HUD.
 - **Piso contínuo**: superfícies desenhadas por trechos, com juntas de laje alinhadas ao mundo, rachaduras, manchas, poças, ralos, musgo e materiais próprios por tema — sem a antiga grade de blocos.
 - **Cenários** com parallax em camadas, skyline, fachada escolar contínua com janelas acesas/apagadas/quebradas, calhas, ar-condicionado, caixa d'água, relógio, cerca, postes e cones de luz. Interiores com armários, quadros de avisos, tanques de laboratório, racks, estantes, janelas com chuva e arquibancadas.
-- **Cutscenes mudas, estilo Hollow Knight**: **sem nenhum texto**. Em vez de falas, criaturas em silhueta caminham, um olho gigante observa, vaga-lumes sobem e o cenário se move com push-in, tremor, flash e vinheta. Nos alertas de chefe a silhueta entra deslizando e os holofotes varrem.
+- **Cutscenes cinematográficas com texto**: um painel mostra quem fala e uma explicação curta, com efeito de máquina de escrever. A arte foi enriquecida: lua com halo, ruínas em paralaxe, névoa, olho gigante, três tipos de criaturas caminhando, esporos brilhantes e grama em primeiro plano — além do push-in, tremor, flash e da silhueta do chefe entrando deslizando.
 - **Inimigos** com silhuetas, cores e animações próprias por classe e variante, desenhadas por código — sem sprites externos.
 - **Chefes refeitos do zero e armas próprias**: o **Porteiro** é um cavaleiro de armadura com elmo, capa e espada; a **Inspetora**, uma assassina encapuzada de duas adagas; o **Técnico**, um ogro com martelo e ombreiras; a **Coordenadora**, uma necromante com cajado e runas; a **Diretora**, uma rainha-aranha com coroa e patas articuladas. A arma é desenhada na mão e acompanha o movimento.
 - **Personagens e armas redesenhados**: cada monitor tem rosto, cabelo, jaqueta, emblema e silhueta próprios; o bastão, o estilingue e o martelo ganharam sprites detalhados com brilho, correias e núcleo de energia.

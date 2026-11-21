@@ -5,10 +5,7 @@
    Estética pixel-art com tiles de 32px e cenários escolares.
    ============================================================ */
 
-let CUTSCENE_SILENT = false;
-
 function drawText(ctx, str, x, y, opts = {}) {
-  if (CUTSCENE_SILENT) return;
   const {
     size = 20, color = '#ffffff', align = 'left', baseline = 'middle',
     font = 'Consolas, monospace', weight = 'bold', alpha = 1, glow = null, glowSize = 14
@@ -2416,6 +2413,13 @@ Game.prototype.drawGameScene = function (ctx) {
   FX.draw(ctx, cam);
   this.drawForeground(ctx, cam);
   ctx.restore();
+
+  // vinheta sutil para dar profundidade
+  const vg = ctx.createRadialGradient(VIEW_W / 2, VIEW_H / 2, 300, VIEW_W / 2, VIEW_H / 2, 780);
+  vg.addColorStop(0, 'rgba(0,0,0,0)');
+  vg.addColorStop(1, 'rgba(0,0,0,0.28)');
+  ctx.fillStyle = vg;
+  ctx.fillRect(0, 0, VIEW_W, VIEW_H);
 };
 
 Game.prototype.drawForeground = function (ctx, cam) {
@@ -2495,7 +2499,7 @@ Game.prototype.drawHUD = function (ctx) {
   drawWeaponGlyph(ctx, w.id, wx + 24, wy + 25, 26, w.color);
   drawKeycap(ctx, String(this.weaponIndex + 1), wx + 8, wy + 6, w.color, true, 0.7);
   drawText(ctx, w.name, wx + 46, wy + 20, { size: 12, color: w.color });
-  drawText(ctx, w.melee ? 'CORPO A CORPO' : `TIRO Â· ${w.energy} ENERGIA`, wx + 46, wy + 36, {
+  drawText(ctx, w.melee ? 'CORPO A CORPO' : `TIRO · ${w.energy} ENERGIA`, wx + 46, wy + 36, {
     size: 8, color: 'rgba(190,225,200,0.6)'
   });
   if (p.chargeTime > 0.05) {
@@ -2531,6 +2535,39 @@ Game.prototype.drawHUD = function (ctx) {
   }
 
   if (this.level.tutorial) this.drawTutorialHUD(ctx);
+
+  // mira do mouse
+  if (!p.dead && Input.mouse.active && this.state !== 'paused') {
+    const mx = Input.mouse.x, my = Input.mouse.y;
+    const w = WEAPONS[this.weaponIndex];
+    const ready = p.attackCd <= 0;
+    const c = ready ? w.color : 'rgba(150,190,170,0.6)';
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.strokeStyle = c;
+    ctx.shadowColor = c;
+    ctx.shadowBlur = 8;
+    ctx.lineWidth = 1.5;
+    const r = 9 + Math.sin(this.time * 6) * 1.5;
+    ctx.beginPath();
+    ctx.arc(mx, my, r, 0, TAU);
+    ctx.stroke();
+    for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+      ctx.beginPath();
+      ctx.moveTo(mx + dx * (r + 3), my + dy * (r + 3));
+      ctx.lineTo(mx + dx * (r + 8), my + dy * (r + 8));
+      ctx.stroke();
+    }
+    ctx.fillStyle = c;
+    ctx.fillRect(mx - 1.5, my - 1.5, 3, 3);
+    if (p.chargeTime > 0.55) {
+      ctx.strokeStyle = '#ffd24d';
+      ctx.beginPath();
+      ctx.arc(mx, my, r + 7, -Math.PI / 2, -Math.PI / 2 + TAU);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
 
   if (p.dead) {
     const k = clamp(p.deadTimer / 1.25, 0, 1);
@@ -3065,7 +3102,8 @@ Game.prototype.renderHelp = function (ctx) {
     ['A / D  ·  ← / →', 'Andar'],
     ['SHIFT', 'Impulso (dash) · segure para correr'],
     ['ESPAÇO / W / ↑', 'Pular · 2× pulo duplo · na parede = salto de parede'],
-    ['J  ·  CLIQUE ESQ.', 'Atacar na direção da mira (8 lados)'],
+    ['MOUSE', 'Mira livre: o golpe e o tiro seguem o cursor'],
+    ['J  ·  CLIQUE ESQ.', 'Atacar na direção da mira'],
     ['J (SEGURE)', 'Ataque carregado: giro, rajada tripla ou impacto sísmico'],
     ['E  ·  CLIQUE DIR.', 'Parry: aparar ataques verdes'],
     ['1 / 2 / 3', 'Bastão · Estilingue · Martelo'],
@@ -3527,51 +3565,149 @@ function drawCutsceneHero(ctx, x, groundY, t, color) {
 
 function drawCutsceneCreatures(ctx, t, boss, accent) {
   ctx.save();
-  // olho gigante observando ao fundo
-  const ex = VIEW_W * 0.5 + Math.sin(t * 0.3) * 60;
-  const ey = 210 + Math.sin(t * 0.5) * 8;
-  ctx.fillStyle = 'rgba(4,8,12,0.75)';
-  ctx.beginPath(); ctx.ellipse(ex, ey, 86, 52, 0, 0, TAU); ctx.fill();
-  ctx.strokeStyle = withAlpha(accent, 0.35);
+
+  // lua grande com halo e crateras
+  const mx = VIEW_W * 0.76, my = 150;
+  const halo = ctx.createRadialGradient(mx, my, 20, mx, my, 190);
+  halo.addColorStop(0, withAlpha(accent, 0.22));
+  halo.addColorStop(1, withAlpha(accent, 0));
+  ctx.fillStyle = halo;
+  ctx.fillRect(mx - 200, my - 200, 400, 400);
+  ctx.fillStyle = 'rgba(225,235,220,0.10)';
+  ctx.beginPath(); ctx.arc(mx, my, 64, 0, TAU); ctx.fill();
+  ctx.strokeStyle = withAlpha(accent, 0.25);
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(mx, my, 64, 0, TAU); ctx.stroke();
+  ctx.fillStyle = 'rgba(10,18,22,0.25)';
+  ctx.beginPath(); ctx.arc(mx - 20, my - 14, 9, 0, TAU); ctx.fill();
+  ctx.beginPath(); ctx.arc(mx + 18, my + 16, 13, 0, TAU); ctx.fill();
+  ctx.beginPath(); ctx.arc(mx + 4, my - 30, 6, 0, TAU); ctx.fill();
+
+  // ruÃ­nas ao fundo, em paralaxe
+  ctx.fillStyle = 'rgba(3,9,14,0.55)';
+  for (let i = 0; i < 9; i++) {
+    const px = (i * 170 + Math.sin(t * 0.15 + i) * 12) - 40;
+    const ph = 90 + ((i * 53) % 110);
+    ctx.fillRect(px, 600 - ph, 36, ph);
+    ctx.fillRect(px - 8, 600 - ph, 52, 10);
+    ctx.fillStyle = withAlpha(accent, 0.05);
+    ctx.fillRect(px + 12, 600 - ph + 26, 6, 14);
+    ctx.fillStyle = 'rgba(3,9,14,0.55)';
+  }
+
+  // nÃ©voa baixa
+  for (let i = 0; i < 5; i++) {
+    const fy = 470 + i * 28;
+    const fx = Math.sin(t * 0.25 + i) * 70;
+    const fog = ctx.createLinearGradient(0, fy - 30, 0, fy + 30);
+    fog.addColorStop(0, 'rgba(120,180,160,0)');
+    fog.addColorStop(0.5, withAlpha(accent, 0.045));
+    fog.addColorStop(1, 'rgba(120,180,160,0)');
+    ctx.fillStyle = fog;
+    ctx.fillRect(fx - 200, fy - 30, VIEW_W + 400, 60);
+  }
+
+  // olho gigante observando
+  const ex = VIEW_W * 0.28 + Math.sin(t * 0.3) * 26;
+  const ey = 250 + Math.sin(t * 0.5) * 8;
+  ctx.fillStyle = 'rgba(3,7,11,0.82)';
+  ctx.beginPath(); ctx.ellipse(ex, ey, 96, 58, 0, 0, TAU); ctx.fill();
+  ctx.strokeStyle = withAlpha(accent, 0.4);
   ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.ellipse(ex, ey, 86, 52, 0, 0, TAU); ctx.stroke();
-  ctx.fillStyle = accent;
-  ctx.shadowColor = accent; ctx.shadowBlur = 24;
-  ctx.beginPath(); ctx.arc(ex + Math.sin(t * 0.8) * 8, ey, 12 + Math.sin(t * 2) * 2, 0, TAU); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(ex, ey, 96, 58, 0, 0, TAU); ctx.stroke();
+  for (let i = 0; i < 12; i++) {
+    const a = (TAU * i) / 12;
+    ctx.strokeStyle = withAlpha(accent, 0.12);
+    ctx.beginPath();
+    ctx.moveTo(ex + Math.cos(a) * 98, ey + Math.sin(a) * 60);
+    ctx.lineTo(ex + Math.cos(a) * 122, ey + Math.sin(a) * 74);
+    ctx.stroke();
+  }
+  ctx.fillStyle = boss ? '#ff5d7a' : accent;
+  ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 26;
+  const look = Math.sin(t * 0.9) * 10;
+  ctx.beginPath(); ctx.ellipse(ex + look, ey, 15 + Math.sin(t * 2) * 2, 18, 0, 0, TAU); ctx.fill();
+  ctx.fillStyle = '#05070a';
+  ctx.beginPath(); ctx.ellipse(ex + look, ey, 5, 12, 0, 0, TAU); ctx.fill();
   ctx.shadowBlur = 0;
 
-  // criaturas caminhando em silhueta
-  for (let i = 0; i < 5; i++) {
-    const speed = 26 + i * 7;
-    const x = ((t * speed + i * 310) % (VIEW_W + 240)) - 120;
-    const y = 560 + Math.sin(t * 3 + i) * 2;
-    const s = 0.75 + (i % 3) * 0.16;
+  // criaturas caminhando em silhueta, cada uma com um formato
+  for (let i = 0; i < 6; i++) {
+    const speed = 22 + i * 8;
+    const x = ((t * speed + i * 289) % (VIEW_W + 280)) - 140;
+    const y = 588 + Math.sin(t * 3 + i) * 3;
+    const s = 0.65 + (i % 4) * 0.17;
+    const legs = Math.sin(t * 8 + i * 1.7) * 6;
     ctx.save();
     ctx.translate(x, y);
     ctx.scale(s, s);
-    ctx.fillStyle = 'rgba(6,12,16,0.9)';
-    ctx.fillRect(-12, -34, 24, 32);
-    ctx.beginPath(); ctx.arc(0, -38, 13, Math.PI, TAU); ctx.fill();
-    ctx.fillRect(-14, -2, 8, 6);
-    ctx.fillRect(6, -2, 8, 6);
+
+    if (i % 3 === 0) {
+      // escaravelho
+      ctx.fillStyle = 'rgba(5,11,15,0.95)';
+      ctx.beginPath(); ctx.ellipse(0, -22, 20, 14, 0, 0, TAU); ctx.fill();
+      ctx.beginPath(); ctx.arc(-18, -26, 9, Math.PI, TAU); ctx.fill();
+      for (const sx of [-14, 14]) for (const sy of [-10, 10]) {
+        ctx.beginPath();
+        ctx.moveTo(sx, -18);
+        ctx.lineTo(sx + (sx < 0 ? -12 : 12), -4 + legs * 0.4);
+        ctx.strokeStyle = 'rgba(5,11,15,0.95)'; ctx.lineWidth = 3; ctx.stroke();
+      }
+    } else if (i % 3 === 1) {
+      // bÃ­pede comantenos
+      ctx.fillStyle = 'rgba(5,11,15,0.95)';
+      ctx.fillRect(-10, -46, 20, 34);
+      ctx.beginPath(); ctx.arc(0, -52, 12, Math.PI, TAU); ctx.fill();
+      ctx.strokeStyle = 'rgba(5,11,15,0.95)'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(-6, -62); ctx.lineTo(-12, -78 + Math.sin(t * 4 + i) * 5); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(6, -62); ctx.lineTo(12, -78 + Math.cos(t * 4 + i) * 5); ctx.stroke();
+      ctx.fillRect(-12 + legs, -12, 7, 12);
+      ctx.fillRect(5 - legs, -12, 7, 12);
+    } else {
+      // fungus / olho andante
+      ctx.fillStyle = 'rgba(5,11,15,0.95)';
+      ctx.beginPath(); ctx.ellipse(0, -20, 17, 20, 0, 0, TAU); ctx.fill();
+      ctx.fillRect(-11 + legs, -4, 6, 6);
+      ctx.fillRect(5 - legs, -4, 6, 6);
+      ctx.fillStyle = withAlpha(accent, 0.7);
+      ctx.beginPath(); ctx.arc(0, -26, 4 + Math.sin(t * 3 + i) * 1, 0, TAU); ctx.fill();
+    }
+
+    // olhos brilhando
     ctx.fillStyle = boss ? '#ffd24d' : '#9dffbd';
-    ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 8;
-    ctx.fillRect(-7, -40, 5, 3);
-    ctx.fillRect(3, -40, 5, 3);
+    ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 9;
+    ctx.fillRect(-7, -52, 4, 3);
+    ctx.fillRect(3, -52, 4, 3);
     ctx.shadowBlur = 0;
     ctx.restore();
   }
 
-  // vaga-lumes / faíscas
-  for (let i = 0; i < 14; i++) {
-    const px = (i * 137 + Math.sin(t * 0.7 + i) * 40 + VIEW_W) % VIEW_W;
-    const py = 180 + ((i * 97 + t * (12 + (i % 4) * 5)) % 380);
-    ctx.fillStyle = withAlpha(i % 3 ? accent : '#d9ff6d', 0.3 + 0.4 * Math.abs(Math.sin(t * 2 + i)));
-    ctx.fillRect(px, py, 3, 3);
+  // esporos / vaga-lumes com rastro
+  for (let i = 0; i < 22; i++) {
+    const seed = i * 137.7;
+    const px = (seed + Math.sin(t * 0.7 + i) * 54 + VIEW_W) % VIEW_W;
+    const py = 160 + ((seed * 0.7 + t * (10 + (i % 5) * 6)) % 430);
+    const a = 0.25 + 0.5 * Math.abs(Math.sin(t * 2 + i));
+    ctx.fillStyle = withAlpha(i % 4 ? accent : '#d9ff6d', a);
+    ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 8;
+    const sz = i % 5 === 0 ? 3 : 2;
+    ctx.fillRect(px, py, sz, sz);
+    ctx.shadowBlur = 0;
+  }
+
+  // primeiro plano: silhuetas de grama e pedras
+  ctx.fillStyle = 'rgba(2,6,9,0.92)';
+  for (let i = 0; i < 26; i++) {
+    const gx = i * 52 + Math.sin(t * 0.4 + i) * 3;
+    const gh = 14 + ((i * 31) % 26);
+    ctx.beginPath();
+    ctx.moveTo(gx - 6, 640);
+    ctx.lineTo(gx, 640 - gh);
+    ctx.lineTo(gx + 6, 640);
+    ctx.closePath(); ctx.fill();
   }
   ctx.restore();
 }
-
 function drawCutsceneBoss(ctx, style, color, cx, baseY, t) {
   const pulse = 0.5 + Math.sin(t * 2.2) * 0.5;
   ctx.save();
@@ -4577,7 +4713,6 @@ Game.prototype.renderCutscene = function (ctx) {
   const level = this.level;
   const slide = this.cutsceneSlide();
   if (!level || !slide) return;
-  CUTSCENE_SILENT = true;
   const t = this.cutsceneTime;
   const boss = this.cutsceneMode === 'boss';
   const bossCfg = level.bossCfg || null;
@@ -4857,32 +4992,50 @@ Game.prototype.renderCutscene = function (ctx) {
     });
   }
 
-  // barra vertical de acento
-  ctx.fillStyle = withAlpha(accent, 0.55);
-  ctx.fillRect(46, VIEW_H - 205, 2, 150);
+  // painel de texto explicativo
+  const boxY = VIEW_H - 212;
+  ctx.save();
+  ctx.fillStyle = 'rgba(3,10,8,0.86)';
+  roundRect(ctx, 48, boxY, VIEW_W - 96, 128, 8);
+  ctx.fill();
+  ctx.strokeStyle = withAlpha(accent, 0.45);
+  ctx.lineWidth = 1.5;
+  roundRect(ctx, 48, boxY, VIEW_W - 96, 128, 8);
+  ctx.stroke();
+  ctx.fillStyle = accent;
+  ctx.shadowColor = accent;
+  ctx.shadowBlur = 12;
+  ctx.fillRect(48, boxY + 8, 4, 112);
+  ctx.shadowBlur = 0;
+  ctx.restore();
+
+  // quem fala
+  const speaker = boss && bossCfg ? bossCfg.name : 'VEGA';
+  drawText(ctx, speaker.toUpperCase(), 68, boxY + 18, {
+    size: 10, color: accent2, glow: accent2, glowSize: 6
+  });
 
   // tag do slide
   if (slide.tag) {
-    drawText(ctx, slide.tag, 64, VIEW_H - 198, {
-      size: 10, color: withAlpha(accent, 0.9)
+    drawText(ctx, slide.tag, VIEW_W - 68, boxY + 18, {
+      size: 10, align: 'right', color: withAlpha(accent, 0.9)
     });
   }
 
-  drawText(ctx, slide.title, 64, VIEW_H - 168, {
-    size: boss ? 32 : 28, color: '#eafff0', glow: accent, glowSize: boss ? 18 : 14
+  drawText(ctx, slide.title, 68, boxY + 48, {
+    size: boss ? 28 : 25, color: '#eafff0', glow: accent, glowSize: boss ? 16 : 12
   });
   ctx.fillStyle = withAlpha(accent, 0.55);
-  ctx.fillRect(64, VIEW_H - 157, 72, 3);
+  ctx.fillRect(68, boxY + 66, 72, 3);
 
-  let remaining = Math.floor(this.cutsceneReveal);
-  slide.lines.slice(0, 1).forEach((line, i) => {
-    const visible = line.slice(0, Math.max(0, remaining));
-    remaining -= line.length + 1;
-    drawText(ctx, visible, 64, VIEW_H - 128 + i * 24, {
-      size: 15, color: 'rgba(225,248,232,0.92)'
+  const full = this.cutsceneText(slide);
+  const visible = full.slice(0, Math.max(0, Math.floor(this.cutsceneReveal)));
+  const rows = wrapTextLines(ctx, visible, VIEW_W - 180, 14);
+  rows.slice(0, 3).forEach((line, i) => {
+    drawText(ctx, line, 68, boxY + 88 + i * 20, {
+      size: 14, color: 'rgba(228,250,235,0.94)'
     });
   });
-
   const total = this.cutsceneText(slide).length;
   if (this.cutsceneReveal >= total) {
     const a = 0.45 + Math.sin(t * 5) * 0.25;
@@ -4904,7 +5057,6 @@ Game.prototype.renderCutscene = function (ctx) {
     ctx.fillStyle = i === this.cutsceneIndex ? accent : withAlpha(accent, 0.22);
     ctx.fillRect(x, VIEW_H - 30, dotW, 4);
   }
-  CUTSCENE_SILENT = false;
 };
 
 Game.prototype.renderStory = function (ctx) {

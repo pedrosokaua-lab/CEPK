@@ -292,7 +292,7 @@ function hexShade(hex, amount) {
 const Input = {
   down: new Set(),
   just: new Set(),
-  mouse: { x: 0, y: 0, down: false, clicked: false, rightDown: false, rightClicked: false },
+  mouse: { x: 0, y: 0, active: false, down: false, clicked: false, rightDown: false, rightClicked: false },
   init(canvas) {
     this.canvas = canvas;
     window.addEventListener('keydown', (e) => {
@@ -314,6 +314,8 @@ const Input = {
       const r = canvas.getBoundingClientRect();
       this.mouse.x = ((e.clientX - r.left) / r.width) * VIEW_W;
       this.mouse.y = ((e.clientY - r.top) / r.height) * VIEW_H;
+      this.mouse.active = true;
+      this.mouse.lastMove = performance.now();
     };
     canvas.addEventListener('mousemove', updateMouse);
     canvas.addEventListener('contextmenu', (e) => e.preventDefault());

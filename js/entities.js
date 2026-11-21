@@ -281,19 +281,32 @@ class Player {
     const maxSpeed = (running ? 338 : 226) * this.speedMul;
     const accel = (this.onGround ? 3400 : 2350) * (0.85 + this.speedMul * 0.15);
 
-    // Mira de 8 direções: WASD/setas definem o lado do golpe e do tiro.
+    // Mira: o mouse aponta livremente; WASD/setas continuam como alternativa.
     const aimRawX = (right ? 1 : 0) - (left ? 1 : 0);
     const aimRawY = (Input.isDown('KeyS', 'ArrowDown') ? 1 : 0) -
       (Input.isDown('KeyW', 'ArrowUp') ? 1 : 0);
     const aimLen = Math.hypot(aimRawX, aimRawY);
+    const m = Input.mouse;
+    const mouseFresh = m.active && performance.now() - (m.lastMove || 0) < 6000;
     if (aimLen > 0) {
       this.attackAimX = aimRawX / aimLen;
       this.attackAimY = aimRawY / aimLen;
-      if (Math.abs(this.attackAimX) > 0.15) this.face = this.attackAimX > 0 ? 1 : -1;
+    } else if (mouseFresh && game.cam) {
+      const dx = m.x - (this.cx - game.cam.x);
+      const dy = m.y - (this.cy - game.cam.y);
+      const d = Math.hypot(dx, dy);
+      if (d > 8) {
+        this.attackAimX = dx / d;
+        this.attackAimY = dy / d;
+      } else {
+        this.attackAimX = this.face;
+        this.attackAimY = 0;
+      }
     } else {
       this.attackAimX = this.face;
       this.attackAimY = 0;
     }
+    if (Math.abs(this.attackAimX) > 0.1) this.face = this.attackAimX > 0 ? 1 : -1;
     this.attackAngle = Math.atan2(this.attackAimY, this.attackAimX);
 
     if (this.dashTimer <= 0) {
@@ -5584,7 +5597,7 @@ class Exit {
     ctx.fillStyle = this.open ? '#d8ffe2' : '#ff9aa4';
     ctx.font = 'bold 11px Consolas, monospace';
     ctx.textAlign = 'center';
-    ctx.fillText(this.open ? 'SAÃDA' : 'TRAVADA', cx, sy + 14);
+    ctx.fillText(this.open ? 'SAÍDA' : 'TRAVADA', cx, sy + 14);
 
     ctx.restore();
   }
