@@ -415,7 +415,7 @@ function level1() {
     ],
     hint: 'SHIFT dá o impulso. E faz o parry. Use os dois para atravessar o pátio.',
     boss: { name: 'O PORTEIRO', hp: 48, speed: 62, color: '#6dff9e', w: 116, h: 122, style: 'guardian' },
-    arena: { left: 107, right: 133, trigger: 109, exit: 138 }
+    arena: { left: 107, right: 133, trigger: 109, exit: 138, ceiling: 11 }
   });
 
   b.ground(0, 20);
@@ -428,11 +428,11 @@ function level1() {
   b.crate(15, 17);
   b.crate(16, 17);
 
-  // fosso do jardim: uma plataforma central para dividir o salto
+  // fosso do jardim: uma plataforma larga no meio
   b.solid(21, 21, 7);
   b.spikes(21, 20, 7);
-  b.solid(23, 15, 2);
-  b.gear(23, 13);
+  b.solid(23, 15, 3);
+  b.gear(24, 13);
 
   b.ground(28, 18);
   b.turret(32, 17, { variant: 'mortar', hp: 3, damage: 1, range: 620 });
@@ -459,12 +459,12 @@ function level1() {
   b.swooper(71, 9, { variant: 'swarm' });
   b.checkpoint(70, 17);
 
-  // Fosso largo: uma plataforma móvel e uma ledge fixa.
+  // Fosso largo: uma plataforma móvel e uma ledge fixa alinhadas.
   b.solid(76, 21, 5);
   b.spikes(76, 20, 5);
   b.mover(76, 15, 3, { axis: 'x', range: 5, speed: 1.35, phase: 0 });
-  b.solid(80, 14, 2);
-  b.gear(80, 12);
+  b.solid(80, 14, 3);
+  b.gear(81, 12);
 
   b.ground(81, 20);
   b.laser(84, 13, 1, 5);
@@ -476,10 +476,9 @@ function level1() {
   b.charger(99, 17);
   b.spikes(95, 17, 3);
 
-  // Escada de plataformas até o crachá alto.
+  // Plataforma única e visível para o crachá.
   b.solid(97, 14, 3);
-  b.solid(100, 11, 2);
-  b.gear(100, 9);
+  b.gear(97, 12);
 
   b.ground(101, 41);
   b.solid(104, 14, 3);
@@ -583,7 +582,7 @@ function level2() {
     ],
     hint: 'SHIFT dá o impulso e E faz o parry. Use o dash para escapar dos leques.',
     boss: { name: 'A INSPETORA', hp: 64, speed: 72, color: '#ffd24d', w: 112, h: 126, style: 'hunter' },
-    arena: { left: 114, right: 140, trigger: 116, exit: 146 }
+    arena: { left: 114, right: 140, trigger: 116, exit: 146, ceiling: 11 }
   });
 
   b.ground(0, 17);
@@ -597,7 +596,7 @@ function level2() {
 
   b.solid(17, 21, 8);
   b.spikes(17, 20, 8);
-  b.solid(20, 15, 2);
+  b.solid(20, 15, 3);
 
   b.ground(25, 22);
   b.checkpoint(28, 17);
@@ -630,13 +629,13 @@ function level2() {
   b.crate(74, 17);
   b.crate(75, 17);
 
-  // Fosso do hall: três plataformas claras em sequência.
+  // Fosso do hall: três plataformas largas em sequência, sem inimigos no caminho.
   b.solid(77, 21, 12);
   b.spikes(77, 20, 12);
-  b.solid(80, 15, 2);
-  b.solid(84, 13, 2);
+  b.solid(80, 15, 3);
+  b.solid(84, 13, 3);
   b.solid(87, 15, 2);
-  b.gear(84, 11);
+  b.gear(85, 11);
 
   b.ground(89, 18);
   b.solid(88, 14, 4);
@@ -645,7 +644,6 @@ function level2() {
   b.enemy(92, 17, { variant: 'shield' });
   b.charger(93, 17, { variant: 'armored' });
   b.drone(96, 10, { variant: 'sniper' });
-  b.swooper(81, 9, { variant: 'bomber' });
   b.spikes(98, 17, 2);
   b.laser(101, 13, 1, 5);
   b.checkpoint(103, 17);
@@ -752,7 +750,7 @@ function level3() {
     ],
     hint: 'SHIFT dá o impulso. Use o dash para atravessar os vãos e escapar dos saltos.',
     boss: { name: 'O TÉCNICO', hp: 80, speed: 68, color: '#ff8c42', w: 124, h: 136, style: 'bruiser' },
-    arena: { left: 122, right: 148, trigger: 124, exit: 154 }
+    arena: { left: 122, right: 148, trigger: 124, exit: 154, ceiling: 11 }
   });
 
   b.ground(0, 20);
@@ -797,14 +795,13 @@ function level3() {
   b.crate(75, 17);
   b.crate(76, 17);
 
-  // Vão do ginásio: três plataformas fixas em escada.
+  // Vão do ginásio: três plataformas largas em escada, sem inimigos no caminho.
   b.solid(77, 21, 14);
   b.spikes(77, 20, 14);
   b.solid(79, 15, 3);
   b.solid(84, 12, 3);
-  b.solid(88, 15, 2);
-  b.gear(84, 10);
-  b.swooper(81, 9, { variant: 'swarm' });
+  b.solid(88, 15, 3);
+  b.gear(85, 10);
 
   b.ground(91, 18);
   b.checkpoint(92, 17);
@@ -921,7 +918,7 @@ function level4() {
     ],
     hint: 'SHIFT dá o impulso e E faz o parry. Use o dash para cruzar os feixes.',
     boss: { name: 'A COORDENADORA', hp: 98, speed: 76, color: '#b18cff', w: 120, h: 132, style: 'trickster' },
-    arena: { left: 128, right: 154, trigger: 130, exit: 160 }
+    arena: { left: 128, right: 154, trigger: 130, exit: 160, ceiling: 11 }
   });
 
   b.ground(0, 16);
@@ -963,14 +960,11 @@ function level4() {
   b.enemy(70, 17, { variant: 'bomber' });
   b.spikes(75, 17, 3);
 
+  // Vão do laboratório: escada curta e limpa, sem mover em cima das plataformas.
   b.solid(79, 15, 3);
-  b.solid(83, 13, 2);
-  b.gear(83, 11);
-  b.swooper(80, 9, { variant: 'bomber' });
-  b.mover(82, 10, 3, { axis: 'y', range: 4, speed: 1.7, phase: 0.4 });
-  b.solid(85, 11, 2);
-  b.solid(87, 9, 2);
-  b.gear(87, 7);
+  b.solid(84, 13, 3);
+  b.solid(87, 15, 2);
+  b.gear(85, 11);
 
   b.ground(88, 22);
   b.laser(91, 12, 1, 6);
@@ -987,12 +981,11 @@ function level4() {
   b.clue(105, 16, 'pista4');
 
   b.solid(111, 15, 3);
-  b.solid(115, 13, 2);
-  b.gear(115, 11);
+  b.gear(111, 13);
   b.solid(110, 21, 10);
   b.spikes(110, 20, 10);
-  b.mover(111, 14, 3, { axis: 'x', range: 8, speed: 1.5, phase: 0.2 });
-  b.mover(116, 10, 2, { axis: 'y', range: 5, speed: 1.8, phase: 1.3 });
+  b.mover(111, 14, 3, { axis: 'x', range: 6, speed: 1.5, phase: 0.2 });
+  b.solid(117, 13, 2);
 
   b.ground(120, 48);
   b.solid(124, 14, 3);
@@ -1106,7 +1099,7 @@ function level5() {
     ],
     hint: 'Salto de parede, plataformas móveis e dash abrem o caminho até a diretoria.',
     boss: { name: 'A DIRETORA', hp: 156, speed: 82, color: '#ff5d7a', w: 140, h: 150, final: true, style: 'director' },
-    arena: { left: 102, right: 128, trigger: 104, exit: 134 }
+    arena: { left: 102, right: 128, trigger: 104, exit: 134, ceiling: 11 }
   });
 
   b.ground(0, 16);
@@ -1149,12 +1142,11 @@ function level5() {
   b.solid(59, 8, 1);
   b.gear(59, 3);
 
-  // Corredor de espinhos: plataformas móveis e apoios fixos.
+  // Corredor de espinhos: uma plataforma móvel e dois apoios fixos alinhados.
   b.spikes(66, 17, 7);
-  b.mover(65, 14, 4, { axis: 'x', range: 8, speed: 1.6, phase: 0 });
-  b.mover(71, 11, 3, { axis: 'y', range: 5, speed: 1.9, phase: 0.7 });
-  b.solid(73, 12, 2);
-  b.solid(76, 10, 2);
+  b.mover(65, 14, 4, { axis: 'x', range: 7, speed: 1.6, phase: 0 });
+  b.solid(73, 12, 3);
+  b.solid(77, 12, 2);
 
   b.solid(90, 14, 3);
   b.gear(61, 12);
@@ -1162,11 +1154,10 @@ function level5() {
   b.core(91, 12);
   b.turret(62, 17, { variant: 'mortar', range: 640 });
   b.enemy(64, 17, { variant: 'bomber' });
-  b.swooper(66, 8, { variant: 'swarm' });
   b.charger(74, 17, { variant: 'armored' });
   b.enemy(77, 17, { variant: 'runner' });
-  b.mover(80, 12, 3, { axis: 'y', range: 6, speed: 1.6, phase: 1.2 });
-  b.solid(84, 10, 2);
+  b.solid(80, 13, 3);
+  b.solid(84, 12, 2);
 
   // Kennedito cage at tile 94-112, position 17
   b.kennedito(94, 17);  // New Kennedito Cage

@@ -2453,6 +2453,18 @@ Game.prototype.drawHUD = function (ctx) {
   ctx.fillRect(0, 0, VIEW_W, 132);
   ctx.restore();
 
+  /* ------- progresso do mapa ------- */
+  const prog = clamp(p.cx / this.level.widthPx, 0, 1);
+  ctx.fillStyle = 'rgba(220,255,230,0.10)';
+  ctx.fillRect(0, 0, VIEW_W, 3);
+  ctx.fillStyle = withAlpha(th.glow, 0.9);
+  ctx.fillRect(0, 0, VIEW_W * prog, 3);
+  if (this.arena) {
+    const mx = clamp(this.arena.trigger * TILE / this.level.widthPx, 0, 1) * VIEW_W;
+    ctx.fillStyle = '#ffd24d';
+    ctx.fillRect(mx - 1, 0, 3, 5);
+  }
+
   /* ------- painel do personagem ------- */
   const px0 = 18, py0 = 14, pw0 = 354, ph0 = 96;
   ctx.save();
@@ -2534,6 +2546,37 @@ Game.prototype.drawHUD = function (ctx) {
     size: 11, align: 'right', color: 'rgba(215,242,225,0.75)'
   });
 
+  /* ------- objetivo e progresso ------- */
+  const stations = this.level.stations || [];
+  const doneStations = stations.filter((s) => s.action === 'exit' || s.done).length;
+  const activeCps = this.checkpoints.filter((c) => c.active).length;
+  let objective = 'SIGA ATÉ A ARENA DO CHEFE';
+  let objectiveColor = th.glow;
+  if (this.level.tutorial) {
+    objective = `TREINAMENTO ${doneStations}/${stations.length}`;
+    objectiveColor = '#6dff9e';
+  } else if (this.bossActive && !this.bossDefeated && this.boss) {
+    objective = 'DERROTE ' + this.boss.cfg.name.toUpperCase();
+    objectiveColor = this.boss.color;
+  } else if (this.bossDefeated) {
+    objective = 'USE O PORTAL DE SAÍDA';
+    objectiveColor = '#6dff9e';
+  } else if (this.levelIndex === 5 && !this.kenneditoRescued) {
+    objective = 'RESGATE KENNEDITO';
+    objectiveColor = '#ffd24d';
+  }
+  drawText(ctx, 'OBJETIVO', VIEW_W - 24, 87, {
+    size: 8, align: 'right', color: 'rgba(180,220,190,0.5)'
+  });
+  drawText(ctx, objective, VIEW_W - 24, 102, {
+    size: 12, align: 'right', color: objectiveColor, glow: objectiveColor, glowSize: 6
+  });
+  if (this.checkpoints.length) {
+    drawText(ctx, `CHECKPOINT ${activeCps}/${this.checkpoints.length}`, VIEW_W - 24, 119, {
+      size: 9, align: 'right', color: 'rgba(190,230,205,0.6)'
+    });
+  }
+
   /* ------- barra do chefe ------- */
   if (this.boss && this.boss.active && !this.boss.dead) {
     const bw = 500;
@@ -2594,6 +2637,21 @@ Game.prototype.drawHUD = function (ctx) {
     }
     drawText(ctx, `FASE ${this.boss.phase}`, bx + bw + 36, by + 10, {
       size: 9, color: withAlpha(phaseColor, 0.9)
+    });
+  }
+
+  /* ------- dica contextual ------- */
+  if (this.level.hint && !this.level.tutorial) {
+    ctx.save();
+    const txt = 'DICA · ' + this.level.hint;
+    ctx.font = '9px Consolas, monospace';
+    const tw = Math.min(760, ctx.measureText(txt).width + 26);
+    ctx.fillStyle = 'rgba(4,14,10,0.72)';
+    roundRect(ctx, VIEW_W / 2 - tw / 2, 596, tw, 24, 6);
+    ctx.fill();
+    ctx.restore();
+    drawText(ctx, txt, VIEW_W / 2, 611, {
+      size: 9, align: 'center', color: 'rgba(190,230,205,0.72)'
     });
   }
 

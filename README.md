@@ -72,7 +72,7 @@ Cada fase mistura classes e variantes com silhuetas, cores e comportamentos pró
 
 As fases 1 a 5 somam de 10 a 17 inimigos cada, sempre com várias variantes em cena — a Fase 5 chega a onze comportamentos diferentes.
 
-**Aparência e ataque combinam:** os inimigos usam sprites pixel-art próprios por classe/variante — o discípulo de cajado dispara orbes dourados, o esqueleto-mago atira raios violetas, o golem lança pedras, o minotauro investe com os chifres, a banshee solta bombas espectrais e o enxame de vampiros mergulha em grupo. Cada projétil ganhou um desenho condizente (lâmina, teia, runa, pedra, raio).
+**Aparência:** os inimigos voltaram ao desenho procedural original (por classe e variante). Apenas os chefes usam sprites pixel-art, com projéteis condizentes com a criatura: lâminas, teias, runas e pedras.
 
 ## Parry
 
@@ -130,10 +130,10 @@ Depois de cada arena existe uma câmara de saída independente, com portal anima
 - **Piso contínuo**: superfícies desenhadas por trechos, com juntas de laje alinhadas ao mundo, rachaduras, manchas, poças, ralos, musgo e materiais próprios por tema — sem a antiga grade de blocos.
 - **Cenários** com parallax em camadas, skyline, fachada escolar contínua com janelas acesas/apagadas/quebradas, calhas, ar-condicionado, caixa d'água, relógio, cerca, postes e cones de luz. Interiores com armários, quadros de avisos, tanques de laboratório, racks, estantes, janelas com chuva e arquibancadas.
 - **Cutscenes encenadas**: VEGA aparece em primeiro plano, com aura, rim light e arma; a câmera faz **push-in** com tremor sutil, flash de abertura e vinheta. Nos alertas de chefe há holofotes na cor do alvo, linhas de velocidade radiais, névoa baixa, retículo de mira, silhueta gigante do chefe, partículas de brasas, cabeçalho **ALVO PRIORITÁRIO** e letterbox animado.
-- **Inimigos com sprites**: walkers ganham o discípulo de cajado, o golem de pedra e a estátua blindada; drones viram esqueleto-mago ou discípulo; torretas viram golem e centopéia; chargers viram minotauro e demônio; swoopers viram banshee, vampiro e mago flutuante. As animações vêm de folhas de sprites com quadros próprios.
+- **Inimigos** com silhuetas, cores e animações próprias por classe e variante, desenhadas por código — sem sprites externos.
 - **Chefes com sprites e ataques coerentes**: o **Porteiro** é a Armadura Animada (espada e escudo, pedras azuladas); a **Inspetora** é a Assassina das Sombras (leques de lâminas); o **Técnico** é o Ogro Bruto (marteladas e rochas); a **Coordenadora** é a Necromante (runas, clones e orbes); a **Diretora** é a Rainha-Aranha (teias, anéis e rajadas). Cada um mantém aura de fase, telegrafia e barra própria.
 - **Personagens e armas redesenhados**: cada monitor tem rosto, cabelo, jaqueta, emblema e silhueta próprios; o bastão, o estilingue e o martelo ganharam sprites detalhados com brilho, correias e núcleo de energia.
-- **HUD renovado**: retrato animado do personagem, corações com brilho, barra de energia com marcas, seletor de armas com glifos e teclas e uma barra de chefe ornamentada com fases e nome do alvo.
+- **HUD informativo**: retrato animado, corações, energia, objetivo atual, progresso de checkpoints e de estações do tutorial, barra de progresso do mapa com marcação da arena, dica contextual, seletor de armas e barra de chefe com fases.
 
 ## Chefes
 
@@ -192,7 +192,7 @@ A chave nova é `codigo_verde_save_v1`. Saves antigos de `ferro9_save_v1` são l
 ## Tecnologia
 
 - HTML5 Canvas 2D com resolução interna de 1280×720.
-- Tiles de 32px e visual pixel-art: cenários, HUD e efeitos desenhados por código, com sprites locais para inimigos e chefes.
+- Tiles de 32px e visual pixel-art: cenários, inimigos, HUD e efeitos desenhados por código, com sprites locais apenas para os chefes.
 - Física própria de plataforma, colisão por eixos e limites de mundo.
 - Áudio procedural com Web Audio API.
 - Zero dependências e zero build: todos os sprites são arquivos locais em `assets/`, sem bibliotecas ou serviços externos.

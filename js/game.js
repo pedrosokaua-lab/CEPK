@@ -781,7 +781,8 @@ class Game {
     const rightGate = this.exitGate;
     const left = leftGate ? (leftGate.tx + leftGate.w) * TILE : this.arena.left * TILE;
     const right = rightGate ? rightGate.tx * TILE : this.arena.right * TILE;
-    return { left, right };
+    const ceiling = (this.arena.ceiling || 11) * TILE;
+    return { left, right, ceiling };
   }
 
   /* ------------------------------ JOGO ------------------------------ */
@@ -824,6 +825,11 @@ class Game {
         } else if (p.x > maxX) {
           p.x = maxX;
           if (p.vx > 0) p.vx = 0;
+        }
+        // Não deixa o jogador ficar em cima do teto da arena durante a luta.
+        if (p.y < bounds.ceiling) {
+          p.y = bounds.ceiling;
+          if (p.vy < 0) p.vy = 0;
         }
       }
     }

@@ -1952,8 +1952,6 @@ class Walker {
     ctx.ellipse(x + 19, y + 39, 17, 4, 0, 0, TAU);
     ctx.fill();
 
-    const sprite = !this.training && typeof Sprites !== 'undefined' && Sprites.drawEnemy(ctx, this, x, y, 'walker');
-    if (!sprite) {
     if (this.training) {
       // boneco de treino
       ctx.fillStyle = '#5c8a28';
@@ -2124,7 +2122,6 @@ class Walker {
       ctx.fillRect(sx + 2, y + 11 + bob, 2, 6);
       ctx.fillStyle = withAlpha('#7fe7ff', 0.3);
       ctx.fillRect(sx - 1, y + 6 + bob, 8, 2);
-    }
     }
 
     if (charging) {
@@ -2305,7 +2302,7 @@ class Drone {
       parryable: true,
       life: this.parryTrainer ? 4 : this.variant === 'sniper' ? 3.5 : 3,
       kind: this.variant === 'sniper' ? 'laser' : 'orb'
-    }, 'drone', this.variant));
+    }));
     this.muzzle = 0.12;
     Sfx.tone(this.parryTrainer ? 640 : this.variant === 'sniper' ? 760 : 520, 0.07, {
       type: 'square', vol: 0.045, slide: -160
@@ -2354,8 +2351,6 @@ class Drone {
     ctx.ellipse(x + 18, y + 42, 14, 4, 0, 0, TAU);
     ctx.fill();
 
-    const sprite = typeof Sprites !== 'undefined' && Sprites.drawEnemy(ctx, this, x, y, 'drone');
-    if (!sprite) {
     ctx.strokeStyle = 'rgba(127,255,240,0.35)';
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -2444,7 +2439,6 @@ class Drone {
     ctx.moveTo(x + 18 + Math.cos(spin) * 10, y + 1 + bob);
     ctx.lineTo(x + 18 - Math.cos(spin) * 10, y + 1 + bob);
     ctx.stroke();
-    }
 
     if (this.mode === 'aim' && this.game && this.game.player && !this.game.player.dead) {
       const p = this.game.player;
@@ -2587,7 +2581,7 @@ class Turret {
       game.projectiles.push(new Projectile(bx, by, vx, vy, 'enemy', {
         color: '#ff8c42', r: 10, damage: 2, parryable: true, life: 4.5,
         gravity: 760, kind: 'rock'
-      }, 'turret', this.variant));
+      }));
       this.charge = 0;
       this.flash = 0.1;
       FX.burst(bx, by, 10, { color: '#ff8c42', speedMax: 160, lifeMax: 0.35 });
@@ -2598,7 +2592,7 @@ class Turret {
       const spd = 840 * projMul;
       game.projectiles.push(new Projectile(bx, by, Math.cos(this.angle) * spd, Math.sin(this.angle) * spd, 'enemy', {
         color: '#ff5d7a', r: 7, damage: 2, parryable: false, life: 2.6, kind: 'laser'
-      }, 'turret', this.variant));
+      }));
       this.charge = 0;
       this.flash = 0.1;
       FX.burst(bx, by, 12, { color: '#ff5d7a', speedMax: 220, lifeMax: 0.35 });
@@ -2612,7 +2606,7 @@ class Turret {
       damage: this.damage,
       parryable: true,
       life: 3.2
-    }, 'turret', this.variant));
+    }));
     this.charge = 0;
     this.flash = 0.1;
     FX.burst(bx, by, 8, { color: this.color, speedMax: 150, lifeMax: 0.3 });
@@ -2651,8 +2645,6 @@ class Turret {
     ctx.ellipse(cx, y + this.h + 2, 22, 5, 0, 0, TAU);
     ctx.fill();
 
-    const sprite = typeof Sprites !== 'undefined' && Sprites.drawEnemy(ctx, this, x, y, 'turret');
-    if (!sprite) {
     // base
     ctx.fillStyle = '#1b2b22';
     ctx.fillRect(x + 3, y + this.h - 14, this.w - 6, 14);
@@ -2696,7 +2688,6 @@ class Turret {
     // luz de status
     ctx.fillStyle = this.charge > 0 ? '#ff5d6c' : '#6dff9e';
     ctx.fillRect(x + 4, y + 10, 2, 2);
-    }
 
     // cano
     ctx.save();
@@ -2896,8 +2887,6 @@ class Charger {
     ctx.ellipse(x + this.w / 2, y + this.h + 2, 22, 5, 0, 0, TAU);
     ctx.fill();
 
-    const sprite = typeof Sprites !== 'undefined' && Sprites.drawEnemy(ctx, this, x, y, 'charger');
-    if (!sprite) {
     if (charge) {
       ctx.fillStyle = withAlpha(accent, 0.18);
       for (let i = 1; i < 5; i++) {
@@ -2962,7 +2951,6 @@ class Charger {
     ctx.fillStyle = windup ? '#ffd24d' : '#6dff9e';
     ctx.fillRect(x + 10, y, 3, 3);
     ctx.fillRect(x + this.w - 13, y, 3, 3);
-    }
 
     if (this.hp < this.maxHp) {
       const bw = 36;
@@ -3113,7 +3101,7 @@ class Swooper {
     game.projectiles.push(new Projectile(bx, by, Math.cos(ang) * 190, Math.sin(ang) * 80 - 40, 'enemy', {
       color: '#ff8c42', r: 9, damage: 2, life: 4.5,
       parryable: true, gravity: 720, kind: 'rock'
-    }, 'swooper', this.variant));
+    }));
     FX.burst(bx, by, 6, { color: '#ff8c42', speedMax: 110, lifeMax: 0.3 });
     Sfx.tone(240, 0.09, { type: 'square', vol: 0.045, slide: -90 });
   }
@@ -3156,8 +3144,6 @@ class Swooper {
     ctx.ellipse(cx, y + this.h + 6, 18, 4, 0, 0, TAU);
     ctx.fill();
 
-    const sprite = typeof Sprites !== 'undefined' && Sprites.drawEnemy(ctx, this, x, y, 'swooper');
-    if (!sprite) {
     // asas
     ctx.fillStyle = this.flash > 0 ? '#ffffff' : '#3a2418';
     ctx.beginPath();
@@ -3221,7 +3207,6 @@ class Swooper {
     ctx.fillRect(cx + 10, y + 2, 2, 6);
     ctx.fillStyle = diving ? '#ff3355' : '#ffd24d';
     ctx.fillRect(cx + 9, y, 4, 2);
-    }
 
     // olho
     ctx.fillStyle = diving ? '#ff3355' : windup ? '#ffd24d' : '#7ffff0';
@@ -3629,10 +3614,6 @@ class Boss {
     } else {
       this.begin('recover', 0.28);
     }
-  }
-
-  shot(opts) {
-    return typeof Sprites !== 'undefined' ? Sprites.bossShot(this.style, opts) : opts;
   }
 
   fireBarrage(game) {
@@ -4590,7 +4571,7 @@ class Boss {
 /* ------------------------------ PROJÉTEIS ------------------------------ */
 
 class Projectile {
-  constructor(x, y, vx, vy, owner, opts = {}, style = null, variant = null) {
+  constructor(x, y, vx, vy, owner, opts = {}, style = null) {
     this.x = x;
     this.y = y;
     this.vx = vx;
@@ -4615,9 +4596,8 @@ class Projectile {
     this.orbitTime = opts.orbitTime || 0;
     this.orbitSpeed = opts.orbitSpeed || 3;
     this.launchSpeed = opts.launchSpeed || 380;
-    if (owner === 'enemy' && style && typeof Sprites !== 'undefined') {
-      if (Sprites.BOSS_SPRITES[style]) Sprites.styleBossProjectile(this, style);
-      else Sprites.styleEnemyProjectile(this, style, variant);
+    if (owner === 'enemy' && style && typeof Sprites !== 'undefined' && Sprites.BOSS_SPRITES[style]) {
+      Sprites.styleBossProjectile(this, style);
     }
   }
 
