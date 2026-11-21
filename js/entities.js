@@ -4183,58 +4183,32 @@ class Boss {
     // estilo
     this.drawStyle(ctx, x, y, bob, body, dark, light, flash);
 
-    // olho / visor
-    if (this.style !== 'director') {
-      ctx.fillStyle = '#1b1020';
-      ctx.fillRect(x + this.w / 2 - 17, y + 12 + bob, 34, 9);
-      ctx.fillStyle = this.dead ? '#555' : '#ff2d4a';
-      ctx.shadowColor = '#ff2d4a';
-      ctx.shadowBlur = 14;
-      ctx.fillRect(x + this.w / 2 - 8 + this.dir * 5, y + 14 + bob, 9, 5);
-      ctx.shadowBlur = 0;
-    } else {
-      ctx.fillStyle = '#1b1020';
-      ctx.fillRect(x + this.w / 2 - 18, y + 12 + bob, 15, 9);
-      ctx.fillRect(x + this.w / 2 + 3, y + 12 + bob, 15, 9);
-      ctx.fillStyle = '#d9ff6d';
-      ctx.shadowColor = '#d9ff6d';
-      ctx.shadowBlur = 10;
-      ctx.fillRect(x + this.w / 2 - 15 + this.dir * 3, y + 14 + bob, 6, 4);
-      ctx.fillRect(x + this.w / 2 + 6 + this.dir * 3, y + 14 + bob, 6, 4);
-      ctx.shadowBlur = 0;
-    }
-
-    // fase 2/3 aura
+    // aura de fase: brilho suave e particulas, sem caixa em volta do chefe
     if (this.phase >= 2 && !this.dead) {
       const auraColor = this.phase === 3 ? '#ff5d7a' : this.color;
       const acx = x + this.w / 2;
-      const acy = y + this.h * 0.52;
+      const acy = y + this.h * 0.54;
+      const pulse = 0.5 + Math.sin(this.anim * 3) * 0.5;
       ctx.save();
       ctx.globalCompositeOperation = 'lighter';
-      ctx.strokeStyle = auraColor;
-      ctx.globalAlpha = 0.35 + Math.sin(this.anim * 8) * 0.12;
-      ctx.lineWidth = 3;
-      ctx.strokeRect(x - 5, y - 5, this.w + 10, this.h + 10);
-      ctx.globalAlpha = 0.18 + Math.sin(this.anim * 6) * 0.08;
-      ctx.beginPath();
-      ctx.ellipse(acx, acy, this.w * 0.7 + Math.sin(this.anim * 5) * 6, this.h * 0.58, 0, 0, TAU);
-      ctx.stroke();
-      if (this.phase === 3) {
-        for (let i = 0; i < 6; i++) {
-          const a = this.anim * 2.2 + (TAU * i) / 6;
-          const r0 = this.w * 0.52;
-          const r1 = r0 + 18 + Math.abs(Math.sin(this.anim * 9 + i)) * 22;
-          ctx.globalAlpha = 0.28 + Math.abs(Math.sin(this.anim * 7 + i)) * 0.3;
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.moveTo(acx + Math.cos(a) * r0, acy + Math.sin(a) * r0 * 0.7);
-          ctx.lineTo(acx + Math.cos(a + 0.18) * r1, acy + Math.sin(a + 0.18) * r1 * 0.7);
-          ctx.stroke();
-        }
+      const glow = ctx.createRadialGradient(acx, acy, 8, acx, acy, this.w * 0.95);
+      glow.addColorStop(0, withAlpha(auraColor, 0.10 + pulse * 0.06));
+      glow.addColorStop(1, withAlpha(auraColor, 0));
+      ctx.fillStyle = glow;
+      ctx.fillRect(acx - this.w, acy - this.h, this.w * 2, this.h * 2);
+      for (let i = 0; i < (this.phase === 3 ? 10 : 6); i++) {
+        const a = this.anim * (this.phase === 3 ? 1.6 : 0.9) + (TAU * i) / (this.phase === 3 ? 10 : 6);
+        const rr = this.w * 0.5 + Math.sin(this.anim * 3 + i) * 8;
+        const px = acx + Math.cos(a) * rr;
+        const py = acy + Math.sin(a) * rr * 0.7;
+        ctx.fillStyle = withAlpha(auraColor, 0.35 + pulse * 0.35);
+        ctx.shadowColor = auraColor;
+        ctx.shadowBlur = 10;
+        const s = i % 3 === 0 ? 4 : 2;
+        ctx.fillRect(px, py, s, s);
       }
       ctx.restore();
     }
-
     // telegrafia
     if (this.state === 'tele') {
       const pulse = 0.5 + Math.sin(this.anim * 20) * 0.35;
@@ -4242,7 +4216,12 @@ class Boss {
       ctx.globalCompositeOperation = 'lighter';
       ctx.strokeStyle = withAlpha(this.color, 0.5 + pulse * 0.4);
       ctx.lineWidth = 3;
-      ctx.strokeRect(x - 7, y - 7, this.w + 14, this.h + 14);
+      ctx.beginPath();
+      ctx.moveTo(x - 12, y - 12); ctx.lineTo(x + 14, y - 12); ctx.moveTo(x - 12, y - 12); ctx.lineTo(x - 12, y + 14);
+      ctx.moveTo(x + this.w + 12, y - 12); ctx.lineTo(x + this.w - 14, y - 12); ctx.moveTo(x + this.w + 12, y - 12); ctx.lineTo(x + this.w + 12, y + 14);
+      ctx.moveTo(x - 12, y + this.h + 12); ctx.lineTo(x + 14, y + this.h + 12); ctx.moveTo(x - 12, y + this.h + 12); ctx.lineTo(x - 12, y + this.h - 14);
+      ctx.moveTo(x + this.w + 12, y + this.h + 12); ctx.lineTo(x + this.w - 14, y + this.h + 12); ctx.moveTo(x + this.w + 12, y + this.h + 12); ctx.lineTo(x + this.w + 12, y + this.h - 14);
+      ctx.stroke();
       ctx.restore();
       ctx.fillStyle = '#ffd24d';
       ctx.shadowColor = '#ffd24d';
@@ -4270,218 +4249,228 @@ class Boss {
     const w = this.w, h = this.h, cx = x + w / 2;
     const t = this.anim;
     const sway = Math.sin(t * 2.2) * 3;
-    const glow = flash ? '#ffffff' : this.color;
+    const breathe = Math.sin(t * 1.8) * 1.5;
     const P = {
-      guardian: { main: '#9fb6cf', dark: '#4a5d75', trim: '#e8d27a', eye: '#8ef2ff', cloth: '#8e2f3c' },
-      hunter: { main: '#3b3a52', dark: '#1d1c30', trim: '#e0b65a', eye: '#ffd66b', cloth: '#2a293f' },
-      bruiser: { main: '#a08a70', dark: '#5c4a38', trim: '#d8a24a', eye: '#ff9a4d', cloth: '#6b3a26' },
-      trickster: { main: '#6b4a8f', dark: '#34214d', trim: '#d9b8ff', eye: '#d8a6ff', cloth: '#4a2e69' },
-      director: { main: '#4a3358', dark: '#23162f', trim: '#d88cff', eye: '#ff6f9c', cloth: '#5a2a4a' }
-    }[this.style] || { main: '#9fb6cf', dark: '#4a5d75', trim: '#e8d27a', eye: '#8ef2ff', cloth: '#8e2f3c' };
+      guardian: { main:'#9fb6cf', dark:'#3c4d63', deep:'#263444', trim:'#e8d27a', eye:'#9ff4ff', cloth:'#8e2f3c', cloth2:'#5c1e29' },
+      hunter:   { main:'#3d3b56', dark:'#201f37', deep:'#131226', trim:'#e6bf68', eye:'#ffd97a', cloth:'#35334e', cloth2:'#1e1d31' },
+      bruiser:  { main:'#b59a7b', dark:'#6b543c', deep:'#3d2c1d', trim:'#e0aa55', eye:'#ffb35c', cloth:'#7a4127', cloth2:'#4e2918' },
+      trickster:{ main:'#7a55a3', dark:'#3d285c', deep:'#271640', trim:'#dcc0ff', eye:'#d9a6ff', cloth:'#51316f', cloth2:'#311c4a' },
+      director: { main:'#5a3f6b', dark:'#31203f', deep:'#1d1229', trim:'#e2a0ff', eye:'#ff7fb0', cloth:'#6b2d53', cloth2:'#3d1830' }
+    }[this.style] || { main:'#9fb6cf', dark:'#3c4d63', deep:'#263444', trim:'#e8d27a', eye:'#9ff4ff', cloth:'#8e2f3c', cloth2:'#5c1e29' };
 
     ctx.save();
-    const poly = (pts, fill) => {
+    const poly = (pts, fill, stroke) => {
       ctx.fillStyle = fill;
       ctx.beginPath();
       ctx.moveTo(pts[0][0], pts[0][1]);
       for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
-      ctx.closePath();
-      ctx.fill();
+      ctx.closePath(); ctx.fill();
+      if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 2; ctx.stroke(); }
+    };
+    const box = (bx, by, bw, bh, fill, stroke) => {
+      ctx.fillStyle = fill; ctx.fillRect(bx, by, bw, bh);
+      if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 2; ctx.strokeRect(bx + 0.5, by + 0.5, bw - 1, bh - 1); }
+    };
+    const eye = (ex, ey, ew, eh) => {
+      ctx.fillStyle = '#0a0a10'; ctx.fillRect(ex - 2, ey - 2, ew + 4, eh + 4);
+      ctx.fillStyle = P.eye; ctx.shadowColor = P.eye; ctx.shadowBlur = 12;
+      ctx.fillRect(ex, ey, ew, eh); ctx.shadowBlur = 0;
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(ex + 1, ey, Math.max(2, ew / 3), 2);
+    };
+    const grad = (x0, x1, a, b) => {
+      const g = ctx.createLinearGradient(x0, 0, x1, 0);
+      g.addColorStop(0, a); g.addColorStop(0.5, b); g.addColorStop(1, a);
+      return g;
     };
 
     if (this.style === 'guardian') {
-      // capa
-      poly([[cx - 30, y + 28], [cx + 30, y + 28], [cx + 42 + sway, y + h - 8], [cx - 42 + sway, y + h - 8]], P.cloth);
-      poly([[cx - 30, y + 28], [cx - 12, y + 34], [cx - 20 + sway, y + h - 10], [cx - 42 + sway, y + h - 8]], '#6e2330');
-      // pernas
-      ctx.fillStyle = P.dark;
-      ctx.fillRect(cx - 26, y + h - 40, 20, 40);
-      ctx.fillRect(cx + 6, y + h - 40, 20, 40);
-      ctx.fillStyle = P.main;
-      ctx.fillRect(cx - 28, y + h - 40, 18, 24);
-      ctx.fillRect(cx + 10, y + h - 40, 18, 24);
-      ctx.fillStyle = '#263444';
-      ctx.fillRect(cx - 30, y + h - 8, 24, 8);
-      ctx.fillRect(cx + 6, y + h - 8, 24, 8);
-      // torso com reflexo
-      const g = ctx.createLinearGradient(cx - 36, 0, cx + 36, 0);
-      g.addColorStop(0, P.dark); g.addColorStop(0.45, P.main); g.addColorStop(1, P.dark);
-      ctx.fillStyle = g;
-      ctx.fillRect(cx - 36, y + 30, 72, h - 70);
-      ctx.fillStyle = P.trim;
-      ctx.fillRect(cx - 36, y + 30, 72, 4);
-      ctx.fillRect(cx - 4, y + 34, 8, h - 76);
-      // ombreiras
-      for (const s of [-1, 1]) {
-        ctx.fillStyle = P.main;
-        roundRect(ctx, cx + s * 38 - 13, y + 28, 26, 20, 7); ctx.fill();
-        ctx.fillStyle = withAlpha('#ffffff', 0.25);
-        ctx.fillRect(cx + s * 38 - 9, y + 31, 18, 3);
-        ctx.fillStyle = P.trim;
-        ctx.fillRect(cx + s * 38 - 2, y + 42, 4, 4);
-      }
-      // elmo com crista
-      ctx.fillStyle = P.dark;
-      roundRect(ctx, cx - 22, y + 2, 44, 32, 8); ctx.fill();
-      ctx.fillStyle = P.main;
-      ctx.fillRect(cx - 19, y + 5, 38, 20);
-      poly([[cx - 6, y + 1], [cx + 6, y + 1], [cx + 10, y - 12], [cx - 10, y - 12]], P.trim);
-      ctx.fillStyle = '#101820';
-      ctx.fillRect(cx - 17, y + 13, 34, 9);
-      ctx.fillStyle = P.eye;
-      ctx.shadowColor = P.eye; ctx.shadowBlur = 14;
-      ctx.fillRect(cx - 12 + this.dir * 4, y + 15, 24, 4);
-      ctx.shadowBlur = 0;
-      // escudo no outro lado
-      ctx.fillStyle = P.dark;
-      roundRect(ctx, x - 4, y + 40, 20, 50, 6); ctx.fill();
-      ctx.fillStyle = P.main;
-      roundRect(ctx, x, y + 44, 14, 42, 5); ctx.fill();
-      ctx.fillStyle = P.trim;
-      ctx.fillRect(x + 5, y + 54, 4, 22);
-      ctx.fillRect(x + 1, y + 62, 12, 4);
-    } else if (this.style === 'hunter') {
-      // casaco longo
-      poly([[cx - 28, y + 30], [cx + 28, y + 30], [cx + 44 + sway, y + h], [cx - 44 + sway, y + h]], P.cloth);
-      poly([[cx - 28, y + 30], [cx - 10, y + 36], [cx - 22 + sway, y + h], [cx - 44 + sway, y + h]], '#16152a');
-      ctx.fillStyle = P.trim;
-      ctx.fillRect(cx - 30, y + 30, 60, 4);
-      ctx.fillRect(cx - 4, y + 34, 8, h - 50);
-      // pernas
-      ctx.fillStyle = '#1a192b';
-      ctx.fillRect(cx - 20, y + h - 34, 14, 34);
-      ctx.fillRect(cx + 6, y + h - 34, 14, 34);
+      // layered cape
+      poly([[cx-30,y+30+breathe],[cx+30,y+30+breathe],[cx+46+sway,y+h-6],[cx-46+sway,y+h-6]], P.cloth, P.cloth2);
+      poly([[cx-30,y+30+breathe],[cx-12,y+38+breathe],[cx-24+sway,y+h-10],[cx-46+sway,y+h-6]], P.cloth2);
+      ctx.strokeStyle=withAlpha(P.trim,0.55); ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(cx+30,y+34+breathe); ctx.lineTo(cx+44+sway,y+h-10); ctx.stroke();
+      // legs + greaves
+      box(cx-28,y+h-42,20,42,P.dark,P.deep); box(cx+8,y+h-42,20,42,P.dark,P.deep);
+      box(cx-30,y+h-42,18,24,P.main,P.deep); box(cx+12,y+h-42,18,24,P.main,P.deep);
+      box(cx-32,y+h-12,24,12,P.deep); box(cx+8,y+h-12,24,12,P.deep);
+      ctx.fillStyle=P.trim; ctx.fillRect(cx-28,y+h-30,14,3); ctx.fillRect(cx+14,y+h-30,14,3);
       // torso
-      ctx.fillStyle = P.main;
-      roundRect(ctx, cx - 30, y + 28, 60, 62, 10); ctx.fill();
-      ctx.fillStyle = P.dark;
-      ctx.fillRect(cx - 24, y + 36, 48, 40);
-      ctx.fillStyle = P.trim;
-      ctx.fillRect(cx - 6, y + 40, 12, 12);
-      // capuz
-      poly([[cx - 26, y + 30], [cx - 22, y + 4], [cx, y - 8], [cx + 22, y + 4], [cx + 26, y + 30]], P.dark);
-      poly([[cx - 20, y + 8], [cx, y - 4], [cx + 20, y + 8], [cx + 14, y + 28], [cx - 14, y + 28]], P.main);
-      ctx.fillStyle = '#08080f';
-      ctx.fillRect(cx - 15, y + 12, 30, 12);
-      ctx.fillStyle = P.eye;
-      ctx.shadowColor = P.eye; ctx.shadowBlur = 14;
-      ctx.fillRect(cx - 10 + this.dir * 3, y + 15, 8, 4);
-      ctx.fillRect(cx + 3 + this.dir * 3, y + 15, 8, 4);
-      ctx.shadowBlur = 0;
-      // dragonas
-      for (const s of [-1, 1]) {
-        ctx.fillStyle = P.trim;
-        roundRect(ctx, cx + s * 32 - 10, y + 28, 20, 8, 3); ctx.fill();
+      ctx.fillStyle=grad(cx-38,cx+38,P.dark,P.main); ctx.fillRect(cx-38,y+30+breathe,76,h-72);
+      ctx.strokeStyle=P.deep; ctx.lineWidth=2; ctx.strokeRect(cx-37,y+31+breathe,74,h-74);
+      box(cx-4,y+34+breathe,8,h-78,P.trim);
+      ctx.fillStyle=withAlpha('#ffffff',0.18); ctx.fillRect(cx-32,y+36+breathe,8,h-86);
+      // chest emblem
+      box(cx-16,y+46+breathe,32,30,P.deep,P.trim);
+      ctx.fillStyle=P.trim;
+      ctx.fillRect(cx-3,y+50+breathe,6,22); ctx.fillRect(cx-11,y+58+breathe,22,6);
+      ctx.fillStyle='#fff6c8'; ctx.fillRect(cx-2,y+57+breathe,4,6);
+      // belt
+      box(cx-38,y+h-46,76,10,P.deep,P.trim);
+      ctx.fillStyle=P.trim; ctx.fillRect(cx-7,y+h-46,14,10);
+      // pauldrons
+      for(const s of [-1,1]){
+        const px=cx+s*42;
+        poly([[px-16,y+30+breathe],[px+16,y+30+breathe],[px+20,y+48+breathe],[px-20,y+48+breathe]],P.main,P.deep);
+        ctx.fillStyle=withAlpha('#ffffff',0.3); ctx.fillRect(px-12,y+33+breathe,24,4);
+        ctx.fillStyle=P.trim; ctx.fillRect(px-3,y+38+breathe,6,6);
+      }
+      // helmet
+      box(cx-23,y+2,46,32,P.deep,P.main);
+      box(cx-19,y+6,38,20,P.main);
+      ctx.fillStyle=withAlpha('#ffffff',0.22); ctx.fillRect(cx-15,y+8,10,14);
+      poly([[cx-9,y+2],[cx+9,y+2],[cx+12,y-13],[cx-12,y-13]],P.trim,P.deep);
+      ctx.fillStyle=P.trim; ctx.fillRect(cx-3,y-18,6,7);
+      box(cx-18,y+13,36,10,'#0b0f16');
+      eye(cx-13+this.dir*3,y+15,9,5);
+      ctx.fillStyle=P.dark; ctx.fillRect(cx-3,y+13,6,12);
+      // shield with emblem
+      poly([[x-8,y+40],[x+16,y+40],[x+20,y+58],[x+14,y+94],[x+2,y+102],[x-8,y+86]],P.dark,P.trim);
+      poly([[x-3,y+47],[x+13,y+47],[x+15,y+60],[x+10,y+86],[x+3,y+92],[x-3,y+82]],P.main);
+      ctx.fillStyle=P.trim; ctx.fillRect(x+4,y+57,4,26); ctx.fillRect(x-1,y+67,14,4);
+      ctx.fillStyle='#fff6c8'; ctx.fillRect(x+3,y+72,6,6);
+    } else if (this.style === 'hunter') {
+      // coat tails
+      poly([[cx-30,y+30],[cx+30,y+30],[cx+48+sway,y+h],[cx-48+sway,y+h]],P.cloth,P.deep);
+      poly([[cx-30,y+30],[cx-8,y+38],[cx-24+sway,y+h-6],[cx-48+sway,y+h]],P.cloth2);
+      poly([[cx+30,y+30],[cx+8,y+38],[cx+24+sway,y+h-6],[cx+48+sway,y+h]],P.cloth2);
+      ctx.strokeStyle=withAlpha(P.trim,0.5); ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(cx-30,y+34); ctx.lineTo(cx-46+sway,y+h-8); ctx.moveTo(cx+30,y+34); ctx.lineTo(cx+46+sway,y+h-8); ctx.stroke();
+      // legs/boots
+      box(cx-22,y+h-38,16,38,P.deep); box(cx+6,y+h-38,16,38,P.deep);
+      box(cx-24,y+h-10,20,10,P.dark); box(cx+4,y+h-10,20,10,P.dark);
+      // torso
+      ctx.fillStyle=grad(cx-32,cx+32,P.dark,P.main); ctx.fillRect(cx-32,y+28+breathe,64,62);
+      ctx.strokeStyle=P.deep; ctx.lineWidth=2; ctx.strokeRect(cx-31,y+29+breathe,62,60);
+      ctx.strokeStyle=P.trim; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.moveTo(cx-26,y+36+breathe); ctx.lineTo(cx+22,y+78+breathe); ctx.moveTo(cx+26,y+36+breathe); ctx.lineTo(cx-22,y+78+breathe); ctx.stroke();
+      box(cx-8,y+62+breathe,16,16,P.trim,P.deep);
+      ctx.fillStyle=P.deep; ctx.fillRect(cx-4,y+66+breathe,8,8);
+      // hood
+      poly([[cx-28,y+32],[cx-24,y+2],[cx,y-12],[cx+24,y+2],[cx+28,y+32]],P.dark,P.deep);
+      poly([[cx-20,y+10],[cx,y-4],[cx+20,y+10],[cx+15,y+30],[cx-15,y+30]],P.main);
+      box(cx-16,y+12,32,14,'#07070d');
+      eye(cx-11+this.dir*3,y+15,8,4);
+      eye(cx+3+this.dir*3,y+15,8,4);
+      ctx.fillStyle=P.cloth2; ctx.fillRect(cx-5,y+19,10,5);
+      // ponytail + epaulets
+      poly([[cx+18,y+6],[cx+34,y+14+sway],[cx+30,y+40+sway],[cx+18,y+26]],P.cloth2);
+      for(const s of [-1,1]){
+        poly([[cx+s*34-12,y+28],[cx+s*34+12,y+28],[cx+s*34+8,y+38],[cx+s*34-8,y+38]],P.trim,P.deep);
       }
     } else if (this.style === 'bruiser') {
-      // silhueta larga
-      ctx.fillStyle = P.cloth;
-      ctx.fillRect(cx - 34, y + h - 42, 26, 42);
-      ctx.fillRect(cx + 8, y + h - 42, 26, 42);
-      ctx.fillStyle = P.main;
-      roundRect(ctx, cx - 48, y + 26, 96, h - 60, 18); ctx.fill();
-      ctx.fillStyle = P.dark;
-      ctx.fillRect(cx - 40, y + 42, 80, 30);
-      ctx.fillStyle = P.trim;
-      ctx.fillRect(cx - 42, y + 38, 84, 5);
-      // cinto
-      ctx.fillStyle = '#3a2a1c';
-      ctx.fillRect(cx - 46, y + h - 56, 92, 12);
-      ctx.fillStyle = P.trim;
-      ctx.fillRect(cx - 8, y + h - 56, 16, 12);
-      // ombreiras gigantes
-      for (const s of [-1, 1]) {
-        ctx.fillStyle = P.dark;
-        roundRect(ctx, cx + s * 50 - 18, y + 20, 36, 28, 10); ctx.fill();
-        ctx.fillStyle = P.main;
-        roundRect(ctx, cx + s * 50 - 14, y + 22, 28, 18, 8); ctx.fill();
-        ctx.fillStyle = withAlpha('#ffffff', 0.2);
-        ctx.fillRect(cx + s * 50 - 10, y + 25, 20, 3);
+      // legs
+      box(cx-36,y+h-44,28,44,P.cloth2,P.deep); box(cx+8,y+h-44,28,44,P.cloth2,P.deep);
+      box(cx-38,y+h-12,32,12,P.dark); box(cx+6,y+h-12,32,12,P.dark);
+      // massive body
+      ctx.fillStyle=grad(cx-50,cx+50,P.dark,P.main); ctx.fillRect(cx-50,y+28+breathe,100,h-58);
+      ctx.strokeStyle=P.deep; ctx.lineWidth=3; ctx.strokeRect(cx-49,y+29+breathe,98,h-60);
+      // belly plate
+      box(cx-34,y+48+breathe,68,40,P.dark,P.deep);
+      ctx.fillStyle=withAlpha('#ffffff',0.12); ctx.fillRect(cx-30,y+52+breathe,60,5);
+      ctx.fillStyle=P.trim; ctx.fillRect(cx-8,y+52+breathe,16,34);
+      // straps
+      ctx.strokeStyle=P.deep; ctx.lineWidth=6;
+      ctx.beginPath(); ctx.moveTo(cx-44,y+34+breathe); ctx.lineTo(cx+30,y+92+breathe); ctx.stroke();
+      // belt
+      box(cx-50,y+h-40,100,14,P.deep,P.trim);
+      box(cx-12,y+h-42,24,18,P.trim,P.deep);
+      ctx.fillStyle=P.deep; ctx.fillRect(cx-6,y+h-37,12,8);
+      // shoulders with studs
+      for(const s of [-1,1]){
+        const px=cx+s*52;
+        poly([[px-20,y+20],[px+20,y+20],[px+24,y+46],[px-24,y+46]],P.dark,P.deep);
+        poly([[px-16,y+24],[px+16,y+24],[px+18,y+40],[px-18,y+40]],P.main);
+        for(let i=-1;i<=1;i++){ ctx.fillStyle=P.trim; ctx.fillRect(px+i*11-2,y+29,4,4); }
       }
-      // cabeÃ§a
-      ctx.fillStyle = P.main;
-      roundRect(ctx, cx - 22, y + 2, 44, 30, 10); ctx.fill();
-      ctx.fillStyle = P.dark;
-      ctx.fillRect(cx - 24, y + 12, 48, 8);
-      ctx.fillStyle = '#241a12';
-      ctx.fillRect(cx - 16, y + 13, 32, 6);
-      ctx.fillStyle = P.eye;
-      ctx.shadowColor = P.eye; ctx.shadowBlur = 12;
-      ctx.fillRect(cx - 11 + this.dir * 3, y + 14, 8, 4);
-      ctx.fillRect(cx + 3 + this.dir * 3, y + 14, 8, 4);
-      ctx.shadowBlur = 0;
-      // tatuagens
-      ctx.strokeStyle = withAlpha(P.trim, 0.7);
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(cx - 26, y + 60); ctx.lineTo(cx - 10, y + 66);
-      ctx.moveTo(cx + 26, y + 60); ctx.lineTo(cx + 10, y + 66);
-      ctx.stroke();
+      // head: brow, jaw, tusks
+      box(cx-24,y+2,48,32,P.main,P.deep);
+      box(cx-26,y+13,52,9,P.dark);
+      box(cx-20,y+22,40,12,P.main,P.deep);
+      ctx.fillStyle='#f2e6cf';
+      poly([[cx-16,y+28],[cx-10,y+28],[cx-13,y+36]],'#f2e6cf');
+      poly([[cx+16,y+28],[cx+10,y+28],[cx+13,y+36]],'#f2e6cf');
+      eye(cx-13+this.dir*3,y+14,9,5); eye(cx+4+this.dir*3,y+14,9,5);
+      ctx.fillStyle=P.deep; ctx.fillRect(cx-22,y+4,44,5);
+      ctx.fillStyle=P.trim; ctx.fillRect(cx-6,y+3,12,5);
+      // scars
+      ctx.strokeStyle=withAlpha(P.trim,0.7); ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(cx+26,y+58); ctx.lineTo(cx+38,y+64); ctx.moveTo(cx-26,y+60); ctx.lineTo(cx-38,y+66); ctx.stroke();
     } else if (this.style === 'trickster') {
-      // manto
-      poly([[cx - 26, y + 28], [cx + 26, y + 28], [cx + 40 + sway, y + h], [cx - 40 + sway, y + h]], P.cloth);
-      poly([[cx - 26, y + 28], [cx - 8, y + 36], [cx - 18 + sway, y + h], [cx - 40 + sway, y + h]], P.dark);
-      ctx.fillStyle = P.trim;
-      ctx.fillRect(cx - 26, y + 28, 52, 3);
-      // corpo
-      ctx.fillStyle = P.main;
-      roundRect(ctx, cx - 30, y + 30, 60, 66, 12); ctx.fill();
-      ctx.fillStyle = P.dark;
-      ctx.fillRect(cx - 24, y + 40, 48, 44);
-      // capuz e mÃ¡scara
-      poly([[cx - 28, y + 30], [cx - 20, y], [cx, y - 10], [cx + 20, y], [cx + 28, y + 30]], P.dark);
-      poly([[cx - 17, y + 4], [cx, y - 4], [cx + 17, y + 4], [cx + 12, y + 26], [cx - 12, y + 26]], '#e8e2f0');
-      ctx.fillStyle = P.eye;
-      ctx.shadowColor = P.eye; ctx.shadowBlur = 14;
-      ctx.fillRect(cx - 9, y + 13, 7, 4);
-      ctx.fillRect(cx + 2, y + 13, 7, 4);
-      ctx.shadowBlur = 0;
-      // runas flutuantes
-      ctx.strokeStyle = withAlpha(P.trim, 0.8);
-      ctx.lineWidth = 2;
-      for (let i = 0; i < 3; i++) {
-        const a = t * 1.2 + i * 2.1;
-        const rx = cx + Math.cos(a) * 56;
-        const ry = y + 60 + Math.sin(a) * 26;
-        ctx.strokeRect(rx - 6, ry - 6, 12, 12);
-        ctx.beginPath();
-        ctx.moveTo(rx - 3, ry); ctx.lineTo(rx + 3, ry);
-        ctx.stroke();
+      // tattered robe
+      poly([[cx-28,y+28],[cx+28,y+28],[cx+44+sway,y+h],[cx-44+sway,y+h]],P.cloth,P.deep);
+      for(let i=0;i<5;i++){
+        const rx=cx-36+i*18;
+        poly([[rx,y+h-22],[rx+9,y+h-22],[rx+6,y+h],[rx-2,y+h]],P.cloth2);
+      }
+      ctx.strokeStyle=withAlpha(P.trim,0.6); ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(cx+30,y+34); ctx.lineTo(cx+42+sway,y+h-20); ctx.stroke();
+      // body
+      ctx.fillStyle=grad(cx-32,cx+32,P.dark,P.main); ctx.fillRect(cx-32,y+30+breathe,64,64);
+      ctx.strokeStyle=P.deep; ctx.lineWidth=2; ctx.strokeRect(cx-31,y+31+breathe,62,62);
+      // runic hem
+      ctx.fillStyle=P.trim;
+      for(let i=0;i<4;i++){ ctx.fillRect(cx-26+i*15,y+84+breathe,8,3); }
+      // hood + skull mask
+      poly([[cx-30,y+30],[cx-24,y-2],[cx,y-14],[cx+24,y-2],[cx+30,y+30]],P.dark,P.deep);
+      poly([[cx-16,y+6],[cx,y-4],[cx+16,y+6],[cx+13,y+28],[cx-13,y+28]],'#e9e4f2',P.deep);
+      ctx.fillStyle=P.deep;
+      ctx.fillRect(cx-8,y+12,16,4);
+      ctx.fillRect(cx-6,y+22,12,4);
+      eye(cx-10,y+16,7,5); eye(cx+3,y+16,7,5);
+      // teeth
+      ctx.fillStyle='#bdb6cf';
+      for(let i=-2;i<=2;i++) ctx.fillRect(cx+i*5-1,y+25,2,5);
+      // floating orbs
+      for(let i=0;i<3;i++){
+        const a=t*1.3+i*2.1;
+        const ox=cx+Math.cos(a)*58, oy=y+58+Math.sin(a)*30;
+        ctx.fillStyle=P.trim; ctx.shadowColor=P.trim; ctx.shadowBlur=14;
+        ctx.beginPath(); ctx.arc(ox,oy,5+Math.sin(t*3+i)*1.5,0,TAU); ctx.fill();
+        ctx.shadowBlur=0; ctx.fillStyle='#ffffff'; ctx.fillRect(ox-1,oy-1,2,2);
       }
     } else {
-      // rainha-aranha: pernas articuladas
-      ctx.strokeStyle = P.dark;
-      ctx.lineWidth = 7;
-      ctx.lineCap = 'round';
-      for (let i = 0; i < 4; i++) {
-        for (const s of [-1, 1]) {
-          const by = y + 40 + i * 18;
-          const wob = Math.sin(t * 2 + i * 0.7 + (s > 0 ? 1.5 : 0)) * 8;
+      // spider queen: eight articulated legs behind body
+      ctx.lineCap='round';
+      for(let i=0;i<4;i++){
+        for(const s of [-1,1]){
+          const by=y+46+i*16;
+          const wob=Math.sin(t*2.2+i*0.8+(s>0?1.4:0))*8;
+          ctx.strokeStyle=P.deep; ctx.lineWidth=9;
           ctx.beginPath();
-          ctx.moveTo(cx + s * 24, by);
-          ctx.lineTo(cx + s * (60 + wob), by - 16);
-          ctx.lineTo(cx + s * (74 + wob), by + 18);
+          ctx.moveTo(cx+s*22,by);
+          ctx.lineTo(cx+s*(58+wob),by-18);
+          ctx.lineTo(cx+s*(78+wob),by+14);
           ctx.stroke();
+          ctx.strokeStyle=P.trim; ctx.lineWidth=2;
+          ctx.beginPath(); ctx.moveTo(cx+s*(58+wob),by-18); ctx.lineTo(cx+s*(78+wob),by+14); ctx.stroke();
         }
       }
-      // abdÃ´men e tÃ³rax
-      ctx.fillStyle = P.dark;
-      ctx.beginPath(); ctx.ellipse(cx, y + h - 34, 40, 30, 0, 0, TAU); ctx.fill();
-      ctx.fillStyle = P.main;
-      ctx.beginPath(); ctx.ellipse(cx, y + 58, 34, 40, 0, 0, TAU); ctx.fill();
-      ctx.fillStyle = P.trim;
-      ctx.beginPath(); ctx.ellipse(cx, y + 50, 20, 12, 0, 0, TAU); ctx.fill();
-      // cabeÃ§a
-      ctx.fillStyle = P.dark;
-      roundRect(ctx, cx - 20, y + 2, 40, 32, 10); ctx.fill();
-      ctx.fillStyle = P.eye;
-      ctx.shadowColor = P.eye; ctx.shadowBlur = 14;
-      for (let i = -1; i <= 1; i++) {
-        ctx.beginPath(); ctx.arc(cx + i * 11, y + 16, 3, 0, TAU); ctx.fill();
+      // abdomen with stripes
+      ctx.fillStyle=P.dark; ctx.beginPath(); ctx.ellipse(cx,y+h-34,42,30,0,0,TAU); ctx.fill();
+      ctx.strokeStyle=P.deep; ctx.lineWidth=3; ctx.stroke();
+      ctx.strokeStyle=withAlpha(P.trim,0.6); ctx.lineWidth=3;
+      for(let i=-2;i<=2;i++){
+        ctx.beginPath();
+        ctx.ellipse(cx,y+h-34,Math.abs(i)*11+4,28,0,0,TAU);
+        ctx.stroke();
       }
-      ctx.shadowBlur = 0;
-      // coroa
-      poly([[cx - 18, y + 2], [cx - 12, y - 12], [cx - 5, y], [cx + 5, y - 16], [cx + 12, y], [cx + 18, y - 10], [cx + 20, y + 2]], P.trim);
+      // thorax
+      ctx.fillStyle=grad(cx-36,cx+36,P.dark,P.main);
+      ctx.beginPath(); ctx.ellipse(cx,y+62,36,42,0,0,TAU); ctx.fill();
+      ctx.strokeStyle=P.deep; ctx.lineWidth=3; ctx.stroke();
+      ctx.fillStyle=P.trim;
+      poly([[cx,y+46],[cx+10,y+62],[cx,y+78],[cx-10,y+62]],P.trim,P.deep);
+      // head + many eyes
+      box(cx-22,y+2,44,34,P.dark,P.deep);
+      for(const ex of [-12,0,12]) eye(cx+ex-2+this.dir*2,y+14,6,5);
+      // fangs
+      ctx.fillStyle='#f0e6ff';
+      poly([[cx-14,y+28],[cx-8,y+28],[cx-11,y+38]],'#f0e6ff');
+      poly([[cx+14,y+28],[cx+8,y+28],[cx+11,y+38]],'#f0e6ff');
+      // crown
+      poly([[cx-20,y+2],[cx-14,y-14],[cx-6,y-2],[cx,y-20],[cx+6,y-2],[cx+14,y-14],[cx+20,y+2]],P.trim,P.deep);
+      ctx.fillStyle=P.eye; ctx.shadowColor=P.eye; ctx.shadowBlur=12;
+      ctx.fillRect(cx-2,y-14,4,6); ctx.shadowBlur=0;
     }
     ctx.restore();
   }
