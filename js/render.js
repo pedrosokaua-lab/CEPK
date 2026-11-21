@@ -2356,6 +2356,38 @@ Game.prototype.drawArena = function (ctx, cam) {
     ctx.stroke();
   }
 
+  // brasas e partículas suspensas
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < 24; i++) {
+    const px = left + ((i * 197 + id * 53) % Math.max(1, w));
+    const py = floor - ((t * (16 + (i % 5) * 7) + i * 61) % Math.max(1, h - 30));
+    const a = (0.18 + 0.35 * Math.abs(Math.sin(t * 2 + i))) * (active ? 1 : 0.5);
+    ctx.fillStyle = withAlpha(i % 4 ? alert : '#ffd24d', a);
+    const s = i % 6 === 0 ? 3 : 2;
+    ctx.fillRect(px, py, s, s);
+  }
+  ctx.restore();
+
+  // runas girando no piso
+  ctx.save();
+  ctx.translate(ex, cyFloor - 2);
+  ctx.scale(1, 0.32);
+  ctx.rotate(t * (active ? 0.25 : 0.08));
+  ctx.strokeStyle = withAlpha(alert, active ? 0.3 : 0.16);
+  ctx.lineWidth = 2;
+  for (let i = 0; i < 3; i++) {
+    ctx.beginPath();
+    const r = 70 + i * 34;
+    for (let j = 0; j <= 6; j++) {
+      const a = (TAU * j) / 6;
+      const px = Math.cos(a) * r, py = Math.sin(a) * r;
+      if (j === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+  }
+  ctx.restore();
+
   // vinheta interna
   const vg = ctx.createRadialGradient(ex, (ceil + floor) / 2, w * 0.18, ex, (ceil + floor) / 2, w * 0.62);
   vg.addColorStop(0, 'rgba(0,0,0,0)');

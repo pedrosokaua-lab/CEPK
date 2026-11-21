@@ -281,17 +281,14 @@ class Player {
     const maxSpeed = (running ? 338 : 226) * this.speedMul;
     const accel = (this.onGround ? 3400 : 2350) * (0.85 + this.speedMul * 0.15);
 
-    // Mira: o mouse aponta livremente; WASD/setas continuam como alternativa.
+    // Mira livre: o mouse aponta mesmo enquanto você anda/corre.
     const aimRawX = (right ? 1 : 0) - (left ? 1 : 0);
     const aimRawY = (Input.isDown('KeyS', 'ArrowDown') ? 1 : 0) -
       (Input.isDown('KeyW', 'ArrowUp') ? 1 : 0);
     const aimLen = Math.hypot(aimRawX, aimRawY);
     const m = Input.mouse;
     const mouseFresh = m.active && performance.now() - (m.lastMove || 0) < 6000;
-    if (aimLen > 0) {
-      this.attackAimX = aimRawX / aimLen;
-      this.attackAimY = aimRawY / aimLen;
-    } else if (mouseFresh && game.cam) {
+    if (mouseFresh && game.cam) {
       const dx = m.x - (this.cx - game.cam.x);
       const dy = m.y - (this.cy - game.cam.y);
       const d = Math.hypot(dx, dy);
@@ -302,20 +299,23 @@ class Player {
         this.attackAimX = this.face;
         this.attackAimY = 0;
       }
+    } else if (aimLen > 0) {
+      this.attackAimX = aimRawX / aimLen;
+      this.attackAimY = aimRawY / aimLen;
     } else {
       this.attackAimX = this.face;
       this.attackAimY = 0;
     }
-    if (Math.abs(this.attackAimX) > 0.1) this.face = this.attackAimX > 0 ? 1 : -1;
+    if (!mouseFresh && Math.abs(this.attackAimX) > 0.1) this.face = this.attackAimX > 0 ? 1 : -1;
     this.attackAngle = Math.atan2(this.attackAimY, this.attackAimX);
 
     if (this.dashTimer <= 0) {
       if (left && !right) {
         this.vx -= accel * dt;
-        this.face = -1;
+        if (!mouseFresh) this.face = -1;
       } else if (right && !left) {
         this.vx += accel * dt;
-        this.face = 1;
+        if (!mouseFresh) this.face = 1;
       } else {
         this.vx = approach(this.vx, 0, (this.onGround ? 3100 : 540) * dt);
       }
@@ -329,13 +329,14 @@ class Player {
       this.dashCd = 0.65;
       this.justDashed = true;
       this.invuln = Math.max(this.invuln, 0.22);
-      this.vx = this.face * 720 * this.speedMul;
+      const dashDir = (left && !right) ? -1 : (right && !left) ? 1 : this.face;
+      this.vx = dashDir * 720 * this.speedMul;
       this.vy = 0;
       Sfx.tone(300, 0.14, { type: 'sawtooth', vol: 0.08, slide: 260 });
       Sfx.noise(0.12, 0.06, { freq: 1200 });
       FX.burst(this.cx, this.cy, 14, {
         color: '#6dff9e', speedMax: 260, lifeMax: 0.4, shape: 'line',
-        angle: this.face > 0 ? Math.PI : 0, spread: 0.8
+        angle: dashDir > 0 ? Math.PI : 0, spread: 0.8
       });
     }
 
@@ -442,9 +443,9 @@ class Player {
     }
 
     if ((Input.pressed('KeyE') || Input.mouse.rightClicked) && this.parryCd <= 0) {
-      this.parryTimer = 0.34;
-      this.parryPerfect = 0.14;
-      this.parryCd = 0.46;
+      this.parryTimer = 0.16;
+      this.parryPerfect = 0.08;
+      this.parryCd = 0.34;
       this.parryChainTimer = 1.8;
       this.parryAngle = this.attackAngle;
       Sfx.tone(520, 0.08, { type: 'triangle', vol: 0.07, slide: 180 });
@@ -1753,7 +1754,9 @@ class Walker {
       runner: { hp: 2, speed: 1.7, dmg: 1 },
       brute: { hp: 7, speed: 0.68, dmg: 2 },
       bomber: { hp: 3, speed: 1.12, dmg: 1 },
-      shield: { hp: 6, speed: 0.8, dmg: 1 }
+      shield: { hp: 6, speed: 0.8, dmg: 1 },
+      samurai: { hp: 5, speed: 1.35, dmg: 2 },
+      stalker: { hp: 4, speed: 2.1, dmg: 1 }
     }[this.variant] || {};
     this.w = 38;
     this.h = 38;
@@ -1784,7 +1787,8 @@ class Walker {
     this.staggerTimer = 0;
     this.detonated = false;
     this.variantColor = {
-      runner: '#ffd24d', brute: '#ff8c42', bomber: '#ff5d6c', shield: '#7fe7ff'
+      runner: '#ffd24d', brute: '#ff8c42', bomber: '#ff5d6c', shield: '#7fe7ff',
+      samurai: '#d9a6ff', stalker: '#7ffff0'
     }[this.variant] || '#6dff9e';
   }
 
@@ -1908,8 +1912,12 @@ class Walker {
       }
     }
 
+    // Inimigos não se matam nos espinhos: eles recuam e mudam de direção.
     if (game.level.hazardRect(this.x + 2, this.y + 2, this.w - 4, this.h - 4)) {
-      this.hurt(3, game);
+      this.dir *= -1;
+      this.vx = this.dir * 90;
+      this.x = clamp(this.x + this.dir * 8, 0, game.level.widthPx - this.w);
+      this.state = 'patrol';
     }
 
     if (p && !p.dead && aabb(this, p) && this.state !== 'strike') {
@@ -2032,12 +2040,16 @@ class Walker {
       : this.variant === 'bomber' ? '#8f2f3a'
       : this.variant === 'shield' ? '#2f5f8a'
       : this.variant === 'runner' ? '#5a8a2f'
+      : this.variant === 'samurai' ? '#5a3a7a'
+      : this.variant === 'stalker' ? '#1f6a72'
       : '#2f7a48';
     const dark = this.flash > 0 ? '#ffffff'
       : this.variant === 'brute' ? '#4a1e0e'
       : this.variant === 'bomber' ? '#4a141c'
       : this.variant === 'shield' ? '#173a52'
       : this.variant === 'runner' ? '#2f4a18'
+      : this.variant === 'samurai' ? '#2a1838'
+      : this.variant === 'stalker' ? '#0e3a40'
       : '#173d26';
     const eye = charging ? '#ff2d4a' : this.variantColor;
 
@@ -3385,6 +3397,18 @@ class Boss {
       this.x = maxX;
       if (this.vx > 0) this.vx = 0;
     }
+    // teto e piso da arena
+    const ceiling = (game.arena && game.arena.ceiling ? game.arena.ceiling : 11) * TILE;
+    if (this.y < ceiling) {
+      this.y = ceiling;
+      if (this.vy < 0) this.vy = 0;
+    }
+    const floor = game.level.heightPx - this.h - TILE * 2;
+    if (this.y > floor) {
+      this.y = floor;
+      if (this.vy > 0) this.vy = 0;
+      this.airborne = false;
+    }
   }
 
   reset(game) {
@@ -3427,6 +3451,11 @@ class Boss {
 
   begin(state, timer) {
     this.state = state;
+    // Fase 1: mais lenta e com mais tempo de reação; fase 2 em diante: bem mais rápida.
+    if (state === 'idle' || state === 'recover' || state === 'tele') {
+      const scale = this.phase === 1 ? 1.55 : this.phase === 2 ? 0.82 : 0.62;
+      timer *= scale;
+    }
     this.timer = timer;
   }
 
@@ -3495,6 +3524,8 @@ class Boss {
       return;
     }
 
+    // Mesmo com o jogador morto, o chefe continua preso na arena.
+    if (game.arena) this.arenaClamp(game);
     const p = game.player;
     if (!p || p.dead) return;
 
@@ -3550,8 +3581,12 @@ class Boss {
 
     this.dir = p.cx < this.cx ? -1 : 1;
 
+    // Fase 1: mais lento e com pausas longas. Fases 2/3: bem mais agressivo.
+    const idleSpeed = this.phase === 1 ? 0.52 : this.phase === 2 ? 0.95 : 1.15;
+    const idleAccel = this.phase === 1 ? 420 : 820;
+
     if (this.state === 'idle') {
-      this.vx = approach(this.vx, this.dir * this.speed * 0.9, 680 * dt);
+      this.vx = approach(this.vx, this.dir * this.speed * idleSpeed, idleAccel * dt);
       if (this.timer <= 0) this.chooseAttack(game);
     } else if (this.state === 'tele') {
       this.vx = approach(this.vx, 0, 3000 * dt);
@@ -4053,7 +4088,12 @@ class Boss {
 
   takeDamage(n, game) {
     if (this.dead) return;
-    this.hp -= n;
+    if (!this.active || (game && game.player && game.player.dead)) return;
+    if (!game || !game.arena || (this.cx >= game.arenaBounds().left && this.cx <= game.arenaBounds().right)) {
+      // Fase 1 é frágil; a partir da fase 2 o chefe endurece e leva mais tempo para cair.
+      const defence = this.phase === 1 ? 1 : this.phase === 2 ? 0.62 : 0.48;
+      this.hp -= Math.max(1, n * defence);
+    }
     this.flash = 0.16;
     game.shake(0.25);
     Sfx.tone(160, 0.12, { type: 'square', vol: 0.1, slide: -60 });
@@ -4176,7 +4216,6 @@ class Boss {
       ctx.fillRect(x + this.w / 2 + 6 + this.dir * 3, y + 14 + bob, 6, 4);
       ctx.shadowBlur = 0;
     }
-    this.drawWeapon(ctx, x, y, bob);
 
     // fase 2/3 aura
     if (this.phase >= 2 && !this.dead) {
@@ -4240,74 +4279,6 @@ class Boss {
   }
 
   // Desenha o armature que o sprite está segurando, com o ataque combinando com a skin.
-  drawWeapon(ctx, x, y, bob) {
-    if (this.dead) return;
-    const s = (typeof Sprites !== 'undefined' && Sprites.BOSS_SPRITES[this.style]) || null;
-    const color = s ? s.color : this.color;
-    const dark = hexShade(color, -70);
-    const dir = this.dir >= 0 ? 1 : -1;
-    const hx = x + (dir > 0 ? this.w * 0.86 : this.w * 0.14);
-    const hy = y + this.h * 0.46 + bob;
-    const melee = ['tele', 'bash', 'slash', 'combo', 'spin', 'charge', 'slam', 'jump', 'rush', 'quake', 'shock'].indexOf(this.state) >= 0;
-    let swing = 0;
-    if (melee) {
-      const durations = { tele: 0.4, bash: 0.3, slash: 0.28, combo: 0.66, spin: 0.72, charge: 0.8, slam: 1.15, jump: 1.2, rush: 0.36, quake: 1.05, shock: 0.38 };
-      swing = clamp(1 - this.timer / (durations[this.state] || 0.4), 0, 1);
-    }
-    const idle = Math.sin(this.anim * 2.2) * 0.12;
-    const ang = (dir > 0 ? -0.85 : -2.3) + idle + swing * 1.9;
-    ctx.save();
-    ctx.translate(hx, hy);
-    ctx.rotate(ang);
-    ctx.globalCompositeOperation = 'lighter';
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 3;
-    ctx.shadowColor = color;
-    ctx.shadowBlur = 16;
-
-    if (this.style === 'guardian') {
-      ctx.fillStyle = color;
-      ctx.fillRect(0, -4, 58, 8);
-      ctx.fillStyle = '#f4fbff';
-      ctx.fillRect(46, -2, 15, 4);
-      ctx.strokeStyle = withAlpha(color, 0.6);
-      ctx.beginPath(); ctx.arc(10, 0, 64, -0.7, 0.7); ctx.stroke();
-    } else if (this.style === 'hunter') {
-      for (const sy of [-13, 13]) {
-        ctx.fillStyle = color;
-        ctx.fillRect(0, sy - 2, 36, 4);
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(30, sy - 1, 9, 2);
-      }
-      ctx.strokeStyle = withAlpha(color, 0.55);
-      ctx.beginPath(); ctx.arc(8, 0, 44, -0.8, 0.8); ctx.stroke();
-    } else if (this.style === 'bruiser') {
-      ctx.fillStyle = dark;
-      ctx.fillRect(0, -3, 42, 6);
-      ctx.fillStyle = color;
-      ctx.fillRect(38, -18, 24, 36);
-      ctx.fillStyle = withAlpha('#ffffff', 0.5);
-      ctx.fillRect(42, -14, 14, 4);
-      ctx.strokeStyle = withAlpha(color, 0.6);
-      ctx.beginPath(); ctx.arc(12, 0, 56, -0.6, 0.6); ctx.stroke();
-    } else if (this.style === 'trickster') {
-      ctx.fillStyle = dark;
-      ctx.fillRect(0, -2, 52, 4);
-      ctx.strokeStyle = color;
-      ctx.beginPath(); ctx.arc(56, 0, 11 + Math.sin(this.anim * 3) * 2, 0, TAU); ctx.stroke();
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath(); ctx.arc(56, 0, 3, 0, TAU); ctx.fill();
-    } else {
-      for (let i = -1; i <= 1; i++) {
-        ctx.beginPath();
-        ctx.moveTo(0, i * 9);
-        ctx.quadraticCurveTo(26, i * 14, 50, i * 24);
-        ctx.stroke();
-      }
-    }
-    ctx.restore();
-  }
-
   drawStyle(ctx, x, y, bob, body, dark, light, flash) {
     const w = this.w, h = this.h, cx = x + w / 2;
     const t = this.anim;

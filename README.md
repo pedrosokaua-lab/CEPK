@@ -32,9 +32,9 @@ Depois acesse `http://localhost:8123`.
 | `Shift` | Segurar para correr; tocar para **dash** (impulso) |
 | `Espaço` / `W` / `↑` | Pular; aperte de novo no ar para **pulo duplo** |
 | `L` | **Dash alternativo** (impulso no ar) |
-| `Mouse` | **Mira livre** — golpes e tiros seguem o cursor (WASD/setas continuam funcionando) |
+| `Mouse` | **Mira livre** — golpes e tiros seguem o cursor mesmo enquanto você anda/corre (WASD/setas continuam funcionando) |
 | `J` ou clique esquerdo | Atacar na direção do cursor; **segure 0,55s** para o ataque carregado |
-| `E` | **Parry** — aparar ataques verdes e projéteis (janela perfeita de 0.14s) |
+| `E` | **Parry** — clique no instante do impacto (janela de 0.16s, perfeita de 0.08s) |
 | `1` / `2` / `3` | Trocar de arma |
 | `M` | Ligar / desligar som |
 | `Esc` / `P` | Pausar |
@@ -65,7 +65,7 @@ Cada fase mistura classes e variantes com silhuetas, cores e comportamentos pró
 
 | Classe | Variantes | Comportamento |
 | --- | --- | --- |
-| **Walker** | padrão, `runner`, `brute`, `bomber`, `shield` | Patrulha de solo; corre, aguenta dano, explode ao morrer ou bloqueia golpes frontais |
+| **Walker** | padrão, `runner`, `brute`, `bomber`, `shield`, `samurai`, `stalker` | Patrulha de solo; corre, aguenta dano, explode, bloqueia golpes ou ataca em duas velocidades novas |
 | **Drone** | padrão, `sniper`, `sprayer` | Voo com tiro preciso ou rajadas em leque |
 | **Turret** | padrão, `mortar`, `laser` | Dispara projéteis em arco ou carrega um feixe horizontal |
 | **Charger** | padrão, `armored`, `berserk` | Investe em linha reta; versões com mais vida ou fúria ao levar dano |
@@ -132,7 +132,7 @@ Depois de cada arena existe uma câmara de saída independente com uma **porta/e
 - **Cenários** com parallax em camadas, skyline, fachada escolar contínua com janelas acesas/apagadas/quebradas, calhas, ar-condicionado, caixa d'água, relógio, cerca, postes e cones de luz. Interiores com armários, quadros de avisos, tanques de laboratório, racks, estantes, janelas com chuva e arquibancadas.
 - **Cutscenes cinematográficas com texto**: um painel mostra quem fala e uma explicação curta, com efeito de máquina de escrever. A arte foi enriquecida: lua com halo, ruínas em paralaxe, névoa, olho gigante, três tipos de criaturas caminhando, esporos brilhantes e grama em primeiro plano — além do push-in, tremor, flash e da silhueta do chefe entrando deslizando.
 - **Inimigos** com silhuetas, cores e animações próprias por classe e variante, desenhadas por código — sem sprites externos.
-- **Chefes refeitos do zero e armas próprias**: o **Porteiro** é um cavaleiro de armadura com elmo, capa e espada; a **Inspetora**, uma assassina encapuzada de duas adagas; o **Técnico**, um ogro com martelo e ombreiras; a **Coordenadora**, uma necromante com cajado e runas; a **Diretora**, uma rainha-aranha com coroa e patas articuladas. A arma é desenhada na mão e acompanha o movimento.
+- **Chefes refeitos do zero**: o **Porteiro** é um cavaleiro de armadura com elmo, capa e escudo; a **Inspetora**, uma assassina encapuzada; o **Técnico**, um ogro com ombreiras; a **Coordenadora**, uma necromante; a **Diretora**, uma rainha-aranha com coroa e patas articuladas. Os ataques têm formato próprio (lâminas, martelos, runas, teias e garras), mas as armas não são mais desenhadas na mão.
 - **Personagens e armas redesenhados**: cada monitor tem rosto, cabelo, jaqueta, emblema e silhueta próprios; o bastão, o estilingue e o martelo ganharam sprites detalhados com brilho, correias e núcleo de energia.
 - **HUD minimalista**: só retrato, corações, energia e a arma equipada; durante a luta aparece apenas a barra do chefe com as fases. O tutorial mantém seu lembrete de controle.
 
@@ -144,7 +144,7 @@ Depois de cada arena existe uma câmara de saída independente com uma **porta/e
 - **A COORDENADORA** — clones, teleportes e padrões de projéteis. Arena: Protocolo de Contenção.
 - **A DIRETORA** — três fases, feixes, invocações e um sinal vermelho. Arena: Sinal Vermelho.
 
-Os chefes telegrafam ataques e podem ser atordoados com parry. **Todos os cinco têm três fases**: a fase 2 começa em 66% da vida e a fase 3 em 32%. A cada fase eles ficam mais rápidos, encurtam os telegraphs, reduzem a recuperação e encadeiam combos extras. Cada um tem cutscene de entrada, arena temática e sala de saída própria.
+Os chefes telegrafam ataques e podem ser atordoados com parry. **Todos os cinco têm três fases**: a fase 2 começa em 66% da vida e a fase 3 em 32%. A **fase 1 é deliberadamente mais fácil** — o chefe anda devagar, tem pausas longas e leva dano cheio. Na **fase 2 ele fica bem mais rápido e agressivo**, e passa a reduzir o dano recebido (38% menos na fase 2, 52% menos na fase 3), então a barra desce mais devagar. O chefe fica preso à arena mesmo se o jogador morrer, e tiros em voo não podem derrubá-lo depois da morte. Cada um tem cutscene de entrada, arena temática e sala de saída própria.
 
 Vida e ritmo dos chefes no modo Normal:
 

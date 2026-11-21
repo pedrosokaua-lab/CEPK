@@ -1105,6 +1105,8 @@ class Game {
     this.player.deadTimer = 1.25;
     this.player.hp = 0;
     this.stats.deaths++;
+    // Tiros que ainda estavam no ar não podem derrubar o chefe depois da morte.
+    this.projectiles = this.projectiles.filter((pr) => pr.owner !== 'player');
     this.shake(0.9);
     Sfx.tone(90, 0.5, { type: 'sawtooth', vol: 0.18, slide: -50 });
     Sfx.noise(0.35, 0.18, { freq: 420 });

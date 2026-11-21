@@ -294,7 +294,6 @@ function tutorialLevel() {
   // Pátio contínuo: nada de cair do mapa no tutorial.
   b.ground(0, 100);
   b.spawn(2, 17);
-  b.checkpoint(10, 17);
 
   // 1) MOVER — portão de energia
   b.gate(12, 11, 1, 7, 'move');
@@ -309,12 +308,10 @@ function tutorialLevel() {
 
   // 4) IMPULSO — barreira que abre com o dash (SHIFT)
   b.gate(49, 11, 1, 7, 'dash');
-  b.checkpoint(45, 17);
 
   // 5) GOLPE — boneco de treino
   b.enemy(57, 17, { training: true, tag: 'melee', hp: 4 });
   b.gate(63, 11, 1, 7, 'attack');
-  b.checkpoint(60, 17);
 
   // 6) ESTILINGUE — alvo fixo imune a golpes, só cai com tiro
   b.drone(71, 17, { training: true, tag: 'shoot', hp: 2, fixed: true });
@@ -324,7 +321,6 @@ function tutorialLevel() {
   // 7) PARRY — orbe lento e parável (com janela perfeita de 0.14s)
   b.drone(85, 14, { training: true, tag: 'parry', parryTrainer: true, invulnerable: true, fixed: true });
   b.gate(91, 11, 1, 7, 'parry');
-  b.checkpoint(88, 17);
 
   // 8) PORTAL
   b.exit(96, 17);
@@ -420,7 +416,7 @@ function level1() {
 
   b.ground(0, 20);
   b.spawn(2, 17);
-  b.enemy(7, 17, { variant: 'runner' });
+  b.enemy(12, 17, { variant: 'runner' });
   b.solid(4, 14, 3);
   b.gear(5, 12);
   b.solid(9, 13, 3);
@@ -428,7 +424,7 @@ function level1() {
   b.crate(14, 17);
   b.crate(15, 17);
   b.crate(16, 17);
-  b.enemy(17, 17, { variant: 'runner' });
+  b.enemy(17, 17, { variant: 'samurai' });
 
   // fosso do jardim: um salto longo e limpo, sem plataforma no meio
   b.solid(21, 21, 7);
@@ -441,7 +437,7 @@ function level1() {
   b.gear(35, 11);
   b.clue(36, 12, 'pista1');
   b.checkpoint(36, 17);
-  b.enemy(41, 17, { variant: 'runner' });
+  b.enemy(41, 17, { variant: 'stalker' });
   b.spikes(43, 17, 2);
   b.enemy(44, 17, { variant: 'runner' });
 
@@ -458,7 +454,6 @@ function level1() {
   b.enemy(59, 17, { variant: 'shield' });
   b.enemy(69, 17, { variant: 'bomber' });
   b.enemy(71, 17, { variant: 'brute' });
-  b.checkpoint(70, 17);
 
   // Fosso largo: só o salto, sem mover nem ledge.
   b.solid(76, 21, 5);
@@ -585,14 +580,14 @@ function level2() {
 
   b.ground(0, 17);
   b.spawn(2, 17);
-  b.enemy(6, 17, { variant: 'brute' });
+  b.enemy(13, 17, { variant: 'brute' });
   b.solid(8, 14, 4);
   b.gear(9, 12);
   b.enemy(12, 17, { variant: 'runner' });
   b.crate(14, 17);
   b.crate(15, 17);
   b.crate(16, 17);
-  b.enemy(17, 17, { variant: 'runner' });
+  b.enemy(17, 17, { variant: 'samurai' });
 
   b.solid(17, 21, 8);
   b.spikes(17, 20, 8);
@@ -602,7 +597,7 @@ function level2() {
   b.solid(30, 15, 5);
   b.gear(31, 13);
   b.drone(34, 11, { variant: 'sniper' });
-  b.enemy(40, 17, { variant: 'runner' });
+  b.enemy(40, 17, { variant: 'stalker' });
   b.laser(37, 12, 1, 6);
   b.enemy(35, 17, { variant: 'shield' });
   b.enemy(42, 17, { variant: 'bomber' });
@@ -621,8 +616,7 @@ function level2() {
   b.core(67, 14);
   b.drone(58, 9, { variant: 'sprayer' });
   b.enemy(59, 17, { variant: 'brute' });
-  b.enemy(64, 17, { variant: 'runner' });
-  b.checkpoint(71, 17);
+  b.enemy(64, 17, { variant: 'samurai' });
   b.laser(72, 13, 1, 5);
   b.charger(71, 17);
   b.crate(74, 17);
@@ -637,7 +631,6 @@ function level2() {
   b.ground(89, 18);
   b.solid(88, 14, 4);
   b.gear(89, 12);
-  b.checkpoint(90, 17);
   b.enemy(92, 17, { variant: 'shield' });
   b.charger(93, 17, { variant: 'armored' });
   b.drone(96, 10, { variant: 'sniper' });
@@ -648,7 +641,6 @@ function level2() {
   b.ground(107, 45);
   b.solid(110, 14, 3);
   b.turret(109, 17, { variant: 'mortar', hp: 3, damage: 1, range: 620 });
-  b.checkpoint(112, 17);
 
   // Arena do chefe + sala de saída
   b.gate(114, 11, 2, 7, 'boss_arena', false);
@@ -752,11 +744,11 @@ function level3() {
 
   b.ground(0, 20);
   b.spawn(2, 17);
-  b.enemy(7, 17, { variant: 'runner' });
+  b.enemy(13, 17, { variant: 'runner' });
   b.solid(4, 14, 4);
   b.gear(5, 12);
   b.enemy(12, 17, { variant: 'runner' });
-  b.enemy(15, 17, { variant: 'runner' });
+  b.enemy(15, 17, { variant: 'stalker' });
   b.turret(17, 17, { variant: 'laser', range: 600 });
 
   b.solid(22, 15, 3);
@@ -778,7 +770,6 @@ function level3() {
   b.enemy(45, 17, { variant: 'bomber' });
 
   b.ground(53, 24);
-  b.checkpoint(56, 17);
   b.laser(59, 12, 1, 6);
   b.laser(65, 12, 1, 6);
   b.laser(71, 12, 1, 6);
@@ -805,7 +796,7 @@ function level3() {
   b.core(98, 10);
   b.drone(94, 8, { variant: 'sniper' });
   b.enemy(103, 17, { variant: 'shield' });
-  b.enemy(95, 17, { variant: 'runner' });
+  b.enemy(95, 17, { variant: 'samurai' });
   b.enemy(101, 17, { variant: 'brute' });
   b.charger(94, 17, { variant: 'armored' });
   b.spikes(105, 17, 2);
@@ -813,7 +804,6 @@ function level3() {
 
   b.ground(109, 53);
   b.solid(112, 14, 3);
-  b.checkpoint(119, 17);
 
   // Arena do chefe + sala de saída
   b.gate(122, 11, 2, 7, 'boss_arena', false);
@@ -917,7 +907,7 @@ function level4() {
 
   b.ground(0, 16);
   b.spawn(2, 17);
-  b.charger(6, 17);
+  b.charger(12, 17);
   b.solid(8, 14, 3);
   b.gear(9, 12);
   b.enemy(11, 17, { variant: 'runner' });
@@ -941,7 +931,6 @@ function level4() {
   b.gear(47, 13);
 
   b.ground(56, 22);
-  b.checkpoint(59, 17);
   b.solid(61, 16, 4);
   b.solid(73, 16, 4);
   b.gear(62, 14);
@@ -979,7 +968,6 @@ function level4() {
   b.ground(120, 48);
   b.solid(124, 14, 3);
   b.gear(125, 12);
-  b.checkpoint(126, 17);
 
   // Arena do chefe + sala de saída
   b.gate(128, 11, 2, 7, 'boss_arena', false);
@@ -1093,10 +1081,10 @@ function level5() {
 
   b.ground(0, 16);
   b.spawn(2, 17);
-  b.enemy(6, 17, { variant: 'brute' });
+  b.enemy(12, 17, { variant: 'brute' });
   b.gear(5, 15);
-  b.enemy(9, 17, { variant: 'runner' });
-  b.drone(12, 10, { variant: 'sniper' });
+  b.enemy(16, 17, { variant: 'runner' });
+  b.drone(18, 10, { variant: 'sniper' });
   b.laser(14, 12, 1, 6);
 
   b.ground(16, 10);
@@ -1119,13 +1107,11 @@ function level5() {
 
   b.ground(46, 10);
   b.laser(48, 12, 1, 6);
-  b.checkpoint(51, 17);
   b.drone(53, 9, { variant: 'sniper' });
   b.charger(45, 17);
 
   // Torre final: chaminé de salto de parede com apoios.
   b.ground(56, 84);
-  b.checkpoint(57, 17);
   b.solid(57, 6, 1, 6);
   b.solid(60, 6, 1, 12);
   b.gear(59, 3);
