@@ -428,11 +428,10 @@ function level1() {
   b.crate(15, 17);
   b.crate(16, 17);
 
-  // fosso do jardim: uma plataforma larga no meio
+  // fosso do jardim: um salto longo e limpo, sem plataforma no meio
   b.solid(21, 21, 7);
   b.spikes(21, 20, 7);
-  b.solid(23, 15, 3);
-  b.gear(24, 13);
+  b.gear(25, 13);
 
   b.ground(28, 18);
   b.turret(32, 17, { variant: 'mortar', hp: 3, damage: 1, range: 620 });
@@ -459,12 +458,10 @@ function level1() {
   b.swooper(71, 9, { variant: 'swarm' });
   b.checkpoint(70, 17);
 
-  // Fosso largo: uma plataforma móvel e uma ledge fixa alinhadas.
+  // Fosso largo: só o salto, sem mover nem ledge.
   b.solid(76, 21, 5);
   b.spikes(76, 20, 5);
-  b.mover(76, 15, 3, { axis: 'x', range: 5, speed: 1.35, phase: 0 });
-  b.solid(80, 14, 3);
-  b.gear(81, 12);
+  b.gear(78, 12);
 
   b.ground(81, 20);
   b.laser(84, 13, 1, 5);
@@ -476,9 +473,8 @@ function level1() {
   b.charger(99, 17);
   b.spikes(95, 17, 3);
 
-  // Plataforma única e visível para o crachá.
-  b.solid(97, 14, 3);
-  b.gear(97, 12);
+  // Crachá no chão, sem escada de plataformas.
+  b.gear(97, 15);
 
   b.ground(101, 41);
   b.solid(104, 14, 3);
@@ -596,7 +592,6 @@ function level2() {
 
   b.solid(17, 21, 8);
   b.spikes(17, 20, 8);
-  b.solid(20, 15, 3);
 
   b.ground(25, 22);
   b.checkpoint(28, 17);
@@ -629,13 +624,11 @@ function level2() {
   b.crate(74, 17);
   b.crate(75, 17);
 
-  // Fosso do hall: três plataformas largas em sequência, sem inimigos no caminho.
+  // Fosso do hall: uma única plataforma no meio, rota óbvia.
   b.solid(77, 21, 12);
   b.spikes(77, 20, 12);
-  b.solid(80, 15, 3);
-  b.solid(84, 13, 3);
-  b.solid(87, 15, 2);
-  b.gear(85, 11);
+  b.solid(81, 15, 4);
+  b.gear(82, 13);
 
   b.ground(89, 18);
   b.solid(88, 14, 4);
@@ -795,19 +788,15 @@ function level3() {
   b.crate(75, 17);
   b.crate(76, 17);
 
-  // Vão do ginásio: três plataformas largas em escada, sem inimigos no caminho.
+  // Vão do ginásio: uma plataforma central, o resto é salto.
   b.solid(77, 21, 14);
   b.spikes(77, 20, 14);
-  b.solid(79, 15, 3);
-  b.solid(84, 12, 3);
-  b.solid(88, 15, 3);
-  b.gear(85, 10);
+  b.solid(82, 15, 4);
+  b.gear(83, 13);
 
   b.ground(91, 18);
   b.checkpoint(92, 17);
-  b.solid(90, 15, 5);
-  b.solid(97, 12, 5);
-  b.gear(91, 13);
+  b.solid(97, 12, 4);
   b.core(98, 10);
   b.drone(94, 8, { variant: 'sniper' });
   b.drone(103, 10, { variant: 'sprayer' });
@@ -929,7 +918,6 @@ function level4() {
 
   b.solid(16, 21, 10);
   b.spikes(16, 20, 10);
-  b.solid(21, 15, 3);
   b.gear(21, 13);
 
   b.ground(26, 20);
@@ -944,15 +932,13 @@ function level4() {
   b.swooper(44, 9, { variant: 'swarm' });
 
   b.solid(47, 15, 3);
-  b.solid(51, 13, 2);
-  b.gear(51, 11);
+  b.gear(47, 13);
 
   b.ground(56, 22);
   b.checkpoint(59, 17);
   b.solid(61, 16, 4);
-  b.solid(67, 13, 4);
   b.solid(73, 16, 4);
-  b.gear(68, 11);
+  b.gear(62, 14);
   b.core(74, 14);
   b.drone(64, 8, { variant: 'sprayer' });
   b.drone(71, 10, { variant: 'sniper' });
@@ -960,11 +946,9 @@ function level4() {
   b.enemy(70, 17, { variant: 'bomber' });
   b.spikes(75, 17, 3);
 
-  // Vão do laboratório: escada curta e limpa, sem mover em cima das plataformas.
-  b.solid(79, 15, 3);
-  b.solid(84, 13, 3);
-  b.solid(87, 15, 2);
-  b.gear(85, 11);
+  // Vão do laboratório: uma plataforma central.
+  b.solid(82, 15, 3);
+  b.gear(82, 13);
 
   b.ground(88, 22);
   b.laser(91, 12, 1, 6);
@@ -984,8 +968,7 @@ function level4() {
   b.gear(111, 13);
   b.solid(110, 21, 10);
   b.spikes(110, 20, 10);
-  b.mover(111, 14, 3, { axis: 'x', range: 6, speed: 1.5, phase: 0.2 });
-  b.solid(117, 13, 2);
+  b.solid(114, 15, 3);
 
   b.ground(120, 48);
   b.solid(124, 14, 3);
@@ -1138,15 +1121,12 @@ function level5() {
   b.checkpoint(57, 17);
   b.solid(57, 6, 1, 6);
   b.solid(60, 6, 1, 12);
-  b.solid(58, 11, 2);
-  b.solid(59, 8, 1);
   b.gear(59, 3);
 
-  // Corredor de espinhos: uma plataforma móvel e dois apoios fixos alinhados.
+  // Corredor de espinhos: um único salto sobre uma plataforma fixa.
   b.spikes(66, 17, 7);
-  b.mover(65, 14, 4, { axis: 'x', range: 7, speed: 1.6, phase: 0 });
-  b.solid(73, 12, 3);
-  b.solid(77, 12, 2);
+  b.solid(69, 14, 4);
+  b.solid(75, 13, 2);
 
   b.solid(90, 14, 3);
   b.gear(61, 12);
@@ -1157,14 +1137,12 @@ function level5() {
   b.charger(74, 17, { variant: 'armored' });
   b.enemy(77, 17, { variant: 'runner' });
   b.solid(80, 13, 3);
-  b.solid(84, 12, 2);
 
   // Kennedito cage at tile 94-112, position 17
   b.kennedito(94, 17);  // New Kennedito Cage
 
-  // Crumble platforms before the cage
-  b.crumble(82, 17, 5);  // Crumble section
-  b.crumble(88, 17, 3);  // Another crumble section
+  // Uma única passagem de plataformas quebradiças antes da gaiola
+  b.crumble(82, 17, 5);
   b.enemy(88, 16, { variant: 'shield' });
   b.swooper(90, 8, { variant: 'bomber' });
 

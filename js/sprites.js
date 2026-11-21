@@ -18,11 +18,11 @@ const Sprites = (() => {
 
   // Cada chefe também "fala" com um tipo de projétil e uma cor próprios.
   const BOSS_SPRITES = {
-    guardian: { monster: 'armor', color: '#a9d8ff', kind: 'blade', wave: '#bfe6ff' },
-    hunter: { monster: 'assassin', color: '#b7ecff', kind: 'blade', wave: '#cfeeff' },
-    bruiser: { monster: 'ogre', color: '#ff9a4d', kind: 'rock', wave: '#ffb066' },
+    guardian: { monster: 'armor', color: '#a9d8ff', kind: 'sword', wave: '#bfe6ff' },
+    hunter: { monster: 'assassin', color: '#b7ecff', kind: 'dagger', wave: '#cfeeff' },
+    bruiser: { monster: 'ogre', color: '#ff9a4d', kind: 'hammer', wave: '#ffb066' },
     trickster: { monster: 'necro', color: '#b18cff', kind: 'rune', wave: '#cdabff' },
-    director: { monster: 'spiderQueen', color: '#c86bff', kind: 'web', wave: '#d8a0ff' }
+    director: { monster: 'spiderQueen', color: '#c86bff', kind: 'claw', wave: '#d8a0ff' }
   };
 
   const MONSTER_CELLS = {
@@ -76,6 +76,8 @@ const Sprites = (() => {
       p.color = s.color;
     } else if (p.kind === 'laser') {
       p.color = style === 'hunter' ? '#b7ecff' : s.color;
+    } else {
+      p.color = s.color;
     }
   }
 

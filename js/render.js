@@ -2440,303 +2440,106 @@ Game.prototype.drawForeground = function (ctx, cam) {
 Game.prototype.drawHUD = function (ctx) {
   const p = this.player;
   if (!p) return;
-  const th = this.level.theme;
   const ch = p.character || this.character || CHARACTERS[0];
 
-  // topo
+  /* ------- retrato + vida + energia ------- */
+  const px = 16, py = 14, pw = 246, ph = 62;
   ctx.save();
-  const g = ctx.createLinearGradient(0, 0, 0, 132);
-  g.addColorStop(0, 'rgba(4,7,14,0.86)');
-  g.addColorStop(0.7, 'rgba(4,7,14,0.36)');
-  g.addColorStop(1, 'rgba(4,7,14,0)');
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, VIEW_W, 132);
-  ctx.restore();
-
-  /* ------- progresso do mapa ------- */
-  const prog = clamp(p.cx / this.level.widthPx, 0, 1);
-  ctx.fillStyle = 'rgba(220,255,230,0.10)';
-  ctx.fillRect(0, 0, VIEW_W, 3);
-  ctx.fillStyle = withAlpha(th.glow, 0.9);
-  ctx.fillRect(0, 0, VIEW_W * prog, 3);
-  if (this.arena) {
-    const mx = clamp(this.arena.trigger * TILE / this.level.widthPx, 0, 1) * VIEW_W;
-    ctx.fillStyle = '#ffd24d';
-    ctx.fillRect(mx - 1, 0, 3, 5);
-  }
-
-  /* ------- painel do personagem ------- */
-  const px0 = 18, py0 = 14, pw0 = 354, ph0 = 96;
-  ctx.save();
-  ctx.fillStyle = 'rgba(4,12,9,0.86)';
-  roundRect(ctx, px0, py0, pw0, ph0, 9);
+  ctx.fillStyle = 'rgba(4,12,9,0.84)';
+  roundRect(ctx, px, py, pw, ph, 9);
   ctx.fill();
-  ctx.strokeStyle = withAlpha(ch.color, 0.5);
+  ctx.strokeStyle = withAlpha(ch.color, 0.45);
   ctx.lineWidth = 1.5;
-  roundRect(ctx, px0, py0, pw0, ph0, 9);
+  roundRect(ctx, px, py, pw, ph, 9);
   ctx.stroke();
-  ctx.fillStyle = withAlpha(ch.color, 0.09);
-  roundRect(ctx, px0 + 3, py0 + 3, pw0 - 6, 26, 6);
-  ctx.fill();
-  ctx.restore();
-
-  drawCharacterFace(ctx, ch, px0 + 12, py0 + 14, 68, this.time);
-  drawText(ctx, ch.name, px0 + 92, py0 + 20, {
-    size: 19, color: ch.color, glow: ch.color, glowSize: 10
-  });
-  drawText(ctx, ch.role + ' · ' + ch.desc.split('.')[0], px0 + 92, py0 + 40, {
-    size: 9, color: 'rgba(205,235,215,0.62)'
+  drawCharacterFace(ctx, ch, px + 6, py + 7, 46, this.time);
+  drawText(ctx, ch.name, px + 60, py + 16, {
+    size: 14, color: ch.color, glow: ch.color, glowSize: 6
   });
 
-  // vida em corações
-  const heartSize = p.maxHp > 8 ? 11 : 14;
-  const heartGap = p.maxHp > 8 ? 13 : 17;
+  const hs = p.maxHp > 8 ? 10 : 12;
+  const hg = p.maxHp > 8 ? 12 : 14;
   for (let i = 0; i < p.maxHp; i++) {
-    const filled = i < p.hp;
-    drawPixelHeart(ctx, px0 + 92 + i * heartGap, py0 + 50, heartSize,
-      filled ? ch.color : 'rgba(24,44,34,0.95)');
-    if (filled) {
-      ctx.save();
-      ctx.globalAlpha = 0.32;
-      drawPixelHeart(ctx, px0 + 92 + i * heartGap, py0 + 50, heartSize, '#ffffff');
-      ctx.restore();
-    }
+    drawPixelHeart(ctx, px + 60 + i * hg, py + 27, hs,
+      i < p.hp ? ch.color : 'rgba(24,44,34,0.95)');
   }
-  drawText(ctx, p.hp + '/' + p.maxHp, px0 + pw0 - 16, py0 + 56, {
-    size: 10, align: 'right', color: withAlpha(ch.color, 0.85)
-  });
 
-  // energia
-  const ex = px0 + 92, ey = py0 + 70, ew = pw0 - 112;
-  ctx.fillStyle = 'rgba(5,9,16,0.9)';
-  roundRect(ctx, ex, ey, ew, 14, 4);
+  const ex = px + 60, ey = py + 44, ew = pw - 70, eh = 9;
+  ctx.fillStyle = 'rgba(5,9,16,0.92)';
+  roundRect(ctx, ex, ey, ew, eh, 3);
   ctx.fill();
-  ctx.strokeStyle = 'rgba(130,175,215,0.3)';
-  ctx.lineWidth = 1;
-  roundRect(ctx, ex, ey, ew, 14, 4);
-  ctx.stroke();
   const ep = clamp(p.energy / p.maxEnergy, 0, 1);
   const eg = ctx.createLinearGradient(ex, 0, ex + ew, 0);
   eg.addColorStop(0, '#2f8a4c');
   eg.addColorStop(0.65, '#7fe7ff');
   eg.addColorStop(1, '#b6ff9a');
   ctx.fillStyle = eg;
-  roundRect(ctx, ex + 2, ey + 2, Math.max(0, (ew - 4) * ep), 10, 3);
-  ctx.fill();
-  ctx.save();
-  ctx.globalAlpha = 0.22;
-  ctx.fillStyle = '#ffffff';
-  roundRect(ctx, ex + 2, ey + 2, Math.max(0, (ew - 4) * ep), 3, 2);
+  roundRect(ctx, ex + 1, ey + 1, Math.max(0, (ew - 2) * ep), eh - 2, 2);
   ctx.fill();
   ctx.restore();
-  drawText(ctx, 'ENERGIA', ex + 7, ey + 7, { size: 8, color: 'rgba(3,18,10,0.92)' });
-  drawText(ctx, Math.round(p.energy) + ' / ' + p.maxEnergy, ex + ew - 7, ey + 7, {
-    size: 8, align: 'right', color: 'rgba(235,255,240,0.9)'
-  });
 
-  /* ------- fase / dificuldade ------- */
-  const diff = DIFFICULTIES[this.difficulty];
-  drawText(ctx, this.level.name.toUpperCase(), VIEW_W - 24, 26, {
-    size: 17, align: 'right', color: withAlpha(th.glow, 0.95)
+  /* ------- arma atual ------- */
+  const w = WEAPONS[this.weaponIndex];
+  const wx = 16, wy = VIEW_H - 70, ww = 178, wh = 50;
+  ctx.save();
+  ctx.fillStyle = 'rgba(4,10,16,0.86)';
+  roundRect(ctx, wx, wy, ww, wh, 7);
+  ctx.fill();
+  ctx.strokeStyle = withAlpha(w.color, 0.7);
+  ctx.lineWidth = 1.5;
+  roundRect(ctx, wx, wy, ww, wh, 7);
+  ctx.stroke();
+  drawWeaponGlyph(ctx, w.id, wx + 24, wy + 25, 26, w.color);
+  drawKeycap(ctx, String(this.weaponIndex + 1), wx + 8, wy + 6, w.color, true, 0.7);
+  drawText(ctx, w.name, wx + 46, wy + 20, { size: 12, color: w.color });
+  drawText(ctx, w.melee ? 'CORPO A CORPO' : `TIRO Â· ${w.energy} ENERGIA`, wx + 46, wy + 36, {
+    size: 8, color: 'rgba(190,225,200,0.6)'
   });
-  drawText(ctx, `${diff.name}  ·  ${this.level.subtitle || ''}`, VIEW_W - 24, 47, {
-    size: 10, align: 'right', color: withAlpha(diff.color, 0.72)
-  });
-  drawText(ctx, `◆ ${this.stats.gears}/${this.totalGears}   ● ${this.stats.cores}/${this.totalCores}   ✦ ${this.cluesFound.size}/4`, VIEW_W - 24, 68, {
-    size: 11, align: 'right', color: 'rgba(215,242,225,0.75)'
-  });
-
-  /* ------- objetivo e progresso ------- */
-  const stations = this.level.stations || [];
-  const doneStations = stations.filter((s) => s.action === 'exit' || s.done).length;
-  const activeCps = this.checkpoints.filter((c) => c.active).length;
-  let objective = 'SIGA ATÉ A ARENA DO CHEFE';
-  let objectiveColor = th.glow;
-  if (this.level.tutorial) {
-    objective = `TREINAMENTO ${doneStations}/${stations.length}`;
-    objectiveColor = '#6dff9e';
-  } else if (this.bossActive && !this.bossDefeated && this.boss) {
-    objective = 'DERROTE ' + this.boss.cfg.name.toUpperCase();
-    objectiveColor = this.boss.color;
-  } else if (this.bossDefeated) {
-    objective = 'USE O PORTAL DE SAÍDA';
-    objectiveColor = '#6dff9e';
-  } else if (this.levelIndex === 5 && !this.kenneditoRescued) {
-    objective = 'RESGATE KENNEDITO';
-    objectiveColor = '#ffd24d';
+  if (p.chargeTime > 0.05) {
+    ctx.fillStyle = 'rgba(3,10,16,0.9)';
+    ctx.fillRect(wx + 4, wy + wh - 4, ww - 8, 3);
+    ctx.fillStyle = p.chargeTime >= 0.55 ? '#ffd24d' : w.color;
+    ctx.fillRect(wx + 4, wy + wh - 4, (ww - 8) * Math.min(1, p.chargeTime / 0.55), 3);
   }
-  drawText(ctx, 'OBJETIVO', VIEW_W - 24, 87, {
-    size: 8, align: 'right', color: 'rgba(180,220,190,0.5)'
-  });
-  drawText(ctx, objective, VIEW_W - 24, 102, {
-    size: 12, align: 'right', color: objectiveColor, glow: objectiveColor, glowSize: 6
-  });
-  if (this.checkpoints.length) {
-    drawText(ctx, `CHECKPOINT ${activeCps}/${this.checkpoints.length}`, VIEW_W - 24, 119, {
-      size: 9, align: 'right', color: 'rgba(190,230,205,0.6)'
-    });
-  }
+  ctx.restore();
 
-  /* ------- barra do chefe ------- */
+  /* ------- chefe (sÃ³ durante a luta) ------- */
   if (this.boss && this.boss.active && !this.boss.dead) {
-    const bw = 500;
-    const bx = VIEW_W / 2 - bw / 2;
-    const by = 30;
+    const bw = 420, bx = VIEW_W / 2 - bw / 2, by = 20;
     const bp = clamp(this.boss.hp / this.boss.maxHp, 0, 1);
-    const phaseColor = this.boss.phase === 3 ? '#ff3355' : this.boss.phase === 2 ? '#ffd24d' : this.boss.color;
-
-    ctx.save();
-    // moldura ornamentada
-    ctx.fillStyle = 'rgba(3,9,8,0.94)';
-    roundRect(ctx, bx - 18, by - 18, bw + 36, 44, 8);
-    ctx.fill();
-    ctx.strokeStyle = withAlpha(phaseColor, 0.45);
-    ctx.lineWidth = 1.5;
-    roundRect(ctx, bx - 18, by - 18, bw + 36, 44, 8);
-    ctx.stroke();
-    // pontas
-    ctx.fillStyle = withAlpha(phaseColor, 0.85);
-    ctx.beginPath();
-    ctx.moveTo(bx - 26, by - 6);
-    ctx.lineTo(bx - 14, by - 16);
-    ctx.lineTo(bx - 14, by + 14);
-    ctx.lineTo(bx - 26, by + 4);
-    ctx.closePath();
-    ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(bx + bw + 26, by - 6);
-    ctx.lineTo(bx + bw + 14, by - 16);
-    ctx.lineTo(bx + bw + 14, by + 14);
-    ctx.lineTo(bx + bw + 26, by + 4);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-
-    drawText(ctx, this.boss.cfg.name, VIEW_W / 2, by - 7, {
-      size: 13, align: 'center', color: phaseColor, glow: phaseColor, glowSize: 9
+    const pc = this.boss.phase === 3 ? '#ff3355' : this.boss.phase === 2 ? '#ffd24d' : this.boss.color;
+    drawText(ctx, this.boss.cfg.name, VIEW_W / 2, by - 6, {
+      size: 12, align: 'center', color: pc, glow: pc, glowSize: 8
     });
-    ctx.fillStyle = 'rgba(2,7,6,0.95)';
-    roundRect(ctx, bx, by + 3, bw, 14, 4);
+    ctx.fillStyle = 'rgba(3,9,8,0.92)';
+    roundRect(ctx, bx, by, bw, 12, 4);
     ctx.fill();
-    ctx.strokeStyle = withAlpha(phaseColor, 0.6);
+    ctx.strokeStyle = withAlpha(pc, 0.7);
     ctx.lineWidth = 1;
-    roundRect(ctx, bx, by + 3, bw, 14, 4);
+    roundRect(ctx, bx, by, bw, 12, 4);
     ctx.stroke();
-    const bg2 = ctx.createLinearGradient(bx, 0, bx + bw, 0);
-    bg2.addColorStop(0, phaseColor);
-    bg2.addColorStop(0.6, this.boss.phase === 3 ? '#ff7a4d' : phaseColor);
-    bg2.addColorStop(1, '#ffffff');
-    ctx.fillStyle = bg2;
-    roundRect(ctx, bx + 2, by + 5, Math.max(0, (bw - 4) * bp), 10, 3);
+    ctx.fillStyle = pc;
+    roundRect(ctx, bx + 2, by + 2, Math.max(0, (bw - 4) * bp), 8, 2);
     ctx.fill();
-    // marcas de fase
     for (let i = 1; i <= 2; i++) {
-      const mx = bx + (bw * (i === 1 ? 0.34 : 0.68));
       ctx.fillStyle = 'rgba(4,10,8,0.9)';
-      ctx.fillRect(mx, by + 3, 2, 14);
+      ctx.fillRect(bx + bw * (i === 1 ? 0.34 : 0.68), by, 2, 12);
     }
-    drawText(ctx, `FASE ${this.boss.phase}`, bx + bw + 36, by + 10, {
-      size: 9, color: withAlpha(phaseColor, 0.9)
-    });
   }
 
-  /* ------- dica contextual ------- */
-  if (this.level.hint && !this.level.tutorial) {
-    ctx.save();
-    const txt = 'DICA · ' + this.level.hint;
-    ctx.font = '9px Consolas, monospace';
-    const tw = Math.min(760, ctx.measureText(txt).width + 26);
-    ctx.fillStyle = 'rgba(4,14,10,0.72)';
-    roundRect(ctx, VIEW_W / 2 - tw / 2, 596, tw, 24, 6);
-    ctx.fill();
-    ctx.restore();
-    drawText(ctx, txt, VIEW_W / 2, 611, {
-      size: 9, align: 'center', color: 'rgba(190,230,205,0.72)'
-    });
-  }
-
-  /* ------- armas ------- */
-  const wy = 646;
-  drawText(ctx, 'ARMAS', 24, wy - 12, { size: 9, color: 'rgba(180,220,190,0.6)' });
-  for (let i = 0; i < WEAPONS.length; i++) {
-    const w = WEAPONS[i];
-    const x = 24 + i * 152;
-    const selected = i === this.weaponIndex;
-    ctx.save();
-    ctx.fillStyle = selected ? withAlpha(w.color, 0.18) : 'rgba(6,10,17,0.88)';
-    roundRect(ctx, x, wy, 142, 52, 7);
-    ctx.fill();
-    ctx.strokeStyle = selected ? w.color : 'rgba(135,170,205,0.24)';
-    ctx.lineWidth = selected ? 2 : 1;
-    if (selected) {
-      ctx.shadowColor = w.color;
-      ctx.shadowBlur = 14;
-    }
-    roundRect(ctx, x, wy, 142, 52, 7);
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-    if (selected) {
-      ctx.fillStyle = withAlpha(w.color, 0.9);
-      roundRect(ctx, x, wy, 4, 52, 2);
-      ctx.fill();
-    }
-    drawWeaponGlyph(ctx, w.id, x + 26, wy + 27, 34, w.color);
-    drawKeycap(ctx, String(i + 1), x + 46, wy + 5, w.color, true, 0.78);
-    drawText(ctx, w.name, x + 48, wy + 27, {
-      size: 12, color: selected ? w.color : 'rgba(205,235,215,0.78)'
-    });
-    drawText(ctx, w.melee ? 'CORPO A CORPO' : `TIRO · ${w.energy} ENERGIA`, x + 48, wy + 41, {
-      size: 8, color: 'rgba(170,210,185,0.58)'
-    });
-    if (selected && p.chargeTime > 0.05) {
-      const cw = Math.min(1, p.chargeTime / 0.55);
-      ctx.fillStyle = 'rgba(3,10,16,0.9)';
-      ctx.fillRect(x + 4, wy + 48, 134, 3);
-      ctx.fillStyle = cw >= 1 ? '#ffd24d' : w.color;
-      ctx.fillRect(x + 4, wy + 48, 134 * Math.min(1, p.chargeTime / 0.55), 3);
-    }
-    ctx.restore();
-  }
-
-  /* ------- impulso / parry ------- */
-  const cdy = wy - 12;
-  drawText(ctx, 'IMPULSO', 512, cdy - 2, { size: 8, color: 'rgba(170,210,185,0.55)' });
-  drawKeycap(ctx, 'SHIFT', 512, cdy + 7, '#7fe7ff', p.dashCd <= 0, 0.9);
-  drawText(ctx, 'PARRY', 602, cdy - 2, { size: 8, color: 'rgba(170,210,185,0.55)' });
-  drawKeycap(ctx, 'E', 602, cdy + 7, '#6dff9e', p.parryCd <= 0, 0.9);
-  if (p.parryChain > 1 && p.parryChainTimer > 0) {
-    drawText(ctx, 'x' + p.parryChain, 638, cdy + 15, {
-      size: 12, color: '#ffd24d', glow: '#ffd24d', glowSize: 8
-    });
-  }
-  if (p.dashCd > 0) {
-    ctx.fillStyle = 'rgba(3,14,9,0.7)';
-    ctx.fillRect(512, cdy + 31, 58, 3);
-    ctx.fillStyle = '#7fe7ff';
-    ctx.fillRect(512, cdy + 31, 58 * (1 - p.dashCd / 0.65), 3);
-  }
-
-  // tutorial
   if (this.level.tutorial) this.drawTutorialHUD(ctx);
 
-  // mudo
-  drawText(ctx, Sfx.muted ? 'SOM OFF' : 'M · SOM', VIEW_W - 24, VIEW_H - 14, {
-    size: 9, align: 'right', color: 'rgba(150,190,165,0.45)'
-  });
-
-  // morte
   if (p.dead) {
     ctx.fillStyle = 'rgba(2,8,5,0.55)';
     ctx.fillRect(0, 0, VIEW_W, VIEW_H);
     drawText(ctx, 'SINAL PERDIDO', VIEW_W / 2, VIEW_H / 2 - 10, {
       size: 38, align: 'center', color: '#ff5d6c', glow: '#ff5d6c', glowSize: 18
     });
-    drawText(ctx, 'Reiniciando no último checkpoint...', VIEW_W / 2, VIEW_H / 2 + 34, {
+    drawText(ctx, 'Reiniciando no Ãºltimo checkpoint...', VIEW_W / 2, VIEW_H / 2 + 34, {
       size: 13, align: 'center', color: 'rgba(220,240,230,0.7)'
     });
   }
 };
-
 Game.prototype.drawToasts = function (ctx) {
   this.toasts.forEach((toast, i) => {
     const a = clamp(toast.life / Math.min(0.5, toast.max), 0, 1);
@@ -4712,9 +4515,9 @@ Game.prototype.renderCutscene = function (ctx) {
   const portraitSlide = boss && !arenaSlide && String(slide.motif).indexOf('boss') === 0;
 
   // câmera cinematográfica: push-in lento e tremor sutil no alerta de chefe
-  const push = 1 + Math.min(0.035, t * 0.012);
-  const shakeX = boss ? Math.sin(t * 41) * 1.4 : 0;
-  const shakeY = boss ? Math.cos(t * 37) * 0.9 : 0;
+  const push = 1 + Math.min(0.09, t * 0.035);
+  const shakeX = boss ? Math.sin(t * 41) * 2.6 : Math.sin(t * 22) * 0.6;
+  const shakeY = boss ? Math.cos(t * 37) * 1.8 : Math.cos(t * 19) * 0.4;
   ctx.save();
   ctx.translate(VIEW_W / 2 + shakeX, VIEW_H / 2 + shakeY);
   ctx.scale(push, push);
@@ -4742,7 +4545,7 @@ Game.prototype.renderCutscene = function (ctx) {
     // holofotes de alerta
     for (let i = 0; i < 3; i++) {
       const bx = 260 + i * 380;
-      const sway = Math.sin(t * 0.7 + i * 2.1) * 34;
+      const sway = Math.sin(t * 1.1 + i * 2.1) * 62;
       const beam = ctx.createLinearGradient(bx, 0, bx + sway, 620);
       beam.addColorStop(0, withAlpha(accent, 0.2));
       beam.addColorStop(1, withAlpha(accent, 0));
@@ -4759,7 +4562,7 @@ Game.prototype.renderCutscene = function (ctx) {
     // linhas de velocidade radiais
     ctx.save();
     ctx.translate(VIEW_W / 2, 340);
-    ctx.rotate(t * 0.04);
+    ctx.rotate(t * 0.12);
     for (let i = 0; i < 26; i++) {
       const a = (TAU * i) / 26;
       const r0 = 310 + (i % 3) * 44;
@@ -4778,9 +4581,11 @@ Game.prototype.renderCutscene = function (ctx) {
   if (boss && arenaSlide && bossCfg) {
     const appear = clamp((t - 0.1) / 0.9, 0, 1);
     ctx.save();
-    ctx.globalAlpha = 0.28 * appear;
-    ctx.translate(VIEW_W / 2, 704);
-    ctx.scale(1.26, 1.26);
+    ctx.globalAlpha = 0.34 * appear;
+    ctx.translate(VIEW_W / 2 - 280 * (1 - appear), 704 + 46 * (1 - appear));
+    const grow = 1.1 + 0.16 * appear;
+    ctx.scale(grow, grow);
+    ctx.rotate(Math.sin(t * 1.4) * 0.02);
     drawCutsceneBoss(ctx, bossCfg.style, accent, 0, 0, t);
     ctx.restore();
   }
@@ -4851,14 +4656,14 @@ Game.prototype.renderCutscene = function (ctx) {
 
   // partículas cinematográficas
   ctx.save();
-  const pcount = boss ? 46 : 22;
+  const pcount = boss ? 72 : 36;
   for (let i = 0; i < pcount; i++) {
     const seed = i * 131.7;
-    const px = ((seed + Math.sin(t * 0.6 + i) * 40) % VIEW_W + VIEW_W) % VIEW_W;
-    const py = 620 - ((t * (boss ? 38 : 14) + seed) % 460);
+    const px = ((seed + Math.sin(t * 1.2 + i) * 64) % VIEW_W + VIEW_W) % VIEW_W;
+    const py = 620 - ((t * (boss ? 78 : 30) + seed) % 460);
     const a = boss
-      ? 0.22 + 0.5 * Math.abs(Math.sin(t * 2 + i))
-      : 0.08 + 0.12 * Math.abs(Math.sin(t + i));
+      ? 0.3 + 0.55 * Math.abs(Math.sin(t * 3 + i))
+      : 0.12 + 0.2 * Math.abs(Math.sin(t * 1.5 + i));
     ctx.fillStyle = withAlpha(boss ? (i % 3 ? accent : '#ffd24d') : '#9dffbd', a);
     const s = boss ? 2 + (i % 3) : 2;
     ctx.fillRect(px, py, s, s);
@@ -4997,11 +4802,11 @@ Game.prototype.renderCutscene = function (ctx) {
   ctx.fillRect(64, VIEW_H - 157, 72, 3);
 
   let remaining = Math.floor(this.cutsceneReveal);
-  slide.lines.forEach((line, i) => {
+  slide.lines.slice(0, 1).forEach((line, i) => {
     const visible = line.slice(0, Math.max(0, remaining));
     remaining -= line.length + 1;
     drawText(ctx, visible, 64, VIEW_H - 128 + i * 24, {
-      size: 14, color: 'rgba(225,248,232,0.88)'
+      size: 15, color: 'rgba(225,248,232,0.92)'
     });
   });
 
@@ -5054,7 +4859,7 @@ Game.prototype.renderStory = function (ctx) {
   drawPanel(ctx, VIEW_W / 2 - 390, 242, 780, 262, {
     fill: 'rgba(3,16,10,0.82)', stroke: withAlpha(level.theme.accent, 0.25), radius: 12
   });
-  level.story.forEach((line, i) => {
+  level.story.slice(0, 2).forEach((line, i) => {
     drawText(ctx, line, VIEW_W / 2, 292 + i * 44, {
       size: 16, align: 'center', color: 'rgba(225,248,232,0.9)'
     });

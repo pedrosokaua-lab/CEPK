@@ -4093,6 +4093,7 @@ class Boss {
       ctx.shadowBlur = 0;
     }
     }
+    this.drawWeapon(ctx, x, y, bob);
 
     // fase 2/3 aura
     if (this.phase >= 2 && !this.dead) {
@@ -4152,6 +4153,75 @@ class Boss {
       ctx.fillText('★ ★', x + this.w / 2, y - 14 + bob);
     }
 
+    ctx.restore();
+  }
+
+  // Desenha o armature que o sprite está segurando, com o ataque combinando com a skin.
+  drawWeapon(ctx, x, y, bob) {
+    if (this.dead) return;
+    const s = (typeof Sprites !== 'undefined' && Sprites.BOSS_SPRITES[this.style]) || null;
+    const color = s ? s.color : this.color;
+    const dark = hexShade(color, -70);
+    const dir = this.dir >= 0 ? 1 : -1;
+    const hx = x + (dir > 0 ? this.w * 0.86 : this.w * 0.14);
+    const hy = y + this.h * 0.46 + bob;
+    const melee = ['tele', 'bash', 'slash', 'charge', 'slam', 'jump', 'rush', 'quake', 'shock'].indexOf(this.state) >= 0;
+    let swing = 0;
+    if (melee) {
+      const durations = { tele: 0.4, bash: 0.3, slash: 0.28, charge: 0.8, slam: 1.15, jump: 1.2, rush: 0.36, quake: 1.05, shock: 0.38 };
+      swing = clamp(1 - this.timer / (durations[this.state] || 0.4), 0, 1);
+    }
+    const idle = Math.sin(this.anim * 2.2) * 0.12;
+    const ang = (dir > 0 ? -0.85 : -2.3) + idle + swing * 1.9;
+    ctx.save();
+    ctx.translate(hx, hy);
+    ctx.rotate(ang);
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 3;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 16;
+
+    if (this.style === 'guardian') {
+      ctx.fillStyle = color;
+      ctx.fillRect(0, -4, 58, 8);
+      ctx.fillStyle = '#f4fbff';
+      ctx.fillRect(46, -2, 15, 4);
+      ctx.strokeStyle = withAlpha(color, 0.6);
+      ctx.beginPath(); ctx.arc(10, 0, 64, -0.7, 0.7); ctx.stroke();
+    } else if (this.style === 'hunter') {
+      for (const sy of [-13, 13]) {
+        ctx.fillStyle = color;
+        ctx.fillRect(0, sy - 2, 36, 4);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(30, sy - 1, 9, 2);
+      }
+      ctx.strokeStyle = withAlpha(color, 0.55);
+      ctx.beginPath(); ctx.arc(8, 0, 44, -0.8, 0.8); ctx.stroke();
+    } else if (this.style === 'bruiser') {
+      ctx.fillStyle = dark;
+      ctx.fillRect(0, -3, 42, 6);
+      ctx.fillStyle = color;
+      ctx.fillRect(38, -18, 24, 36);
+      ctx.fillStyle = withAlpha('#ffffff', 0.5);
+      ctx.fillRect(42, -14, 14, 4);
+      ctx.strokeStyle = withAlpha(color, 0.6);
+      ctx.beginPath(); ctx.arc(12, 0, 56, -0.6, 0.6); ctx.stroke();
+    } else if (this.style === 'trickster') {
+      ctx.fillStyle = dark;
+      ctx.fillRect(0, -2, 52, 4);
+      ctx.strokeStyle = color;
+      ctx.beginPath(); ctx.arc(56, 0, 11 + Math.sin(this.anim * 3) * 2, 0, TAU); ctx.stroke();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath(); ctx.arc(56, 0, 3, 0, TAU); ctx.fill();
+    } else {
+      for (let i = -1; i <= 1; i++) {
+        ctx.beginPath();
+        ctx.moveTo(0, i * 9);
+        ctx.quadraticCurveTo(26, i * 14, 50, i * 24);
+        ctx.stroke();
+      }
+    }
     ctx.restore();
   }
 
@@ -4884,6 +4954,70 @@ class Projectile {
       ctx.fillRect(-this.r * 4, -this.r * 0.55, this.r * 8, this.r * 1.1);
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(-this.r * 3.2, -this.r * 0.16, this.r * 6.4, this.r * 0.32);
+      ctx.restore();
+    } else if (this.kind === 'sword') {
+      const ang = Math.atan2(this.vy, this.vx);
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(ang);
+      ctx.fillStyle = this.color;
+      ctx.shadowColor = this.color;
+      ctx.shadowBlur = 18;
+      ctx.fillRect(-this.r, -this.r * 0.35, this.r * 3.4, this.r * 0.7);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(this.r * 1.6, -this.r * 0.2, this.r * 1.6, this.r * 0.4);
+      ctx.strokeStyle = withAlpha(this.color, 0.7);
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(-this.r, 0, this.r * 3, -0.8, 0.8);
+      ctx.stroke();
+      ctx.restore();
+    } else if (this.kind === 'dagger') {
+      const ang = Math.atan2(this.vy, this.vx);
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(ang);
+      ctx.strokeStyle = this.color;
+      ctx.shadowColor = this.color;
+      ctx.shadowBlur = 16;
+      ctx.lineWidth = 3;
+      for (const s of [-1, 1]) {
+        ctx.beginPath();
+        ctx.moveTo(-this.r, s * this.r * 0.7);
+        ctx.lineTo(this.r * 2.2, s * this.r * 0.15);
+        ctx.stroke();
+      }
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(this.r * 1.4, -2, this.r, 4);
+      ctx.restore();
+    } else if (this.kind === 'hammer') {
+      const ang = Math.atan2(this.vy, this.vx);
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(ang + this.spin * 0.6);
+      ctx.fillStyle = '#5a3a1c';
+      ctx.fillRect(-this.r * 1.6, -2, this.r * 2.4, 4);
+      ctx.fillStyle = this.color;
+      ctx.shadowColor = this.color;
+      ctx.shadowBlur = 16;
+      ctx.fillRect(this.r * 0.4, -this.r, this.r * 1.2, this.r * 2);
+      ctx.fillStyle = withAlpha('#ffffff', 0.6);
+      ctx.fillRect(this.r * 0.6, -this.r * 0.6, this.r * 0.3, this.r * 1.2);
+      ctx.restore();
+    } else if (this.kind === 'claw') {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(Math.atan2(this.vy, this.vx));
+      ctx.strokeStyle = this.color;
+      ctx.shadowColor = this.color;
+      ctx.shadowBlur = 16;
+      ctx.lineWidth = 3;
+      for (let i = -1; i <= 1; i++) {
+        ctx.beginPath();
+        ctx.moveTo(-this.r, i * this.r * 0.5);
+        ctx.quadraticCurveTo(this.r, i * this.r, this.r * 2, i * this.r * 1.5);
+        ctx.stroke();
+      }
       ctx.restore();
     } else {
       ctx.fillStyle = this.color;

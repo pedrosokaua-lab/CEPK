@@ -38,7 +38,7 @@ Depois acesse `http://localhost:8123`.
 | `M` | Ligar / desligar som |
 | `Esc` / `P` | Pausar |
 
-**Parkour:** o combate e a travessia usam apenas armas, dash, parry, pulo duplo, salto de parede e plataformas móveis. Não há mais poderes: cada vão e cada chaminé tem uma rota clara com esses recursos.
+**Parkour:** o combate e a travessia usam apenas armas, dash, parry, pulo duplo e salto de parede. Não há poderes nem plataformas móveis: cada vão tem uma rota clara, com no máximo um apoio no meio.
 
 ## Personagens
 
@@ -98,13 +98,13 @@ Aperte **E** pouco antes do impacto. Os primeiros instantes são um **PARRY PERF
 
 ## Fases
 
-1. **Pátio Central** — o começo do sinal, com plataformas móveis e uma rota clara sobre o fosso.
-2. **Corredores** — armários, câmeras e plataformas fixas no grande vão do hall.
-3. **Ginásio** — a arena de treino, com escada de plataformas sobre o fosso e chaminés de salto de parede.
-4. **Laboratório** — reatores, lasers e um parkour de plataformas móveis.
-5. **Diretoria** — o confronto final com o Sistema Verde, uma torre de salto de parede e o resgate de Kennedito.
+1. **Pátio Central** — o começo do sinal, com fossos largos vencidos no salto duplo e no dash.
+2. **Corredores** — armários, câmeras e um único apoio no grande vão do hall.
+3. **Ginásio** — a arena de treino, com uma plataforma central no fosso e chaminés de salto de parede.
+4. **Laboratório** — reatores, lasers e vãos com no máximo uma plataforma de apoio.
+5. **Diretoria** — o confronto final com o Sistema Verde, torre de salto de parede e o resgate de Kennedito.
 
-Cada fase tem história, cutscene animada, checkpoints, colecionáveis, desafios de plataforma, **arena de chefe** e **sala de saída** próprias. O parkour combina pulo duplo, dash, salto de parede e plataformas móveis — cada seção tem uma rota visível e sem sobreposição de mecânicas.
+Cada fase tem história, cutscene animada, checkpoints, colecionáveis, desafios de plataforma, **arena de chefe** e **sala de saída** próprias. O parkour usa poucas plataformas e nenhuma plataforma móvel: o desafio vem de vãos longos, saltos duplos, dash e leitura do cenário — sem empilhamento de mecânicas.
 
 ## Arenas de chefe
 
@@ -129,11 +129,11 @@ Depois de cada arena existe uma câmara de saída independente, com portal anima
 - **Paletas por ambiente**: pátio em azul-noite com janelas âmbar, corredores em teal e terrazzo, ginásio em madeira e vinho, laboratório em aço azul e diretoria em vinho e dourado. O verde fica reservado ao Sistema Verde e à identidade do HUD.
 - **Piso contínuo**: superfícies desenhadas por trechos, com juntas de laje alinhadas ao mundo, rachaduras, manchas, poças, ralos, musgo e materiais próprios por tema — sem a antiga grade de blocos.
 - **Cenários** com parallax em camadas, skyline, fachada escolar contínua com janelas acesas/apagadas/quebradas, calhas, ar-condicionado, caixa d'água, relógio, cerca, postes e cones de luz. Interiores com armários, quadros de avisos, tanques de laboratório, racks, estantes, janelas com chuva e arquibancadas.
-- **Cutscenes encenadas**: VEGA aparece em primeiro plano, com aura, rim light e arma; a câmera faz **push-in** com tremor sutil, flash de abertura e vinheta. Nos alertas de chefe há holofotes na cor do alvo, linhas de velocidade radiais, névoa baixa, retículo de mira, silhueta gigante do chefe, partículas de brasas, cabeçalho **ALVO PRIORITÁRIO** e letterbox animado.
+- **Cutscenes animadas e enxutas**: **uma fala curta por slide**, com VEGA entrando em cena, câmera com push-in e tremor, flash, vinheta e muitas partículas. Nos alertas de chefe a silhueta entra deslizando, os holofotes varrem, as linhas de velocidade giram e o retículo pulsa — cabeçalho **ALVO PRIORITÁRIO** e letterbox animado.
 - **Inimigos** com silhuetas, cores e animações próprias por classe e variante, desenhadas por código — sem sprites externos.
-- **Chefes com sprites e ataques coerentes**: o **Porteiro** é a Armadura Animada (espada e escudo, pedras azuladas); a **Inspetora** é a Assassina das Sombras (leques de lâminas); o **Técnico** é o Ogro Bruto (marteladas e rochas); a **Coordenadora** é a Necromante (runas, clones e orbes); a **Diretora** é a Rainha-Aranha (teias, anéis e rajadas). Cada um mantém aura de fase, telegrafia e barra própria.
+- **Chefes com sprites e armas próprias**: o **Porteiro** empunha a espada da Armadura Animada (arcos de espada e pedras azuladas); a **Inspetora** usa suas duas adagas (leques de lâminas); o **Técnico** gira o martelo do Ogro Bruto (marteladas e rochas); a **Coordenadora** lança runas pelo cajado da Necromante; a **Diretora** ataca com as garras da Rainha-Aranha (teias, anéis e rajadas). A arma é desenhada na mão do sprite e acompanha o ataque.
 - **Personagens e armas redesenhados**: cada monitor tem rosto, cabelo, jaqueta, emblema e silhueta próprios; o bastão, o estilingue e o martelo ganharam sprites detalhados com brilho, correias e núcleo de energia.
-- **HUD informativo**: retrato animado, corações, energia, objetivo atual, progresso de checkpoints e de estações do tutorial, barra de progresso do mapa com marcação da arena, dica contextual, seletor de armas e barra de chefe com fases.
+- **HUD minimalista**: só retrato, corações, energia e a arma equipada; durante a luta aparece apenas a barra do chefe com as fases. O tutorial mantém seu lembrete de controle.
 
 ## Chefes
 
@@ -202,7 +202,7 @@ A chave nova é `codigo_verde_save_v1`. Saves antigos de `ferro9_save_v1` são l
 ```text
 index.html
 css/style.css
-assets/          — folhas de sprites dos inimigos e chefes
+assets/          — folhas de sprites dos chefes
 js/core.js       — constantes, utilidades, input, áudio, partículas, save
 js/level.js      — construtor de fases, temas, tutorial, níveis e histórias
 js/sprites.js    — carregamento das folhas, mapeamento e estilo dos ataques

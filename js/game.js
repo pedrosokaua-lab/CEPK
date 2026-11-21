@@ -691,7 +691,7 @@ class Game {
   }
 
   cutsceneText(slide) {
-    return slide ? slide.lines.join('\n') : '';
+    return slide ? (slide.lines[0] || '') : '';
   }
 
   updateCutscene(dt) {
@@ -705,7 +705,7 @@ class Game {
     }
 
     const total = this.cutsceneText(slide).length;
-    this.cutsceneReveal = Math.min(total, this.cutsceneReveal + dt * 46);
+    this.cutsceneReveal = Math.min(total, this.cutsceneReveal + dt * 90);
 
     if (Input.pressed('Escape')) {
       this.finishCutscene();
