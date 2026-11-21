@@ -116,6 +116,7 @@ Ao entrar na área final de cada fase, a câmera trava em uma arena dedicada:
 - Ao fim da cutscene, o **portão de entrada** se fecha e o **portão de saída** permanece travado durante a luta.
 - As arenas mantêm o tamanho original de **24 tiles de largura (768px internos)**, sem plataformas dentro da sala — o piso é livre para o combate.
 - **Jogador e chefe ficam contidos na arena** durante o combate: nem investidas, saltos, recuos ou atordoamentos atravessam os portões. **Os chefes não têm mais teleporte.** A contenção é reaplicada depois de cada atualização de física.
+- **Fora da luta o chefe é inerte:** não ataca e não pode ser atacado. Só leva dano quando a luta está ativa e o jogador está vivo dentro da arena; projéteis pendentes são limpos na morte.
 - A arena tem parede de fundo com painéis, treliça de teto, lâmpadas, **quatro refletores volumétricos**, holofote que segue o chefe, selo giratório, marca d'água com o nome do alvo e piso de combate com círculo, rachaduras e detritos.
 - Durante a luta, **luzes de emergência piscam**, um **lockdown vermelho** cobre a sala e uma linha de varredura percorre a arena.
 - Se o jogador cair, o chefe é resetado e a luta recomeça sem repetir a cutscene.

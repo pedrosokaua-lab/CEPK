@@ -3529,8 +3529,9 @@ class Boss {
       return;
     }
 
-    // Mesmo com o jogador morto, o chefe continua preso na arena.
+    // Fora da luta o chefe fica inerte: não ataca e não pode ser atacado.
     if (game.arena) this.arenaClamp(game);
+    if (!game.bossActive || game.bossDefeated) return;
     const p = game.player;
     if (!p || p.dead) return;
 
@@ -4072,12 +4073,14 @@ class Boss {
 
   takeDamage(n, game) {
     if (this.dead) return;
-    if (!this.active || (game && game.player && game.player.dead)) return;
-    if (!game || !game.arena || (this.cx >= game.arenaBounds().left && this.cx <= game.arenaBounds().right)) {
-      // Fase 1 é frágil; a partir da fase 2 o chefe endurece e leva mais tempo para cair.
-      const defence = this.phase === 1 ? 1 : this.phase === 2 ? 0.62 : 0.48;
-      this.hp -= Math.max(1, n * defence);
-    }
+    // Só leva dano durante a luta, com o jogador dentro da arena e vivo.
+    if (!game || !game.bossActive || game.bossDefeated) return;
+    if (!this.active || !game.player || game.player.dead) return;
+    const bounds = game.arenaBounds();
+    if (bounds && (game.player.cx < bounds.left || game.player.cx > bounds.right)) return;
+    // Fase 1 é frágil; a partir da fase 2 o chefe endurece e leva mais tempo para cair.
+    const defence = this.phase === 1 ? 1 : this.phase === 2 ? 0.62 : 0.48;
+    this.hp -= Math.max(1, n * defence);
     this.flash = 0.16;
     game.shake(0.25);
     Sfx.tone(160, 0.12, { type: 'square', vol: 0.1, slide: -60 });

@@ -1149,7 +1149,7 @@ class Game {
     p.parryChain = 0;
     p.parryChainTimer = 0;
     for (const cr of this.crumbles) cr.reset(this);
-    this.projectiles = this.projectiles.filter((pr) => pr.owner === 'player');
+    this.projectiles = [];
 
     // O chefe mantém a vida ao morrer. Só recupera se você demorar a voltar.
     if (this.boss && this.bossIntroDone && !this.bossDefeated) {
