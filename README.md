@@ -114,8 +114,8 @@ Ao entrar na área final de cada fase, a câmera trava em uma arena dedicada:
 - Um **gatilho** dispara a cutscene exclusiva do chefe (dois slides com arte própria).
 - **O chefe e a arena ficam escondidos até essa cutscene.** O chefe só é criado quando a luta começa; antes disso, a área é um corredor comum.
 - Ao fim da cutscene, o **portão de entrada** se fecha e o **portão de saída** permanece travado durante a luta.
-- Todas as arenas foram ampliadas para **34 tiles de largura (1088px internos)**, com três pilares de cobertura e muito espaço para investidas e teleportes.
-- **Jogador e chefe ficam contidos na arena** durante o combate: nem investidas, teleportes, saltos, recuos ou atordoamentos atravessam os portões. Os teleportes foram ajustados para não travarem nos cantos, com margem extra e verificação de parede. A contenção é reaplicada depois de cada atualização de física.
+- As arenas mantêm o tamanho original de **24 tiles de largura (768px internos)**, sem plataformas dentro da sala — o piso é livre para o combate.
+- **Jogador e chefe ficam contidos na arena** durante o combate: nem investidas, saltos, recuos ou atordoamentos atravessam os portões. **Os chefes não têm mais teleporte.** A contenção é reaplicada depois de cada atualização de física.
 - A arena tem parede de fundo com painéis, treliça de teto, lâmpadas, **quatro refletores volumétricos**, holofote que segue o chefe, selo giratório, marca d'água com o nome do alvo e piso de combate com círculo, rachaduras e detritos.
 - Durante a luta, **luzes de emergência piscam**, um **lockdown vermelho** cobre a sala e uma linha de varredura percorre a arena.
 - Se o jogador cair, o chefe é resetado e a luta recomeça sem repetir a cutscene.
@@ -141,7 +141,7 @@ Depois de cada arena existe uma câmara de saída independente com uma **porta/e
 - **O PORTEIRO** — guarda o pátio com investidas e ondas de choque. Arena: Guarita do Pátio.
 - **A INSPETORA** — caça à distância e corta o espaço com lâminas. Arena: Corredor Sem Saída.
 - **O TÉCNICO** — salta, gira e usa o peso da quadra. Arena: Quadra Fechada.
-- **A COORDENADORA** — clones, teleportes e padrões de projéteis. Arena: Protocolo de Contenção.
+- **A COORDENADORA** — clones, runas e padrões de projéteis. Arena: Protocolo de Contenção.
 - **A DIRETORA** — três fases, feixes, invocações e um sinal vermelho. Arena: Sinal Vermelho.
 
 Os chefes telegrafam ataques e podem ser atordoados com parry. **Todos os cinco têm três fases**: a fase 2 começa em 66% da vida e a fase 3 em 32%. A **fase 1 é deliberadamente mais fácil** — o chefe anda devagar, tem pausas longas e leva dano cheio. Na **fase 2 ele fica bem mais rápido e agressivo**, e passa a reduzir o dano recebido (38% menos na fase 2, 52% menos na fase 3), então a barra desce mais devagar. O chefe fica preso à arena mesmo se o jogador morrer, e tiros em voo não podem derrubá-lo depois da morte. Cada um tem cutscene de entrada, arena temática e sala de saída própria.
@@ -151,9 +151,9 @@ Vida e ritmo dos chefes no modo Normal:
 | Chefe | Vida | Velocidade | Padrões principais |
 | --- | --- | --- | --- |
 | O Porteiro | 100 | 84 | investida, marretada, ondas de choque, reforços, terremoto, meteoros |
-| A Inspetora | 150 | 96 | leque, lâminas, teleporte, chuva, feixe, laser, barragem |
+| A Inspetora | 150 | 96 | leque, lâminas, giro, chuva, feixe, laser, barragem |
 | O Técnico | 210 | 92 | salto, giro, pedras, ondas, impacto, terremoto, meteoros |
-| A Coordenadora | 280 | 104 | clones, teleporte, leque, anel, chuva, órbita, laser |
+| A Coordenadora | 280 | 104 | clones, leque, anel, chuva, órbita, laser |
 | A Diretora | 420 | 112 | anel, feixe, reforços, clones, chuva, leque, laser, meteoros, órbita, terremoto |
 
 Além dos ataques clássicos, cada chefe ganhou **seis novos golpes** distribuídos pelas três fases:
