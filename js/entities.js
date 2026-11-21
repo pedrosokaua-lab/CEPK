@@ -185,7 +185,6 @@ class Player {
     this.hp = 5;
     this.maxEnergy = Math.round(100 * this.energyMul);
     this.energy = this.maxEnergy;
-    this.energyLock = 0;
     this.invuln = 0;
     this.hurtFlash = 0;
     this.coyote = 0;
@@ -219,12 +218,6 @@ class Player {
     this.comboTimer = 0;
     this.recoil = 0;
 
-    this.pulseCd = 0;
-    this.pulseFlash = 0;
-    this.superTimer = 0;
-    this.shield = false;
-    this.focus = false;
-
     this.dead = false;
     this.deadTimer = 0;
     this.justDoubleJumped = false;
@@ -236,13 +229,6 @@ class Player {
     this.standingMover = null;
     this.wallJumpCd = 0;
     this.wallSlide = false;
-    this.inWind = false;
-    this.glideActive = false;
-
-    // gancho
-    this.grappleCd = 0;
-    this.grappleTimer = 0;
-    this.grapplePoint = null;
 
     // ataques carregados
     this.chargeTime = 0;
@@ -252,7 +238,6 @@ class Player {
   get cx() { return this.x + this.w / 2; }
   get cy() { return this.y + this.h / 2; }
   get bottom() { return this.y + this.h; }
-  get superActive() { return this.superTimer > 0; }
 
   update(dt) {
     const game = this.game;
@@ -265,9 +250,7 @@ class Player {
 
     this.invuln = Math.max(0, this.invuln - dt);
     this.hurtFlash = Math.max(0, this.hurtFlash - dt);
-    this.energyLock = Math.max(0, this.energyLock - dt);
     this.landSquash = Math.max(0, this.landSquash - dt * 4);
-    this.superTimer = Math.max(0, this.superTimer - dt);
     this.dashCd = Math.max(0, this.dashCd - dt);
     this.dashTimer = Math.max(0, this.dashTimer - dt);
     this.parryCd = Math.max(0, this.parryCd - dt);
@@ -280,13 +263,8 @@ class Player {
     this.attackTimer = Math.max(0, this.attackTimer - dt);
     this.comboTimer = Math.max(0, this.comboTimer - dt);
     this.recoil = Math.max(0, this.recoil - dt);
-    this.pulseCd = Math.max(0, this.pulseCd - dt);
-    this.pulseFlash = Math.max(0, this.pulseFlash - dt);
     this.wallJumpCd = Math.max(0, this.wallJumpCd - dt);
-    this.grappleCd = Math.max(0, this.grappleCd - dt);
     this.wallSlide = false;
-    this.inWind = false;
-    this.glideActive = false;
     this.prevBottom = this.bottom;
     if (this.comboTimer <= 0) this.combo = 0;
 
@@ -296,16 +274,11 @@ class Player {
     if (Input.pressed('Digit3', 'Numpad3')) game.weaponIndex = 2;
     game.weaponIndex = clamp(game.weaponIndex, 0, WEAPONS.length - 1);
 
-    /* ------- poderes (dependências do movimento) ------- */
-    const powers = game.powers;
-    const hasEnergy = this.energy > 0 && this.energyLock <= 0;
-
     /* ------- movimento ------- */
     const left = Input.isDown('ArrowLeft', 'KeyA');
     const right = Input.isDown('ArrowRight', 'KeyD');
     const running = Input.isDown('ShiftLeft', 'ShiftRight');
-    const superOn = this.superActive;
-    const maxSpeed = (running ? 338 : 226) * this.speedMul * (superOn ? 1.2 : 1);
+    const maxSpeed = (running ? 338 : 226) * this.speedMul;
     const accel = (this.onGround ? 3400 : 2350) * (0.85 + this.speedMul * 0.15);
 
     // Mira de 8 direções: WASD/setas definem o lado do golpe e do tiro.
@@ -323,170 +296,114 @@ class Player {
     }
     this.attackAngle = Math.atan2(this.attackAimY, this.attackAimX);
 
-    const grappling = this.grappleTimer > 0 && !!this.grapplePoint;
-    if (grappling) {
-      this.updateGrapplePull(dt, game);
-    } else {
-      if (this.dashTimer <= 0) {
-        if (left && !right) {
-          this.vx -= accel * dt;
-          this.face = -1;
-        } else if (right && !left) {
-          this.vx += accel * dt;
-          this.face = 1;
-        } else {
-          this.vx = approach(this.vx, 0, (this.onGround ? 3100 : 540) * dt);
-        }
-        this.vx = clamp(this.vx, -maxSpeed, maxSpeed);
-      }
-
-      /* ------- impulso ------- */
-      if (Input.pressed('ShiftLeft', 'ShiftRight', 'KeyL') && this.dashCd <= 0 && (this.onGround || this.airDash > 0)) {
-        if (!this.onGround) this.airDash--;
-        this.dashTimer = 0.16;
-        this.dashCd = 0.65;
-        this.justDashed = true;
-        this.invuln = Math.max(this.invuln, 0.22);
-        this.vx = this.face * 720 * this.speedMul;
-        this.vy = 0;
-        Sfx.tone(300, 0.14, { type: 'sawtooth', vol: 0.08, slide: 260 });
-        Sfx.noise(0.12, 0.06, { freq: 1200 });
-        FX.burst(this.cx, this.cy, 14, {
-          color: '#6dff9e', speedMax: 260, lifeMax: 0.4, shape: 'line',
-          angle: this.face > 0 ? Math.PI : 0, spread: 0.8
-        });
-      }
-
-      if (this.dashTimer > 0) {
-        this.vx = this.face * 720 * this.speedMul;
-        this.vy = Math.min(this.vy, 30);
-      }
-
-      /* ------- pulo / pulo duplo / parede ------- */
-      const jumpDown = Input.isDown('Space', 'KeyW', 'ArrowUp');
-      if (Input.pressed('Space', 'KeyW', 'ArrowUp')) this.jumpBuf = 0.13;
-      this.jumpBuf -= dt;
-
-      if (this.onGround) {
-        this.coyote = 0.1;
-        this.jumpsLeft = 2;
-        this.airDash = 1;
+    if (this.dashTimer <= 0) {
+      if (left && !right) {
+        this.vx -= accel * dt;
+        this.face = -1;
+      } else if (right && !left) {
+        this.vx += accel * dt;
+        this.face = 1;
       } else {
-        this.coyote -= dt;
+        this.vx = approach(this.vx, 0, (this.onGround ? 3100 : 540) * dt);
       }
-
-      const wallTouch = this.hitWall !== 0 && !this.onGround;
-      if (this.jumpBuf > 0 && this.dashTimer <= 0) {
-        if (wallTouch && this.wallJumpCd <= 0) {
-          this.vy = superOn ? -790 : -720;
-          this.vx = -this.hitWall * 360 * this.speedMul;
-          this.jumpBuf = 0;
-          this.wallJumpCd = 0.18;
-          this.jumpsLeft = Math.max(this.jumpsLeft, 1);
-          this.airDash = Math.max(this.airDash, 1);
-          this.justJumped = true;
-          this.face = -this.hitWall;
-          this.landSquash = 0.2;
-          Sfx.tone(300, 0.14, { type: 'square', vol: 0.09, slide: 210 });
-          FX.burst(this.cx + this.hitWall * 14, this.cy, 12, {
-            color: '#7fe7ff', speedMax: 200, lifeMax: 0.45, shape: 'line',
-            angle: this.hitWall > 0 ? Math.PI : 0, spread: 1.1
-          });
-        } else if (this.onGround || this.coyote > 0) {
-          this.vy = superOn ? -780 : -665;
-          this.jumpBuf = 0;
-          this.coyote = 0;
-          this.onGround = false;
-          this.jumpsLeft = 1;
-          this.justJumped = true;
-          this.landSquash = 0.2;
-          Sfx.tone(superOn ? 340 : 220, 0.16, { type: 'square', vol: 0.1, slide: superOn ? 340 : 130 });
-          FX.burst(this.cx, this.bottom, superOn ? 14 : 7, {
-            color: superOn ? '#ffd24d' : '#6dff9e',
-            speedMax: 180, lifeMax: 0.5, gravity: 500
-          });
-        } else if (this.jumpsLeft > 0) {
-          this.vy = superOn ? -720 : -610;
-          this.jumpsLeft--;
-          this.jumpBuf = 0;
-          this.justDoubleJumped = true;
-          this.landSquash = 0.2;
-          Sfx.tone(420, 0.14, { type: 'triangle', vol: 0.1, slide: 180 });
-          FX.burst(this.cx, this.cy + 8, 16, {
-            color: '#7fe7ff', speedMax: 180, lifeMax: 0.5, shape: 'line'
-          });
-          FX.spawn(this.cx, this.cy + 8, {
-            vx: 0, vy: 0, life: 0.35, size: 10, color: '#7fe7ff'
-          });
-        }
-      }
-      if (!jumpDown && this.vy < -240) this.vy = -240;
-
-      /* ------- planador ------- */
-      const gliding = powers.has('glide') && hasEnergy &&
-        Input.isDown('KeyH') && !this.onGround && this.vy > -90 && this.dashTimer <= 0;
-      this.glideActive = gliding;
-      if (gliding) {
-        this.vy = Math.min(this.vy + 460 * dt, 138);
-        this.vx = clamp(this.vx, -maxSpeed * 1.15, maxSpeed * 1.15);
-        if (Math.random() < dt * 14) {
-          FX.spawn(this.cx + rand(-16, 16), this.cy + 10, {
-            vx: rand(-30, 30), vy: rand(10, 60), life: rand(0.25, 0.5),
-            size: rand(1.5, 3), color: '#8fd4ff', glow: true
-          });
-        }
-      } else {
-        const gravity = (this.dashTimer > 0 ? 0 : 2000) * (this.vy > 0 ? 1.1 : 1);
-        this.vy = Math.min(this.vy + gravity * dt, 1080);
-      }
-
-      // Parede: segura a queda e prepara o salto de parede.
-      if (!this.onGround && this.hitWall !== 0 && this.vy > 0) {
-        this.wallSlide = true;
-        this.vy = Math.min(this.vy, 132);
-        if (Math.random() < dt * 18) {
-          FX.spawn(this.cx + this.hitWall * 14, this.cy + rand(-10, 16), {
-            vx: -this.hitWall * rand(20, 70), vy: rand(-20, 40),
-            life: rand(0.2, 0.4), size: rand(1.5, 3), color: '#7fe7ff', glow: true
-          });
-        }
-      }
-
-      /* ------- vento ------- */
-      for (const wz of game.winds) {
-        if (!wz.contains(this)) continue;
-        this.inWind = true;
-        this.vy += wz.forceY * dt;
-        this.vx += wz.forceX * dt;
-        if (wz.forceY < 0) this.vy = Math.max(this.vy, -560);
-        this.vx = clamp(this.vx, -maxSpeed * 1.6, maxSpeed * 1.6);
-      }
+      this.vx = clamp(this.vx, -maxSpeed, maxSpeed);
     }
 
-    this.focus = powers.has('focus') && hasEnergy && Input.isDown('KeyK');
-    this.shield = powers.has('shield') && hasEnergy && Input.isDown('KeyR');
-
-    let drain = 0;
-    if (this.focus) drain += 13;
-    if (this.shield) drain += 24;
-    if (this.glideActive) drain += 9;
-
-    if (Input.pressed('KeyQ') && powers.has('pulse')) game.playerPulse();
-    if (Input.pressed('KeyG') && powers.has('grapple')) this.tryGrapple(game);
-
-    if (Input.pressed('KeyF') && powers.has('super') && this.energy >= 30 && this.superTimer <= 0) {
-      this.energy -= 30;
-      this.superTimer = 6;
-      game.toast('ADRENALINA ATIVADA', '#ffd24d');
-      game.shake(0.35);
-      Sfx.tone(180, 0.4, { type: 'sawtooth', vol: 0.12, slide: 620 });
-      FX.burst(this.cx, this.cy, 26, {
-        color: '#ffd24d', speedMax: 320, lifeMax: 0.8, sizeMax: 6
+    /* ------- impulso ------- */
+    if (Input.pressed('ShiftLeft', 'ShiftRight', 'KeyL') && this.dashCd <= 0 && (this.onGround || this.airDash > 0)) {
+      if (!this.onGround) this.airDash--;
+      this.dashTimer = 0.16;
+      this.dashCd = 0.65;
+      this.justDashed = true;
+      this.invuln = Math.max(this.invuln, 0.22);
+      this.vx = this.face * 720 * this.speedMul;
+      this.vy = 0;
+      Sfx.tone(300, 0.14, { type: 'sawtooth', vol: 0.08, slide: 260 });
+      Sfx.noise(0.12, 0.06, { freq: 1200 });
+      FX.burst(this.cx, this.cy, 14, {
+        color: '#6dff9e', speedMax: 260, lifeMax: 0.4, shape: 'line',
+        angle: this.face > 0 ? Math.PI : 0, spread: 0.8
       });
     }
 
-    if (this.focus) game.usedFocus = true;
-    if (this.shield) game.usedShield = true;
+    if (this.dashTimer > 0) {
+      this.vx = this.face * 720 * this.speedMul;
+      this.vy = Math.min(this.vy, 30);
+    }
+
+    /* ------- pulo / pulo duplo / parede ------- */
+    const jumpDown = Input.isDown('Space', 'KeyW', 'ArrowUp');
+    if (Input.pressed('Space', 'KeyW', 'ArrowUp')) this.jumpBuf = 0.13;
+    this.jumpBuf -= dt;
+
+    if (this.onGround) {
+      this.coyote = 0.1;
+      this.jumpsLeft = 2;
+      this.airDash = 1;
+    } else {
+      this.coyote -= dt;
+    }
+
+    const wallTouch = this.hitWall !== 0 && !this.onGround;
+    if (this.jumpBuf > 0 && this.dashTimer <= 0) {
+      if (wallTouch && this.wallJumpCd <= 0) {
+        this.vy = -720;
+        this.vx = -this.hitWall * 360 * this.speedMul;
+        this.jumpBuf = 0;
+        this.wallJumpCd = 0.18;
+        this.jumpsLeft = Math.max(this.jumpsLeft, 1);
+        this.airDash = Math.max(this.airDash, 1);
+        this.justJumped = true;
+        this.face = -this.hitWall;
+        this.landSquash = 0.2;
+        Sfx.tone(300, 0.14, { type: 'square', vol: 0.09, slide: 210 });
+        FX.burst(this.cx + this.hitWall * 14, this.cy, 12, {
+          color: '#7fe7ff', speedMax: 200, lifeMax: 0.45, shape: 'line',
+          angle: this.hitWall > 0 ? Math.PI : 0, spread: 1.1
+        });
+      } else if (this.onGround || this.coyote > 0) {
+        this.vy = -665;
+        this.jumpBuf = 0;
+        this.coyote = 0;
+        this.onGround = false;
+        this.jumpsLeft = 1;
+        this.justJumped = true;
+        this.landSquash = 0.2;
+        Sfx.tone(220, 0.16, { type: 'square', vol: 0.1, slide: 130 });
+        FX.burst(this.cx, this.bottom, 7, {
+          color: '#6dff9e', speedMax: 180, lifeMax: 0.5, gravity: 500
+        });
+      } else if (this.jumpsLeft > 0) {
+        this.vy = -610;
+        this.jumpsLeft--;
+        this.jumpBuf = 0;
+        this.justDoubleJumped = true;
+        this.landSquash = 0.2;
+        Sfx.tone(420, 0.14, { type: 'triangle', vol: 0.1, slide: 180 });
+        FX.burst(this.cx, this.cy + 8, 16, {
+          color: '#7fe7ff', speedMax: 180, lifeMax: 0.5, shape: 'line'
+        });
+        FX.spawn(this.cx, this.cy + 8, {
+          vx: 0, vy: 0, life: 0.35, size: 10, color: '#7fe7ff'
+        });
+      }
+    }
+    if (!jumpDown && this.vy < -240) this.vy = -240;
+
+    const gravity = (this.dashTimer > 0 ? 0 : 2000) * (this.vy > 0 ? 1.1 : 1);
+    this.vy = Math.min(this.vy + gravity * dt, 1080);
+
+    // Parede: segura a queda e prepara o salto de parede.
+    if (!this.onGround && this.hitWall !== 0 && this.vy > 0) {
+      this.wallSlide = true;
+      this.vy = Math.min(this.vy, 132);
+      if (Math.random() < dt * 18) {
+        FX.spawn(this.cx + this.hitWall * 14, this.cy + rand(-10, 16), {
+          vx: -this.hitWall * rand(20, 70), vy: rand(-20, 40),
+          life: rand(0.2, 0.4), size: rand(1.5, 3), color: '#7fe7ff', glow: true
+        });
+      }
+    }
 
     /* ------- combate ------- */
     const weapon = WEAPONS[game.weaponIndex];
@@ -524,16 +441,8 @@ class Player {
       });
     }
 
-    if (drain > 0) {
-      this.energy = Math.max(0, this.energy - drain * dt);
-      if (this.energy <= 0) {
-        this.energyLock = 0.8;
-        this.focus = this.shield = false;
-      }
-    } else {
-      const regen = game.diff ? game.diff.energyRegen : 1;
-      this.energy = Math.min(this.maxEnergy, this.energy + 10 * regen * this.energyMul * dt);
-    }
+    const regen = game.diff ? game.diff.energyRegen : 1;
+    this.energy = Math.min(this.maxEnergy, this.energy + 10 * regen * this.energyMul * dt);
 
     /* ------- física ------- */
     this.prevVy = this.vy;
@@ -580,7 +489,7 @@ class Player {
     if (Math.abs(ax) > 0.15) this.face = ax > 0 ? 1 : -1;
 
     const finisher = weapon.id === 'bastao' && this.combo === 3;
-    const reach = weapon.range + (finisher ? 10 : 0) + (this.superActive ? 8 : 0);
+    const reach = weapon.range + (finisher ? 10 : 0);
     const horizontal = Math.abs(ax) > 0.35;
     const vertical = Math.abs(ay) > 0.35;
     const boxW = horizontal ? reach : Math.max(20, this.w * 0.92);
@@ -591,8 +500,8 @@ class Player {
       w: boxW,
       h: boxH
     };
-    const damage = Math.max(1, Math.round((weapon.damage + (finisher ? 1 : 0) + (this.superActive ? 2 : 0)) * this.damageMul));
-    const bossDamage = Math.max(1, Math.round((weapon.bossDamage + (finisher ? 2 : 0) + (this.superActive ? 3 : 0)) * this.damageMul));
+    const damage = Math.max(1, Math.round((weapon.damage + (finisher ? 1 : 0)) * this.damageMul));
+    const bossDamage = Math.max(1, Math.round((weapon.bossDamage + (finisher ? 2 : 0)) * this.damageMul));
     const force = weapon.id === 'martelo' ? 700 : 420;
     let hit = false;
 
@@ -667,8 +576,8 @@ class Player {
     game.projectiles.push(new Projectile(px, py, dx * weapon.speed, dy * weapon.speed, 'player', {
       color: weapon.color,
       r: 5,
-      damage: Math.max(1, Math.round((weapon.damage + (this.superActive ? 2 : 0)) * this.damageMul)),
-      bossDamage: Math.max(1, Math.round((weapon.bossDamage + (this.superActive ? 3 : 0)) * this.damageMul)),
+      damage: Math.max(1, Math.round(weapon.damage * this.damageMul)),
+      bossDamage: Math.max(1, Math.round(weapon.bossDamage * this.damageMul)),
       life: 1.2,
       kind: 'pellet',
       parryable: false
@@ -715,81 +624,6 @@ class Player {
     } else {
       this.x = c.x + c.w;
       this.vx = Math.max(0, this.vx);
-    }
-  }
-
-  tryGrapple(game) {
-    if (this.grappleCd > 0) return false;
-    if (this.energy < 12) {
-      game.toast('ENERGIA INSUFICIENTE', '#ff8fa5', 0.9);
-      return false;
-    }
-    const points = game.grapples || [];
-    const ax = this.attackAimX;
-    const ay = this.attackAimY;
-    let best = null;
-    let bestD = 440;
-    for (const gp of points) {
-      if (!gp || gp.dead) continue;
-      const dx = gp.x - this.cx;
-      const dy = gp.y - this.cy;
-      const d = Math.hypot(dx, dy);
-      if (d < 28 || d > 440) continue;
-      const dot = (dx / d) * ax + (dy / d) * ay;
-      if (dot < -0.15) continue;
-      if (segmentBlocked(game.level, this.cx, this.cy, gp.x, gp.y, 14)) continue;
-      if (d < bestD) {
-        bestD = d;
-        best = gp;
-      }
-    }
-    if (!best) {
-      game.toast('SEM GANCHO NA MIRA', '#8fa8bb', 0.9);
-      return false;
-    }
-    this.energy -= 12;
-    this.grappleCd = 0.7;
-    this.grapplePoint = best;
-    this.grappleTimer = 0.85;
-    this.vx = 0;
-    this.vy = 0;
-    this.landSquash = 0.15;
-    game.shake(0.16);
-    Sfx.tone(760, 0.12, { type: 'sine', vol: 0.07, slide: -260 });
-    FX.burst(best.x, best.y, 12, { color: '#ff9ad5', speedMax: 220, lifeMax: 0.45 });
-    return true;
-  }
-
-  updateGrapplePull(dt, game) {
-    const gp = this.grapplePoint;
-    if (!gp) {
-      this.grappleTimer = 0;
-      return;
-    }
-    this.grappleTimer -= dt;
-    const dx = gp.x - this.cx;
-    const dy = gp.y + 8 - this.cy;
-    const d = Math.hypot(dx, dy) || 1;
-    if (d < 38 || this.grappleTimer <= 0) {
-      this.grappleTimer = 0;
-      this.grapplePoint = null;
-      this.vx = (dx / d) * 230;
-      this.vy = -445;
-      this.jumpsLeft = Math.max(this.jumpsLeft, 1);
-      this.airDash = Math.max(this.airDash, 1);
-      Sfx.tone(520, 0.1, { type: 'triangle', vol: 0.06, slide: 180 });
-      FX.burst(this.cx, this.cy, 12, { color: '#ff9ad5', speedMax: 190, lifeMax: 0.4 });
-      return;
-    }
-    const spd = 1120;
-    this.vx = (dx / d) * spd;
-    this.vy = (dy / d) * spd;
-    this.face = dx >= 0 ? 1 : -1;
-    if (Math.random() < dt * 24) {
-      FX.spawn(this.cx, this.cy, {
-        vx: rand(-30, 30), vy: rand(-30, 30),
-        life: 0.3, size: rand(2, 4), color: '#ff9ad5'
-      });
     }
   }
 
@@ -840,9 +674,9 @@ class Player {
     let hit = false;
 
     if (weapon.id === 'bastao') {
-      const radius = 108 + (this.superActive ? 18 : 0);
-      const damage = Math.max(1, Math.round((weapon.damage + 3 + (this.superActive ? 3 : 0)) * this.damageMul));
-      const bossDamage = Math.max(1, Math.round((weapon.bossDamage + 5 + (this.superActive ? 5 : 0)) * this.damageMul));
+      const radius = 108;
+      const damage = Math.max(1, Math.round((weapon.damage + 3) * this.damageMul));
+      const bossDamage = Math.max(1, Math.round((weapon.bossDamage + 5) * this.damageMul));
       const box = { x: this.cx - radius, y: this.cy - radius, w: radius * 2, h: radius * 2 };
       for (const e of game.enemies) {
         if (e.dead || !aabb(box, e)) continue;
@@ -884,8 +718,8 @@ class Player {
       }
       game.pulseRings.push({ x: this.cx, y: this.cy, r: 18, life: 0.42, max: 0.42, color: '#7fe7ff' });
     } else if (weapon.id === 'estilingue') {
-      const damage = Math.max(1, Math.round((weapon.damage + 2 + (this.superActive ? 2 : 0)) * this.damageMul));
-      const bossDamage = Math.max(1, Math.round((weapon.bossDamage + 4 + (this.superActive ? 4 : 0)) * this.damageMul));
+      const damage = Math.max(1, Math.round((weapon.damage + 2) * this.damageMul));
+      const bossDamage = Math.max(1, Math.round((weapon.bossDamage + 4) * this.damageMul));
       for (let i = -1; i <= 1; i++) {
         const ang = angle + i * 0.17;
         game.projectiles.push(new Projectile(
@@ -906,9 +740,9 @@ class Player {
       });
       hit = true;
     } else {
-      const radius = 118 + (this.superActive ? 16 : 0);
-      const damage = Math.max(1, Math.round((weapon.damage + 3 + (this.superActive ? 3 : 0)) * this.damageMul));
-      const bossDamage = Math.max(1, Math.round((weapon.bossDamage + 5 + (this.superActive ? 5 : 0)) * this.damageMul));
+      const radius = 118;
+      const damage = Math.max(1, Math.round((weapon.damage + 3) * this.damageMul));
+      const bossDamage = Math.max(1, Math.round((weapon.bossDamage + 5) * this.damageMul));
       const box = { x: this.cx - radius, y: this.cy - radius, w: radius * 2, h: radius * 2 };
       for (const e of game.enemies) {
         if (e.dead || !aabb(box, e)) continue;
@@ -963,13 +797,6 @@ class Player {
       this.parrySuccess();
       return false;
     }
-    if (this.shield) {
-      this.energy = Math.max(0, this.energy - 9);
-      this.invuln = Math.max(this.invuln, 0.32);
-      FX.burst(this.cx, this.cy, 9, { color: '#b57bff', speedMax: 160, lifeMax: 0.4 });
-      Sfx.tone(420, 0.1, { type: 'sine', vol: 0.06, slide: -120 });
-      return false;
-    }
     const diff = this.game.diff;
     if (diff && diff.dmg !== 1) amount = Math.max(1, Math.round(amount * diff.dmg));
     this.hp -= amount;
@@ -1005,20 +832,19 @@ class Player {
     const walk = this.onGround && Math.abs(this.vx) > 30 ? Math.sin(this.anim * 14) * 3 : 0;
     const bob = this.onGround ? 0 : Math.sin(this.anim * 5) * 1.5;
     const squash = 1 - this.landSquash * 0.12;
-    const superOn = this.superActive;
 
     const skin = ch.skin;
     const skinDark = ch.skinDark;
-    const jacket = superOn ? '#ffd24d' : ch.jacket;
-    const jacketDark = superOn ? '#b9861f' : ch.jacketDark;
-    const jacketLight = superOn ? '#fff2b0' : ch.jacketLight;
+    const jacket = ch.jacket;
+    const jacketDark = ch.jacketDark;
+    const jacketLight = ch.jacketLight;
     const hair = ch.hair;
     const hairLight = ch.hairLight;
-    const shirt = superOn ? '#fff8d8' : ch.shirt;
-    const badge = superOn ? '#ffffff' : ch.badge;
+    const shirt = ch.shirt;
+    const badge = ch.badge;
     const boot = ch.boot;
     const pants = ch.pants;
-    const accent = superOn ? '#fff2b0' : ch.accent;
+    const accent = ch.accent;
 
     // rastro do dash
     if (this.dashTimer > 0) {
@@ -1419,92 +1245,6 @@ class Player {
         ctx.lineWidth = 5 * (1 - k) + 1;
         ctx.beginPath();
         ctx.arc(cx, cy, 39 + k * 95, 0, TAU);
-        ctx.stroke();
-      }
-      ctx.restore();
-    }
-
-    if (this.shield) {
-      const t = performance.now() / 1000;
-      const rr = 52 + Math.sin(t * 5) * 3;
-      ctx.save();
-      ctx.globalCompositeOperation = 'lighter';
-      ctx.strokeStyle = 'rgba(181,123,255,0.9)';
-      ctx.fillStyle = 'rgba(181,123,255,0.10)';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(x + this.w / 2, y + 20, rr, 0, TAU);
-      ctx.fill();
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    if (this.focus) {
-      const t = performance.now() / 1000;
-      ctx.save();
-      ctx.globalCompositeOperation = 'lighter';
-      ctx.strokeStyle = 'rgba(127,231,255,0.55)';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(x + this.w / 2, y + 20, 40 + Math.sin(t * 6) * 4, 0, TAU);
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    if (this.superActive) {
-      const t = performance.now() / 1000;
-      ctx.save();
-      ctx.globalCompositeOperation = 'lighter';
-      ctx.strokeStyle = '#ffd24d';
-      ctx.globalAlpha = 0.8;
-      ctx.lineWidth = 2;
-      for (let i = 0; i < 4; i++) {
-        const a = t * 6 + i * 1.7;
-        const rr = 24 + Math.sin(t * 9 + i) * 8;
-        ctx.beginPath();
-        ctx.arc(x + this.w / 2, y + 20, rr, a, a + 0.5);
-        ctx.stroke();
-      }
-      ctx.restore();
-    }
-
-    if (this.grapplePoint) {
-      const gx = this.grapplePoint.x - cam.x;
-      const gy = this.grapplePoint.y - cam.y;
-      const hx = x + this.w / 2 + this.face * 8;
-      const hy = y + 18;
-      ctx.save();
-      ctx.globalCompositeOperation = 'lighter';
-      ctx.strokeStyle = 'rgba(255,154,213,0.9)';
-      ctx.shadowColor = '#ff9ad5';
-      ctx.shadowBlur = 10;
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.moveTo(hx, hy);
-      ctx.lineTo(gx, gy);
-      ctx.stroke();
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.arc(hx, hy, 3, 0, TAU);
-      ctx.fill();
-      ctx.restore();
-    }
-
-    if (this.glideActive) {
-      const t = performance.now() / 1000;
-      const flap = Math.sin(t * 9) * 4;
-      ctx.save();
-      ctx.globalCompositeOperation = 'lighter';
-      ctx.fillStyle = 'rgba(143,212,255,0.28)';
-      ctx.strokeStyle = 'rgba(200,244,255,0.75)';
-      ctx.lineWidth = 2;
-      for (const side of [-1, 1]) {
-        ctx.beginPath();
-        ctx.moveTo(x + this.w / 2 + side * 5, y + 18);
-        ctx.lineTo(x + this.w / 2 + side * (34 + flap), y + 8 + flap);
-        ctx.lineTo(x + this.w / 2 + side * 28, y + 36);
-        ctx.closePath();
-        ctx.fill();
         ctx.stroke();
       }
       ctx.restore();
@@ -1951,135 +1691,6 @@ class MovingPlatform {
       ctx.lineTo(ax + 8, y + this.h / 2 - 3);
       ctx.closePath();
       ctx.fill();
-    }
-    ctx.restore();
-  }
-}
-
-/* ------------------------------ ZONA DE VENTO ------------------------------ */
-
-class WindZone {
-  constructor(entity) {
-    this.x = entity.tx * TILE;
-    this.y = entity.ty * TILE;
-    this.w = (entity.w || 3) * TILE;
-    this.h = (entity.h || 6) * TILE;
-    this.forceX = entity.forceX || 0;
-    this.forceY = entity.forceY ?? -2450;
-    this.color = entity.color || '#8fe4ff';
-    this.t = rand(0, TAU);
-    this.dead = false;
-  }
-
-  update(dt) {
-    this.t += dt;
-    if (Math.random() < dt * 22) {
-      FX.spawn(this.x + rand(0, this.w), this.y + rand(0, this.h), {
-        vx: this.forceX * 0.012 + rand(-20, 20),
-        vy: this.forceY * 0.055 + rand(-30, 30),
-        life: rand(0.35, 0.8), size: rand(1.5, 3.5),
-        color: this.color, glow: true, shape: 'line'
-      });
-    }
-  }
-
-  contains(body) {
-    return body.x + body.w > this.x + 4 && body.x < this.x + this.w - 4 &&
-      body.y + body.h > this.y && body.y < this.y + this.h;
-  }
-
-  render(ctx, cam) {
-    const x = this.x - cam.x;
-    const y = this.y - cam.y;
-    ctx.save();
-    ctx.globalCompositeOperation = 'lighter';
-    const g = ctx.createLinearGradient(0, y + this.h, 0, y);
-    g.addColorStop(0, withAlpha(this.color, 0.02));
-    g.addColorStop(0.5, withAlpha(this.color, 0.07));
-    g.addColorStop(1, withAlpha(this.color, 0.13));
-    ctx.fillStyle = g;
-    ctx.fillRect(x, y, this.w, this.h);
-    ctx.strokeStyle = withAlpha(this.color, 0.22);
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([8, 12]);
-    ctx.strokeRect(x + 1, y + 1, this.w - 2, this.h - 2);
-    ctx.setLineDash([]);
-    // correntes de ar
-    for (let i = 0; i < 6; i++) {
-      const px = x + 12 + ((i * 47 + this.t * 26) % Math.max(20, this.w - 24));
-      const phase = (this.t * 1.6 + i * 0.37) % 1;
-      const py = y + this.h * (1 - phase);
-      ctx.strokeStyle = withAlpha(this.color, 0.18 + phase * 0.22);
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(px, py);
-      ctx.lineTo(px + Math.sin(this.t * 3 + i) * 5, py - 16 - phase * 18);
-      ctx.stroke();
-    }
-    // setas
-    ctx.fillStyle = withAlpha(this.color, 0.4);
-    for (let i = 0; i < 3; i++) {
-      const ax = x + this.w / 2;
-      const ay = y + 30 + i * 42 + Math.sin(this.t * 2 + i) * 5;
-      ctx.beginPath();
-      ctx.moveTo(ax, ay);
-      ctx.lineTo(ax - 6, ay + 9);
-      ctx.lineTo(ax + 6, ay + 9);
-      ctx.closePath();
-      ctx.fill();
-    }
-    ctx.restore();
-  }
-}
-
-/* ------------------------------ PONTO DE GANCHO ------------------------------ */
-
-class GrapplePoint {
-  constructor(entity) {
-    this.x = entity.tx * TILE + TILE / 2;
-    this.y = entity.ty * TILE + TILE / 2;
-    this.color = entity.color || '#ff9ad5';
-    this.t = rand(0, TAU);
-    this.dead = false;
-  }
-
-  update(dt) {
-    this.t += dt;
-  }
-
-  render(ctx, cam) {
-    const x = this.x - cam.x;
-    const y = this.y - cam.y;
-    const pulse = 0.5 + Math.sin(this.t * 4) * 0.5;
-    ctx.save();
-    ctx.globalCompositeOperation = 'lighter';
-    ctx.strokeStyle = withAlpha(this.color, 0.25 + pulse * 0.25);
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(x, y, 22 + pulse * 7, 0, TAU);
-    ctx.stroke();
-    ctx.strokeStyle = this.color;
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(x, y, 12, 0, TAU);
-    ctx.stroke();
-    ctx.fillStyle = withAlpha(this.color, 0.22 + pulse * 0.2);
-    ctx.beginPath();
-    ctx.arc(x, y, 10, 0, TAU);
-    ctx.fill();
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.arc(x, y, 3, 0, TAU);
-    ctx.fill();
-    // ganchos
-    for (let i = 0; i < 3; i++) {
-      const a = this.t * 1.8 + (TAU * i) / 3;
-      ctx.strokeStyle = withAlpha(this.color, 0.75);
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(x + Math.cos(a) * 13, y + Math.sin(a) * 13);
-      ctx.lineTo(x + Math.cos(a) * 19, y + Math.sin(a) * 19);
-      ctx.stroke();
     }
     ctx.restore();
   }
@@ -5061,12 +4672,6 @@ class Projectile {
           if (this.owner === 'enemy') this.reflect(game);
           return;
         }
-        if (p.shield) {
-          p.energy = Math.max(0, p.energy - 6);
-          this.explode(game);
-          FX.burst(this.x, this.y, 6, { color: '#b57bff', speedMax: 140, lifeMax: 0.35 });
-          return;
-        }
         p.hurt(this.damage, this.x, this, this.parryable);
         this.explode(game);
       }
@@ -5257,7 +4862,6 @@ class Pickup {
     this.baseY = y;
     this.phase = rand(0, TAU);
     this.collected = false;
-    this.power = extra.power || null;
     this.clue = extra.clue || '';
     this.dead = false;
   }
@@ -5269,7 +4873,7 @@ class Pickup {
     this.x = this.baseX;
 
     const p = game.player;
-    const radius = this.kind === 'power' ? 30 : this.kind === 'clue' ? 30 : 24;
+    const radius = this.kind === 'clue' ? 30 : 24;
     if (p && !p.dead && dist(this.x, this.y, p.cx, p.cy) < radius) {
       this.collect(game);
     }
@@ -5336,31 +4940,6 @@ class Pickup {
       ctx.beginPath();
       ctx.arc(x, y, 24 + Math.sin(t * 1.6) * 2, 0, TAU);
       ctx.stroke();
-    } else if (this.kind === 'power' && this.power) {
-      const info = POWER_INFO[this.power];
-      const rr = 17 + Math.sin(t * 3) * 2;
-      const g = ctx.createRadialGradient(x, y, 2, x, y, rr * 2.2);
-      g.addColorStop(0, info.color);
-      g.addColorStop(0.4, withAlpha(info.color, 0.7));
-      g.addColorStop(1, withAlpha(info.color, 0));
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.arc(x, y, rr * 2.2, 0, TAU);
-      ctx.fill();
-      ctx.fillStyle = '#0a0f18';
-      ctx.beginPath();
-      ctx.arc(x, y, rr * 0.8, 0, TAU);
-      ctx.fill();
-      ctx.strokeStyle = info.color;
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(x, y, rr, 0, TAU);
-      ctx.stroke();
-      ctx.fillStyle = info.color;
-      ctx.font = 'bold 15px "Consolas", monospace';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(info.key, x, y + 1);
     }
     ctx.restore();
   }

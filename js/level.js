@@ -57,8 +57,6 @@ class LevelBuilder {
   swooper(tx, ty, data = {}) { return this.add('swooper', tx, ty, data); }
   spring(tx, ty, data = {}) { return this.add('spring', tx, ty, data); }
   mover(tx, ty, w = 3, data = {}) { return this.add('mover', tx, ty, { w, ...data }); }
-  wind(tx, ty, w = 3, h = 6, data = {}) { return this.add('wind', tx, ty, { w, h, ...data }); }
-  grapple(tx, ty, data = {}) { return this.add('grapple', tx, ty, data); }
   crumble(tx, ty, w = 3, data = {}) {
     this.solid(tx, ty, w, 1);
     return this.add('crumble', tx, ty, { w, ...data });
@@ -68,7 +66,6 @@ class LevelBuilder {
   gear(tx, ty) { return this.add('gear', tx, ty); }
   core(tx, ty) { return this.add('core', tx, ty); }
   checkpoint(tx, ty) { return this.add('checkpoint', tx, ty); }
-  power(tx, ty, power) { return this.add('power', tx, ty, { power }); }
   boss(tx, ty, cfg) { return this.add('boss', tx, ty, { boss: cfg }); }
   exit(tx, ty) { return this.add('exit', tx, ty); }
   gate(tx, ty, w, h, station = null, closed = true) {
@@ -275,7 +272,7 @@ function tutorialLevel() {
     name: 'Treinamento',
     short: 'Treinamento',
     subtitle: 'Aprenda no pátio',
-    width: 112,
+    width: 100,
     height: 22,
     theme: THEMES.training,
     musicRoot: 58,
@@ -290,14 +287,12 @@ function tutorialLevel() {
       { action: 'attack', label: 'GOLPE (8 lados)', key: 'J', tx: 54, ty: 17 },
       { action: 'shoot', label: 'ESTILINGUE', key: '2 + J', tx: 67, ty: 17 },
       { action: 'parry', label: 'PARRY (E)', key: 'E', tx: 80, ty: 17 },
-      { action: 'focus', label: 'FOCO (K)', key: 'K', tx: 102, ty: 17 },
-      { action: 'dash_alt', label: 'DASH (L)', key: 'L', tx: 107, ty: 17 },
-      { action: 'exit', label: 'PORTAL', key: '→', tx: 110, ty: 17 }
+      { action: 'exit', label: 'PORTAL', key: '→', tx: 96, ty: 17 }
     ]
   });
 
   // Pátio contínuo: nada de cair do mapa no tutorial.
-  b.ground(0, 112);
+  b.ground(0, 100);
   b.spawn(2, 17);
   b.checkpoint(10, 17);
 
@@ -308,10 +303,9 @@ function tutorialLevel() {
   b.solid(19, 16, 3, 2);
   b.gate(29, 11, 1, 7, 'jump');
 
-  // 3) PULO DUPLO — barreira alta + spring
+  // 3) PULO DUPLO — barreira alta
   b.gate(37, 11, 1, 7, 'double');
   b.checkpoint(33, 17);
-  b.spring(38, 17);  // Spring for double jump
 
   // 4) IMPULSO — barreira que abre com o dash (SHIFT)
   b.gate(49, 11, 1, 7, 'dash');
@@ -332,17 +326,8 @@ function tutorialLevel() {
   b.gate(91, 11, 1, 7, 'parry');
   b.checkpoint(88, 17);
 
-  // 8) FOCUS — módulo de foco (agora em K)
-  b.power(100, 16, 'focus');
-  b.gate(105, 11, 1, 7, 'focus');
-  b.checkpoint(102, 17);
-
-  // 9) DASH ALTERNADO (L)
-  b.gate(108, 11, 1, 7, 'dash_alt');
-  b.checkpoint(106.5, 17);
-
-  // 10) PORTAL
-  b.exit(110, 17);
+  // 8) PORTAL
+  b.exit(96, 17);
 
   return b.build();
 }
@@ -388,11 +373,11 @@ function level1() {
         ]
       },
       {
-        title: 'O PRIMEIRO PODER',
+        title: 'O CAMINHO',
         motif: 'module',
         lines: [
-          'Um pulso de energia verde atravessa o pátio.',
-          'Com ele, você pode quebrar o cerco.',
+          'As portas se fecharam uma a uma.',
+          'Pule, use o dash e abra espaço com as armas.',
           'O caminho até a diretoria começa agora.'
         ]
       },
@@ -428,14 +413,13 @@ function level1() {
         ]
       }
     ],
-    hint: 'Q libera o PULSO: destrói projéteis e empurra inimigos.',
+    hint: 'SHIFT dá o impulso. E faz o parry. Use os dois para atravessar o pátio.',
     boss: { name: 'O PORTEIRO', hp: 48, speed: 62, color: '#6dff9e', w: 116, h: 122, style: 'guardian' },
     arena: { left: 107, right: 133, trigger: 109, exit: 138 }
   });
 
   b.ground(0, 20);
   b.spawn(2, 17);
-  b.power(6, 16, 'pulse');
   b.solid(4, 14, 3);
   b.gear(5, 12);
   b.solid(9, 13, 3);
@@ -444,9 +428,11 @@ function level1() {
   b.crate(15, 17);
   b.crate(16, 17);
 
-  // fosso do jardim
+  // fosso do jardim: uma plataforma central para dividir o salto
   b.solid(21, 21, 7);
   b.spikes(21, 20, 7);
+  b.solid(23, 15, 2);
+  b.gear(23, 13);
 
   b.ground(28, 18);
   b.turret(32, 17, { variant: 'mortar', hp: 3, damage: 1, range: 620 });
@@ -473,12 +459,12 @@ function level1() {
   b.swooper(71, 9, { variant: 'swarm' });
   b.checkpoint(70, 17);
 
-  // Fosso largo: agora só atravessa com as plataformas móveis.
+  // Fosso largo: uma plataforma móvel e uma ledge fixa.
   b.solid(76, 21, 5);
   b.spikes(76, 20, 5);
-  b.mover(76, 15, 3, { axis: 'x', range: 7, speed: 1.35, phase: 0 });
-  b.mover(79, 11, 2, { axis: 'y', range: 5, speed: 1.8, phase: 1.4 });
-  b.gear(79, 8);
+  b.mover(76, 15, 3, { axis: 'x', range: 5, speed: 1.35, phase: 0 });
+  b.solid(80, 14, 2);
+  b.gear(80, 12);
 
   b.ground(81, 20);
   b.laser(84, 13, 1, 5);
@@ -490,13 +476,10 @@ function level1() {
   b.charger(99, 17);
   b.spikes(95, 17, 3);
 
-  // Pulo duplo com spring
-  b.spring(90, 17);
-
-  // Chaminé de salto de parede: a única saída é escalando as paredes.
-  b.solid(98, 9, 1, 5);
-  b.solid(101, 9, 1, 9);
-  b.gear(100, 7);
+  // Escada de plataformas até o crachá alto.
+  b.solid(97, 14, 3);
+  b.solid(100, 11, 2);
+  b.gear(100, 9);
 
   b.ground(101, 41);
   b.solid(104, 14, 3);
@@ -535,7 +518,7 @@ function level2() {
     story: [
       'Os corredores do CEPK viraram um labirinto.',
       'Monitores e câmeras patrulham cada esquina.',
-      'O FOCO permite enxergar o perigo em câmera lenta.',
+      'Cada corredor tem um ritmo. Observe e avance.',
       'Chegue ao ginásio antes que as portas fechem.'
     ],
     cutscene: [
@@ -558,12 +541,12 @@ function level2() {
         ]
       },
       {
-        title: 'FOCO',
-        motif: 'module',
+        title: 'A RONDA',
+        motif: 'observation',
         lines: [
-          'Um módulo de processamento pulsa atrás de um vidro.',
-          'Com ele, o mundo desacelera.',
-          'E você vê a saída antes de todo mundo.'
+          'Drones cruzam o corredor em padrões fixos.',
+          'Espere o momento certo e avance.',
+          'O ginásio fica no fim do hall.'
         ]
       },
       {
@@ -593,19 +576,18 @@ function level2() {
         motif: 'bossArena',
         lines: [
           'Leques de lâminas, investidas e chuva de projéteis.',
-          'Use o FOCO para ler o padrão e o parry para refletir.',
+          'Use o dash para abrir espaço e o parry para refletir.',
           'O corredor é dela. A saída é sua.'
         ]
       }
     ],
-    hint: 'Segure K para ativar o FOCO e desacelerar inimigos e projéteis.',
+    hint: 'SHIFT dá o impulso e E faz o parry. Use o dash para escapar dos leques.',
     boss: { name: 'A INSPETORA', hp: 64, speed: 72, color: '#ffd24d', w: 112, h: 126, style: 'hunter' },
     arena: { left: 114, right: 140, trigger: 116, exit: 146 }
   });
 
   b.ground(0, 17);
   b.spawn(2, 17);
-  b.power(6, 16, 'focus');
   b.solid(8, 14, 4);
   b.gear(9, 12);
   b.enemy(12, 17, { variant: 'runner' });
@@ -615,6 +597,7 @@ function level2() {
 
   b.solid(17, 21, 8);
   b.spikes(17, 20, 8);
+  b.solid(20, 15, 2);
 
   b.ground(25, 22);
   b.checkpoint(28, 17);
@@ -644,17 +627,16 @@ function level2() {
   b.checkpoint(71, 17);
   b.laser(72, 13, 1, 5);
   b.swooper(71, 8, { variant: 'bomber' });
-  b.power(73, 16, 'grapple');
   b.crate(74, 17);
   b.crate(75, 17);
 
-  // Fosso do hall: largo demais para pulo duplo. Use o GANCHO.
+  // Fosso do hall: três plataformas claras em sequência.
   b.solid(77, 21, 12);
   b.spikes(77, 20, 12);
-  b.grapple(80, 8);
-  b.grapple(86, 7);
-  b.mover(82, 14, 3, { axis: 'y', range: 5, speed: 1.7, phase: 0.6 });
-  b.wind(84, 7, 3, 9, { forceY: -2050 });
+  b.solid(80, 15, 2);
+  b.solid(84, 13, 2);
+  b.solid(87, 15, 2);
+  b.gear(84, 11);
 
   b.ground(89, 18);
   b.solid(88, 14, 4);
@@ -705,7 +687,7 @@ function level3() {
     story: [
       'O ginásio virou arena de treinamento do Sistema.',
       'As arquibancadas estão vazias, mas as máquinas não.',
-      'O ESCUDO protege contra os ataques mais pesados.',
+      'Plataformas e refletores bloqueiam a quadra.',
       'Atravesse a quadra e alcance a ala técnica.'
     ],
     cutscene: [
@@ -728,12 +710,12 @@ function level3() {
         ]
       },
       {
-        title: 'ESCUDO',
-        motif: 'module',
+        title: 'ARQUIBANCADA',
+        motif: 'training',
         lines: [
-          'Um campo de força espera no alto da arquibancada.',
-          'Ele absorve o impacto e devolve o silêncio.',
-          'O ginásio não vai te parar.'
+          'As arquibancadas escondem refletores e armadilhas.',
+          'O placar acompanha cada movimento seu.',
+          'A ala técnica fica atrás da quadra.'
         ]
       },
       {
@@ -763,19 +745,18 @@ function level3() {
         motif: 'bossArena',
         lines: [
           'Saltos, rochas e ondas de impacto sacodem o ginásio.',
-          'O ESCUDO segura o primeiro golpe. O dash abre espaço.',
+          'O dash abre espaço. O parry devolve o impacto.',
           'Vença a partida e libere a ala técnica.'
         ]
       }
     ],
-    hint: 'Segure R para ativar o ESCUDO e absorver os ataques.',
+    hint: 'SHIFT dá o impulso. Use o dash para atravessar os vãos e escapar dos saltos.',
     boss: { name: 'O TÉCNICO', hp: 80, speed: 68, color: '#ff8c42', w: 124, h: 136, style: 'bruiser' },
     arena: { left: 122, right: 148, trigger: 124, exit: 154 }
   });
 
   b.ground(0, 20);
   b.spawn(2, 17);
-  b.power(7, 16, 'shield');
   b.solid(4, 14, 4);
   b.gear(5, 12);
   b.enemy(12, 17, { variant: 'runner' });
@@ -812,19 +793,17 @@ function level3() {
   b.enemy(63, 17, { variant: 'shield' });
   b.enemy(69, 17, { variant: 'bomber' });
   b.swooper(74, 8, { variant: 'bomber' });
-  b.power(72, 16, 'glide');
   b.crate(74, 17);
   b.crate(75, 17);
   b.crate(76, 17);
 
-  // Vão do ginásio: vento ascendente + PLANADOR para cruzar.
+  // Vão do ginásio: três plataformas fixas em escada.
   b.solid(77, 21, 14);
   b.spikes(77, 20, 14);
-  b.wind(78, 6, 13, 13, { forceY: -2150, forceX: 520 });
-  b.mover(82, 14, 3, { axis: 'x', range: 7, speed: 1.5, phase: 0 });
-  b.mover(88, 11, 2, { axis: 'y', range: 5, speed: 1.9, phase: 1.1 });
-  b.grapple(84, 7);
-  b.grapple(89, 6);
+  b.solid(79, 15, 3);
+  b.solid(84, 12, 3);
+  b.solid(88, 15, 2);
+  b.gear(84, 10);
   b.swooper(81, 9, { variant: 'swarm' });
 
   b.ground(91, 18);
@@ -840,9 +819,6 @@ function level3() {
   b.charger(94, 17, { variant: 'armored' });
   b.spikes(105, 17, 2);
   b.swooper(107, 8, { variant: 'swarm' });
-
-  // Spring for high jump training
-  b.spring(110, 17);  // New Spring
 
   b.ground(109, 53);
   b.solid(112, 14, 3);
@@ -880,7 +856,7 @@ function level4() {
     story: [
       'O laboratório do CEPK guarda os projetos do Sistema.',
       'Feixes de energia cortam os corredores.',
-      'A ADRENALINA transforma energia em velocidade.',
+      'Lasers e reatores bloqueiam cada passagem.',
       'Desligue os reatores e chegue à diretoria.'
     ],
     cutscene: [
@@ -903,11 +879,11 @@ function level4() {
         ]
       },
       {
-        title: 'ADRENALINA',
+        title: 'REATOR',
         motif: 'module',
         lines: [
-          'O último módulo está preso ao reator.',
-          'Com ele, cada passo vira um trovão.',
+          'O reator principal ainda pulsa no fim do corredor.',
+          'Cada plataforma é uma peça do caminho.',
           'A diretoria está logo acima.'
         ]
       },
@@ -943,14 +919,13 @@ function level4() {
         ]
       }
     ],
-    hint: 'F ativa a ADRENALINA: mais velocidade, salto e dano por 6s.',
+    hint: 'SHIFT dá o impulso e E faz o parry. Use o dash para cruzar os feixes.',
     boss: { name: 'A COORDENADORA', hp: 98, speed: 76, color: '#b18cff', w: 120, h: 132, style: 'trickster' },
     arena: { left: 128, right: 154, trigger: 130, exit: 160 }
   });
 
   b.ground(0, 16);
   b.spawn(2, 17);
-  b.power(6, 16, 'super');
   b.solid(8, 14, 3);
   b.gear(9, 12);
   b.enemy(11, 17, { variant: 'runner' });
@@ -959,10 +934,6 @@ function level4() {
   b.spikes(16, 20, 10);
   b.solid(21, 15, 3);
   b.gear(21, 13);
-  b.wind(17, 6, 8, 14, { forceY: -2300 });
-  b.mover(18, 14, 3, { axis: 'x', range: 6, speed: 1.6, phase: 0 });
-  b.mover(23, 10, 2, { axis: 'y', range: 5, speed: 1.9, phase: 0.8 });
-  b.grapple(21, 6);
 
   b.ground(26, 20);
   b.checkpoint(29, 17);
@@ -997,10 +968,9 @@ function level4() {
   b.gear(83, 11);
   b.swooper(80, 9, { variant: 'bomber' });
   b.mover(82, 10, 3, { axis: 'y', range: 4, speed: 1.7, phase: 0.4 });
-  b.solid(85, 8, 1, 5);
-  b.solid(87, 8, 1, 10);
-  b.grapple(86, 6);
-  b.wind(78, 7, 9, 12, { forceY: -1850 });
+  b.solid(85, 11, 2);
+  b.solid(87, 9, 2);
+  b.gear(87, 7);
 
   b.ground(88, 22);
   b.laser(91, 12, 1, 6);
@@ -1023,7 +993,6 @@ function level4() {
   b.spikes(110, 20, 10);
   b.mover(111, 14, 3, { axis: 'x', range: 8, speed: 1.5, phase: 0.2 });
   b.mover(116, 10, 2, { axis: 'y', range: 5, speed: 1.8, phase: 1.3 });
-  b.grapple(114, 6);
 
   b.ground(120, 48);
   b.solid(124, 14, 3);
@@ -1062,7 +1031,7 @@ function level5() {
     story: [
       'A diretoria fica no topo do CEPK.',
       'A DIRETORA controla o Sistema Verde.',
-      'Todos os poderes estão com você.',
+      'As armas, o dash e o parry são tudo o que você tem.',
       'Liberte a escola.'
     ],
     cutscene: [
@@ -1135,7 +1104,7 @@ function level5() {
         ]
       }
     ],
-    hint: 'Use GANCHO (G), PLANADOR (H), salto de parede e plataformas móveis. Combine os seis poderes.',
+    hint: 'Salto de parede, plataformas móveis e dash abrem o caminho até a diretoria.',
     boss: { name: 'A DIRETORA', hp: 156, speed: 82, color: '#ff5d7a', w: 140, h: 150, final: true, style: 'director' },
     arena: { left: 102, right: 128, trigger: 104, exit: 134 }
   });
@@ -1171,20 +1140,21 @@ function level5() {
   b.drone(53, 9, { variant: 'sniper' });
   b.swooper(45, 9, { variant: 'bomber' });
 
-  // Torre final: chaminé de salto de parede + gancho.
+  // Torre final: chaminé de salto de parede com apoios.
   b.ground(56, 84);
   b.checkpoint(57, 17);
   b.solid(57, 6, 1, 6);
   b.solid(60, 6, 1, 12);
-  b.grapple(59, 4);
+  b.solid(58, 11, 2);
+  b.solid(59, 8, 1);
   b.gear(59, 3);
 
-  // Corredor de espinhos: plataformas móveis e vento.
+  // Corredor de espinhos: plataformas móveis e apoios fixos.
   b.spikes(66, 17, 7);
   b.mover(65, 14, 4, { axis: 'x', range: 8, speed: 1.6, phase: 0 });
   b.mover(71, 11, 3, { axis: 'y', range: 5, speed: 1.9, phase: 0.7 });
-  b.wind(73, 8, 4, 10, { forceY: -2200 });
-  b.grapple(75, 6);
+  b.solid(73, 12, 2);
+  b.solid(76, 10, 2);
 
   b.solid(90, 14, 3);
   b.gear(61, 12);
@@ -1196,8 +1166,7 @@ function level5() {
   b.charger(74, 17, { variant: 'armored' });
   b.enemy(77, 17, { variant: 'runner' });
   b.mover(80, 12, 3, { axis: 'y', range: 6, speed: 1.6, phase: 1.2 });
-  b.grapple(81, 6);
-  b.wind(88, 6, 3, 10, { forceY: -2100 });
+  b.solid(84, 10, 2);
 
   // Kennedito cage at tile 94-112, position 17
   b.kennedito(94, 17);  // New Kennedito Cage
@@ -1233,48 +1202,3 @@ function level5() {
 }
 
 const LEVELS = [tutorialLevel, level1, level2, level3, level4, level5];
-
-const POWER_INFO = {
-  pulse: {
-    name: 'PULSO',
-    short: 'Pulso',
-    color: '#6dff9e',
-    key: 'Q',
-    desc: 'Onda de choque que destrói projéteis e empurra inimigos.'
-  },
-  focus: {
-    name: 'FOCO',
-    short: 'Foco',
-    color: '#7fe7ff',
-    key: 'K',
-    desc: 'Desacelera inimigos e projéteis enquanto você segura.'
-  },
-  shield: {
-    name: 'ESCUDO',
-    short: 'Escudo',
-    color: '#b57bff',
-    key: 'R',
-    desc: 'Barreira de energia que bloqueia dano.'
-  },
-  super: {
-    name: 'ADRENALINA',
-    short: 'Adrenalina',
-    color: '#ffd24d',
-    key: 'F',
-    desc: 'Aumenta velocidade, salto e dano por 6 segundos.'
-  },
-  grapple: {
-    name: 'GANCHO',
-    short: 'Gancho',
-    color: '#ff9ad5',
-    key: 'G',
-    desc: 'Dispara um gancho até 440px e puxa você para o ponto de ancoragem.'
-  },
-  glide: {
-    name: 'PLANADOR',
-    short: 'Planador',
-    color: '#8fd4ff',
-    key: 'H',
-    desc: 'Segure H no ar para planar, cair devagar e atravessar vãos largos.'
-  }
-};

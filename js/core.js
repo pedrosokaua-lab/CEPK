@@ -11,7 +11,6 @@ const TAU = Math.PI * 2;
 
 const GAME_NAME = 'CÓDIGO VERDE';
 const GAME_SUBTITLE = 'COLÉGIO PRESIDENTE KENNEDY';
-const POWER_IDS = ['pulse', 'focus', 'shield', 'super', 'grapple', 'glide'];
 
 /* ------------------------------ DIFICULDADE ------------------------------ */
 
@@ -260,17 +259,6 @@ function circleRect(cx, cy, r, rect) {
   const nx = clamp(cx, rect.x, rect.x + rect.w);
   const ny = clamp(cy, rect.y, rect.y + rect.h);
   return dist2(cx, cy, nx, ny) <= r * r;
-}
-
-// Linha de visão: usada pelo gancho e por feixes. Amostra o mapa em passos curtos.
-function segmentBlocked(level, x1, y1, x2, y2, step = 12) {
-  const d = Math.hypot(x2 - x1, y2 - y1);
-  const n = Math.max(1, Math.ceil(d / step));
-  for (let i = 1; i < n; i++) {
-    const t = i / n;
-    if (level.isSolid(x1 + (x2 - x1) * t, y1 + (y2 - y1) * t)) return true;
-  }
-  return false;
 }
 
 function roundRect(ctx, x, y, w, h, r) {
@@ -660,7 +648,6 @@ function loadSave() {
     const diffValue = Number(data.difficulty);
     return {
       unlocked: clamp(Number(data.unlocked) || 1, 1, 5),
-      powers: Array.isArray(data.powers) ? data.powers.filter((p) => POWER_IDS.includes(p)) : [],
       gears: data.gears || {},
       cores: data.cores || {},
       clues: data.clues && typeof data.clues === 'object' ? data.clues : {},

@@ -34,21 +34,15 @@ Depois acesse `http://localhost:8123`.
 | `L` | **Dash alternativo** (impulso no ar) |
 | `J` ou clique esquerdo | Atacar com a arma equipada (8 direções); **segure 0,55s** para o ataque carregado |
 | `E` | **Parry** — aparar ataques verdes e projéteis (janela perfeita de 0.14s) |
-| `K` | **Foco** (segure; desacelera inimigos e projéteis) |
 | `1` / `2` / `3` | Trocar de arma |
-| `Q` | **Pulso** (após desbloquear) |
-| `R` | **Escudo** (segure; após desbloquear) |
-| `F` | **Adrenalina** (após desbloquear) |
-| `G` | **Gancho** — puxa até a âncora rosa mais próxima (após desbloquear) |
-| `H` | **Planador** — segure no ar para cair devagar (após desbloquear) |
 | `M` | Ligar / desligar som |
 | `Esc` / `P` | Pausar |
 
-**Parkour:** além do pulo duplo e do dash, use **salto de parede** (encoste e pule), **wall slide** (segure a direção contra a parede para deslizar), **plataformas móveis**, **correntes de vento** e **âncoras de gancho**. Vários fossos e chaminés só podem ser vencidos combinando essas mecânicas.
+**Parkour:** o combate e a travessia usam apenas armas, dash, parry, pulo duplo, salto de parede e plataformas móveis. Não há mais poderes: cada vão e cada chaminé tem uma rota clara com esses recursos.
 
 ## Personagens
 
-Escolha o monitor no menu **PERSONAGEM**. Cada um tem atributos, retrato e paleta próprios, e a escolha fica salva no progresso:
+A **seleção de personagem abre ao iniciar a partida** (e também pelo menu **PERSONAGEM**). Cada monitor tem atributos, retrato e paleta próprios, e a escolha fica salva no progresso:
 
 | Personagem | Perfil | Destaque |
 | --- | --- | --- |
@@ -63,16 +57,6 @@ Armas (cada uma tem um **ataque carregado** ao segurar `J` por 0,55s, que gasta 
 - **Bastão** — combo rápido de três golpes, com finalizador mais forte. Carregado: **CORTE RADIAL 360°**, acerta todos os lados e reflete projéteis.
 - **Estilingue** — distância. Gasta energia, mas acerta alvos fora do alcance do bastão. Carregado: **RAJADA TRIPLA**, três pelotas em leque com recuo.
 - **Martelo** — corpo a corpo. Lento e pesado. Quebra a guarda, arremessa inimigos e impulsiona caixas. Carregado: **IMPACTO SÍSMICO**, onda de choque dupla que atravessa o chão.
-
-Poderes:
-- **PULSO (`Q`)** — onda de choque que destrói projéteis e empurra inimigos.
-- **FOCO (`K`)** — desacelera inimigos e projéteis enquanto você segura.
-- **ESCUDO (`R`)** — barreira de energia que absorve dano.
-- **ADRENALINA (`F`)** — mais velocidade, salto e dano por 6 segundos.
-- **GANCHO (`G`)** — dispara uma corda até 440px e puxa você para a âncora rosa; no fim do puxão você ganha impulso e um pulo extra.
-- **PLANADOR (`H`)** — segure no ar para abrir as asas, cair devagar e controlar o rumo em vãos largos.
-
-Os dois novos poderes são coletados no caminho: o **Gancho** no corredor da Fase 2 e o **Planador** no ginásio da Fase 3.
 
 ## Inimigos
 
@@ -90,7 +74,7 @@ As fases 1 a 5 somam de 10 a 17 inimigos cada, sempre com várias variantes em c
 
 ## Parry
 
-Aperte **E** pouco antes do impacto. Os primeiros instantes são um **PARRY PERFEITO**: reflete tudo em volta, atordoa mais e recarrega o dash. Projéteis **verdes** e ataques marcados podem ser aparados e voltam como arma; ataques **vermelhos** são imparáveis e exigem dash ou escudo. Um parry bem-sucedido também atordoa inimigos e chefes próximos e concede energia refundida + dash reset se for perfeito.
+Aperte **E** pouco antes do impacto. Os primeiros instantes são um **PARRY PERFEITO**: reflete tudo em volta, atordoa mais e recarrega o dash. Projéteis **verdes** e ataques marcados podem ser aparados e voltam como arma; ataques **vermelhos** são imparáveis e exigem dash. Um parry bem-sucedido também atordoa inimigos e chefes próximos e concede energia refundida + dash reset se for perfeito.
 
 ## Kennedito e a História
 
@@ -104,28 +88,29 @@ Aperte **E** pouco antes do impacto. Os primeiros instantes são um **PARRY PERF
 
 ## História completa
 
-1. **Pátio Central** — O sinal de emergência dispara. VEGA acorda e deve atravessar o pátio, coletando o PULSO.
-2. **Corredores** — O FOCUS é encontrado; armários e câmeras patrulham o labirinto.
-3. **Ginásio** — O ESCUDO protege contra ataques pesados; o Swooper patrulha as arquibancadas.
-4. **Laboratório** — A ADRENALINA concede velocidade superior; há turrets e chargers novos; coleta de pistas.
+1. **Pátio Central** — O sinal de emergência dispara. VEGA acorda e atravessa o pátio com armas, dash e parry.
+2. **Corredores** — Armários e câmeras patrulham o labirinto; o caminho é vencido no salto e na leitura dos inimigos.
+3. **Ginásio** — O Swooper patrulha as arquibancadas e as plataformas móveis cruzam a quadra.
+4. **Laboratório** — Turrets e chargers novos guardam os reatores; coleta de pistas.
 5. **Diretoria** — O confronto final. Kennedito está cativo; resgatá‑lo abre o gate de resgate antes da diretora. Derrotando a diretora, o Sistema Verde é desativado e a escola é libertada.
 
 ## Fases
 
-1. **Pátio Central** — o começo do sinal e o primeiro poder, com plataformas móveis sobre o fosso.
-2. **Corredores** — armários, câmeras, o Foco e a primeira âncora de **Gancho**.
-3. **Ginásio** — a arena de treino, o Escudo e o **Planador**, com correntes de vento e chaminés de salto de parede.
-4. **Laboratório** — reatores, lasers, a Adrenalina e um parkour de plataformas móveis, vento e ganchos.
+1. **Pátio Central** — o começo do sinal, com plataformas móveis e uma rota clara sobre o fosso.
+2. **Corredores** — armários, câmeras e plataformas fixas no grande vão do hall.
+3. **Ginásio** — a arena de treino, com escada de plataformas sobre o fosso e chaminés de salto de parede.
+4. **Laboratório** — reatores, lasers e um parkour de plataformas móveis.
 5. **Diretoria** — o confronto final com o Sistema Verde, uma torre de salto de parede e o resgate de Kennedito.
 
-Cada fase tem história, cutscene animada, checkpoints, colecionáveis, desafios de plataforma, **arena de chefe** e **sala de saída** próprias. O parkour agora exige combinar pulo duplo, dash, salto de parede, plataformas móveis, vento e gancho — há fossos largos e chaminés que não podem ser vencidos com um único pulo.
+Cada fase tem história, cutscene animada, checkpoints, colecionáveis, desafios de plataforma, **arena de chefe** e **sala de saída** próprias. O parkour combina pulo duplo, dash, salto de parede e plataformas móveis — cada seção tem uma rota visível e sem sobreposição de mecânicas.
 
 ## Arenas de chefe
 
 Ao entrar na área final de cada fase, a câmera trava em uma arena dedicada:
 
 - Um **gatilho** dispara a cutscene exclusiva do chefe (dois slides com arte própria).
-- O **portão de entrada** se fecha e o **portão de saída** permanece travado durante a luta.
+- **O chefe e a arena ficam escondidos até essa cutscene.** O chefe só é criado quando a luta começa; antes disso, a área é um corredor comum.
+- Ao fim da cutscene, o **portão de entrada** se fecha e o **portão de saída** permanece travado durante a luta.
 - Todas as arenas foram ampliadas para **24 tiles de largura (768px internos)**, com três pilares de cobertura e uma engrenagem suspensa no centro.
 - **Jogador e chefe ficam contidos na arena** durante o combate: nem investidas, teleportes, saltos, recuos ou atordoamentos atravessam os portões. A contenção é reaplicada depois de cada atualização de física.
 - A arena tem parede de fundo com painéis, treliça de teto, lâmpadas, **quatro refletores volumétricos**, holofote que segue o chefe, selo giratório, marca d'água com o nome do alvo e piso de combate com círculo, rachaduras e detritos.
@@ -139,14 +124,14 @@ Depois de cada arena existe uma câmara de saída independente, com portal anima
 
 ## Direção de arte
 
-- **Paletas por ambiente**: pátio em azul-noite com janelas âmbar, corredores em teal e terrazzo, ginásio em madeira e vinho, laboratório em aço azul e diretoria em vinho e dourado. O verde fica reservado ao Sistema Verde, aos poderes e à identidade do HUD.
+- **Paletas por ambiente**: pátio em azul-noite com janelas âmbar, corredores em teal e terrazzo, ginásio em madeira e vinho, laboratório em aço azul e diretoria em vinho e dourado. O verde fica reservado ao Sistema Verde e à identidade do HUD.
 - **Piso contínuo**: superfícies desenhadas por trechos, com juntas de laje alinhadas ao mundo, rachaduras, manchas, poças, ralos, musgo e materiais próprios por tema — sem a antiga grade de blocos.
 - **Cenários** com parallax em camadas, skyline, fachada escolar contínua com janelas acesas/apagadas/quebradas, calhas, ar-condicionado, caixa d'água, relógio, cerca, postes e cones de luz. Interiores com armários, quadros de avisos, tanques de laboratório, racks, estantes, janelas com chuva e arquibancadas.
 - **Cutscenes encenadas**: VEGA aparece em primeiro plano, com aura, rim light e arma; a câmera faz **push-in** com tremor sutil, flash de abertura e vinheta. Nos alertas de chefe há holofotes na cor do alvo, linhas de velocidade radiais, névoa baixa, retículo de mira, silhueta gigante do chefe, partículas de brasas, cabeçalho **ALVO PRIORITÁRIO** e letterbox animado.
 - **Inimigos detalhados**: Walkers com cinto, emblema, rádio e joelheiras; drones com braços de rotor, luzes de navegação e lente; torretas com pés estabilizadores, tambor e ventilação; Chargers com ariete, escapamentos e núcleo; Swoopers com nervuras nas asas, cauda e propulsor.
 - **Chefes** com placas de armadura, rebites, ombreiras e núcleo pulsante, além de silhuetas próprias em cada arena. A arte foi refeita: o Porteiro ganhou elmo com crista, placas de ombro e escudo com emblema; a **Inspetora** tem cauda de casaco, dragonas douradas, distintivo, rabo de cavalo, viseira luminosa e cassetete elétrico; o Técnico exibe jaqueta, faixa, apito e halter; a Coordenadora tem capa rasgada, máscara, telas holográficas e orbe; a Diretora usa blazer, lapelas, coroa do Sistema e aura nas mãos.
 - **Personagens e armas redesenhados**: cada monitor tem rosto, cabelo, jaqueta, emblema e silhueta próprios; o bastão, o estilingue e o martelo ganharam sprites detalhados com brilho, correias e núcleo de energia.
-- **HUD renovado**: retrato animado do personagem, corações com brilho, barra de energia com marcas, seletor de armas com glifos e teclas, slots de poderes e uma barra de chefe ornamentada com fases e nome do alvo.
+- **HUD renovado**: retrato animado do personagem, corações com brilho, barra de energia com marcas, seletor de armas com glifos e teclas e uma barra de chefe ornamentada com fases e nome do alvo.
 
 ## Chefes
 
@@ -195,13 +180,12 @@ A dificuldade pode ser alterada a qualquer momento pelo menu.
 O jogo salva automaticamente no `localStorage`:
 
 - fases liberadas e concluídas;
-- poderes desbloqueados;
 - crachás e núcleos coletados;
 - pistas de Kennedito coletadas;
 - personagem escolhido;
 - dificuldade escolhida.
 
-A chave nova é `codigo_verde_save_v1`. Saves antigos de `ferro9_save_v1` são lidos uma vez e migrados, mas poderes magnéticos antigos são descartados.
+A chave nova é `codigo_verde_save_v1`. Saves antigos de `ferro9_save_v1` são lidos uma vez e migrados; poderes antigos são ignorados.
 
 ## Tecnologia
 
@@ -218,8 +202,8 @@ index.html
 css/style.css
 js/core.js       — constantes, utilidades, input, áudio, partículas, save
 js/level.js      — construtor de fases, temas, tutorial, níveis e histórias
-js/entities.js   — VEGA, armas, poderes de mobilidade, parry, inimigos, chefes, projéteis e pickups
-js/game.js       — estados, fluxo de telas, tutorial, poderes e câmera
+js/entities.js   — VEGA, armas, dash, parry, inimigos, chefes, projéteis e pickups
+js/game.js       — estados, fluxo de telas, tutorial, arena do chefe e câmera
 js/render.js     — cenários, HUD, menus, cutscenes e telas de fim
 ```
 

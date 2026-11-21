@@ -20,20 +20,17 @@ class Game {
 
     this.weaponIndex = 0;
     this.tutorialParries = 0;
-    this.focusActive = false;
     this.pulseRings = [];
     this.parryFlash = 0;
     this.hitStop = 0;
 
-    this.usedPulse = false;
-    this.usedFocus = false;
-    this.usedShield = false;
     this.usedMelee = false;
     this.usedRanged = false;
 
+    this.characterStart = false;
+
     this.lastFrame = performance.now();
     this.save = loadSave();
-    this.powers = new Set(this.save ? this.save.powers : []);
     this.difficulty = this.save ? clamp(this.save.difficulty ?? 1, 0, DIFFICULTIES.length - 1) : 1;
     this.diff = DIFFICULTIES[this.difficulty];
     this.selectedDifficulty = this.difficulty;
@@ -59,14 +56,13 @@ class Game {
     this.springs = [];
     this.crumbles = [];
     this.movers = [];
-    this.winds = [];
-    this.grapples = [];
     this.kennedito = null;
     this.kenneditoAlly = null;
     this.kenneditoRescued = false;
     this.gates = [];
     this.exit = null;
     this.boss = null;
+    this.bossSpawn = null;
     this.bossDefeated = false;
     this.bossActive = false;
     this.arena = null;
@@ -101,7 +97,6 @@ class Game {
     if (!this.save) {
       this.save = {
         unlocked: 1,
-        powers: [],
         gears: {},
         cores: {},
         clues: {},
@@ -118,7 +113,6 @@ class Game {
 
   persist() {
     const s = this.ensureSave();
-    s.powers = [...this.powers];
     s.difficulty = this.difficulty;
     s.character = this.characterId;
     writeSave(s);
@@ -216,10 +210,13 @@ class Game {
     for (const r of rects) if (Input.clickIn(r.x, r.y, r.w, r.h)) action = r.action;
 
     if (action === 'start') {
-      if (this.hasProgress()) this.continueGame();
-      else this.startNewGame();
+      this.selectedCharacter = Math.max(0, CHARACTERS.findIndex((c) => c.id === this.characterId));
+      this.characterStart = true;
+      this.state = 'characters';
+      Sfx.tone(500, 0.06, { type: 'square', vol: 0.04 });
     } else if (action === 'character') {
       this.selectedCharacter = Math.max(0, CHARACTERS.findIndex((c) => c.id === this.characterId));
+      this.characterStart = false;
       this.state = 'characters';
       Sfx.tone(500, 0.06, { type: 'square', vol: 0.04 });
     } else if (action === 'difficulty') {
@@ -275,6 +272,7 @@ class Game {
     }
 
     if (Input.pressed('Escape')) {
+      this.characterStart = false;
       this.state = 'menu';
       Sfx.tone(280, 0.07, { type: 'square', vol: 0.04 });
       return;
@@ -287,7 +285,13 @@ class Game {
 
     if (pick !== null) {
       this.setCharacter(CHARACTERS[pick].id);
-      this.state = 'menu';
+      if (this.characterStart) {
+        this.characterStart = false;
+        if (this.hasProgress()) this.continueGame();
+        else this.startNewGame();
+      } else {
+        this.state = 'menu';
+      }
     }
   }
 
@@ -325,7 +329,6 @@ class Game {
     clearSave();
     this.save = {
       unlocked: 1,
-      powers: [],
       gears: {},
       cores: {},
       clues: {},
@@ -334,7 +337,6 @@ class Game {
       character: this.characterId,
       difficulty: this.difficulty
     };
-    this.powers.clear();
     this.cluesFound.clear();
     this.startTutorial();
   }
@@ -365,7 +367,6 @@ class Game {
 
   continueGame() {
     const s = this.ensureSave();
-    this.powers = new Set(s.powers || []);
     this.beginLevel(clamp(s.unlocked, 1, 5), true);
   }
 
@@ -503,7 +504,6 @@ class Game {
       if (this.resetIndex === 1) {
         clearSave();
         this.save = null;
-        this.powers.clear();
         this.cluesFound.clear();
         this.toast('PROGRESSO APAGADO', '#ff5d6c', 2);
       }
@@ -551,26 +551,21 @@ class Game {
     this.springs = [];
     this.crumbles = [];
     this.movers = [];
-    this.winds = [];
-    this.grapples = [];
     this.kennedito = null;
     this.kenneditoAlly = null;
     this.kenneditoRescued = false;
     this.gates = level.gates.slice();
     this.exit = null;
     this.boss = null;
+    this.bossSpawn = null;
     this.bossDefeated = false;
     this.bossActive = false;
     this.toasts = [];
     this.pulseRings = [];
-    this.focusActive = false;
     this.parryFlash = 0;
     this.hitStop = 0;
     this.tutorialParries = 0;
     this.weaponIndex = 0;
-    this.usedPulse = false;
-    this.usedFocus = false;
-    this.usedShield = false;
     this.usedMelee = false;
     this.usedRanged = false;
     FX.clear();
@@ -612,12 +607,6 @@ class Game {
         case 'mover':
           this.movers.push(new MovingPlatform(e, this));
           break;
-        case 'wind':
-          this.winds.push(new WindZone(e));
-          break;
-        case 'grapple':
-          this.grapples.push(new GrapplePoint(e));
-          break;
         case 'gear':
           this.pickups.push(new Pickup('gear', cx, e.ty * TILE + TILE / 2));
           gears++;
@@ -634,9 +623,6 @@ class Game {
           }
           break;
         }
-        case 'power':
-          this.pickups.push(new Pickup('power', cx, e.ty * TILE + TILE / 2, { power: e.power }));
-          break;
         case 'checkpoint':
           this.checkpoints.push(new Checkpoint(cx, bottom));
           break;
@@ -647,7 +633,7 @@ class Game {
           this.exit = new Exit(cx, bottom);
           break;
         case 'boss':
-          this.boss = new Boss(cx, bottom, e.boss, this);
+          this.bossSpawn = { x: cx, y: bottom, cfg: e.boss };
           break;
       }
     }
@@ -759,7 +745,7 @@ class Game {
   }
 
   startBossIntro() {
-    if (!this.boss || !this.level || !this.level.bossCutscene.length) {
+    if (!this.level || !this.level.bossCutscene.length) {
       this.beginBossFight();
       return;
     }
@@ -772,6 +758,9 @@ class Game {
   }
 
   beginBossFight() {
+    if (!this.boss && this.bossSpawn) {
+      this.boss = new Boss(this.bossSpawn.x, this.bossSpawn.y, this.bossSpawn.cfg, this);
+    }
     if (!this.boss || this.boss.dead) return;
     this.state = 'playing';
     this.bossActive = true;
@@ -808,20 +797,18 @@ class Game {
 
     const p = this.player;
 
-    // Gatilho da arena: cutscene do chefe na primeira entrada; depois, reinício direto.
-    if (this.arena && this.boss && !this.boss.dead && p.cx >= this.arena.trigger * TILE) {
+    // Gatilho da arena: o chefe só entra em cena depois da cutscene de entrada.
+    if (this.arena && !this.bossDefeated && p.cx >= this.arena.trigger * TILE) {
       if (!this.bossIntroDone) {
         this.startBossIntro();
         return;
       }
-      if (!this.bossActive && !this.bossDefeated) {
+      if (!this.bossActive) {
         this.beginBossFight();
       }
     }
 
     for (const m of this.movers) m.update(dt);
-    for (const wz of this.winds) wz.update(dt);
-    for (const gp of this.grapples) gp.update(dt);
 
     p.update(dt);
 
@@ -841,9 +828,7 @@ class Game {
       }
     }
 
-    this.updatePowers(dt);
-
-    const slow = this.focusActive ? 0.42 : 1;
+    this.updateEffects(dt);
 
     for (const c of this.crates) {
       c.impactCd = Math.max(0, (c.impactCd || 0) - dt);
@@ -851,14 +836,12 @@ class Game {
     }
     this.resolveCrates();
 
-    for (const e of this.enemies) e.update(dt * slow, this);
-    if (this.boss) this.boss.update(dt * slow, this);
+    for (const e of this.enemies) e.update(dt, this);
+    if (this.boss) this.boss.update(dt, this);
 
     this.handleCrateImpacts();
 
-    for (const pr of this.projectiles) {
-      pr.update(dt * (pr.owner === 'enemy' ? slow : 1), this);
-    }
+    for (const pr of this.projectiles) pr.update(dt, this);
     for (const pk of this.pickups) pk.update(dt, this);
     for (const cp of this.checkpoints) cp.update(dt, this);
     for (const sp of this.springs) sp.update(dt, this);
@@ -894,116 +877,13 @@ class Game {
     }
   }
 
-  updatePowers(dt) {
-    const p = this.player;
-    if (!p || p.dead) {
-      this.focusActive = false;
-      return;
-    }
-
-    this.focusActive = !!p.focus;
-
+  updateEffects(dt) {
     for (let i = this.pulseRings.length - 1; i >= 0; i--) {
       const ring = this.pulseRings[i];
       ring.life -= dt;
       ring.r += 520 * dt;
       if (ring.life <= 0) this.pulseRings.splice(i, 1);
     }
-
-    if (p.pulseFlash > 0) {
-      p.pulseFlash -= dt;
-      if (Math.random() < 0.5) {
-        FX.spawn(p.cx + rand(-60, 60), p.cy + rand(-60, 60), {
-          color: '#6dff9e', life: 0.35, size: rand(2, 5), vy: rand(-40, 40)
-        });
-      }
-    }
-
-    if (p.shield) {
-      for (const pr of this.projectiles) {
-        if (pr.dead || pr.owner !== 'enemy') continue;
-        if (dist(pr.x, pr.y, p.cx, p.cy) < 78) {
-          pr.explode(this);
-          FX.burst(pr.x, pr.y, 6, { color: '#b57bff', speedMax: 140, lifeMax: 0.35 });
-        }
-      }
-      for (const e of this.enemies) {
-        if (e.dead) continue;
-        const dx = e.x + e.w / 2 - p.cx;
-        const dy = e.y + e.h / 2 - p.cy;
-        const d = Math.hypot(dx, dy);
-        if (d < 100 && d > 1) {
-          e.mx = clamp((e.mx || 0) + (dx / d) * 520 * dt, -500, 500);
-          e.my = clamp((e.my || 0) + (dy / d) * 520 * dt, -500, 500);
-        }
-      }
-    }
-
-    if (this.focusActive && Math.random() < 0.4) {
-      FX.spawn(p.cx + rand(-26, 26), p.cy + rand(-30, 30), {
-        color: '#7fe7ff', life: 0.4, size: rand(1, 3), vy: rand(-50, 10)
-      });
-    }
-
-    if (p.superActive && Math.random() < 0.5) {
-      FX.spawn(p.cx + rand(-20, 20), p.cy + rand(-24, 24), {
-        color: pick(['#ffd24d', '#c6ff6a', '#6dff9e']),
-        life: 0.4, size: rand(2, 4), vy: rand(-90, -20)
-      });
-    }
-  }
-
-  playerPulse() {
-    const p = this.player;
-    if (!p || p.dead) return;
-    if (!this.powers.has('pulse')) {
-      this.toast('PULSO AINDA BLOQUEADO', '#8fa8bb', 1.2);
-      return;
-    }
-    if (p.pulseCd > 0) return;
-    if (p.energy < 20) {
-      this.toast('ENERGIA INSUFICIENTE', '#ff8fa5', 1);
-      Sfx.tone(120, 0.08, { type: 'square', vol: 0.04, slide: -40 });
-      return;
-    }
-
-    p.energy -= 20;
-    p.pulseCd = 0.9;
-    p.pulseFlash = 0.35;
-    this.pulseRings.push({ x: p.cx, y: p.cy, r: 20, life: 0.5, max: 0.5 });
-    this.shake(0.4);
-    Sfx.tone(160, 0.28, { type: 'sawtooth', vol: 0.12, slide: 520 });
-    Sfx.noise(0.18, 0.08, { freq: 900 });
-
-    for (const pr of this.projectiles) {
-      if (pr.dead || pr.owner !== 'enemy') continue;
-      if (dist(pr.x, pr.y, p.cx, p.cy) < 210) {
-        pr.explode(this);
-        FX.burst(pr.x, pr.y, 5, { color: '#6dff9e', speedMax: 170, lifeMax: 0.35 });
-      }
-    }
-
-    for (const e of this.enemies) {
-      if (e.dead) continue;
-      const dx = e.x + e.w / 2 - p.cx;
-      const dy = e.y + e.h / 2 - p.cy;
-      const d = Math.hypot(dx, dy);
-      if (d > 190 || d < 1) continue;
-      e.hurt(2, this, p);
-      e.mx = clamp((e.mx || 0) + (dx / d) * 520, -700, 700);
-      e.my = clamp((e.my || 0) + (dy / d) * 360, -700, 700);
-      if (e.stagger) e.stagger(0.6);
-    }
-
-    if (this.boss && !this.boss.dead && dist(this.boss.cx, this.boss.cy, p.cx, p.cy) < 250) {
-      this.boss.takeDamage(3, this);
-      if (this.boss.stagger) this.boss.stagger(0.35, this);
-    }
-
-    FX.burst(p.cx, p.cy, 24, {
-      color: '#6dff9e', speedMax: 360, lifeMax: 0.6, sizeMax: 6, shape: 'line'
-    });
-    this.usedPulse = true;
   }
 
   onParry(p, perfect = false, chain = 1) {
@@ -1133,12 +1013,6 @@ class Game {
         }
         case 'parry':
           if (near && this.tutorialParries > 0) this.completeStation(s);
-          break;
-        case 'focus':
-          if (near && p.focus) this.completeStation(s);
-          break;
-        case 'dash_alt':
-          if (near && p.justDashed) this.completeStation(s);
           break;
       }
     }
@@ -1313,25 +1187,6 @@ class Game {
           : `PISTA ${clueId}/4 — PEGADA DE KENNEDITO`,
         '#b6ff9a', 2.8
       );
-    } else if (pickup.kind === 'power' && pickup.power) {
-      const info = POWER_INFO[pickup.power];
-      if (!this.powers.has(pickup.power)) {
-        this.powers.add(pickup.power);
-        this.persist();
-        this.toast(info.name + ' DESBLOQUEADO!', info.color, 3);
-        this.shake(0.4);
-        Sfx.tone(330, 0.16, { type: 'triangle', vol: 0.12 });
-        Sfx.tone(440, 0.16, { type: 'triangle', vol: 0.12, delay: 0.1 });
-        Sfx.tone(660, 0.3, { type: 'triangle', vol: 0.12, delay: 0.2 });
-        FX.burst(pickup.x, pickup.y, 30, {
-          color: info.color, speedMax: 300, lifeMax: 0.9, sizeMax: 6
-        });
-      } else {
-        p.energy = Math.min(p.maxEnergy, p.energy + 45);
-        this.toast('ENERGIA RECARREGADA', info.color, 1.6);
-        Sfx.tone(660, 0.14, { type: 'sine', vol: 0.08 });
-        FX.burst(pickup.x, pickup.y, 14, { color: info.color, speedMax: 160, lifeMax: 0.5 });
-      }
     }
   }
 
