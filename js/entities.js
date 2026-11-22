@@ -3456,9 +3456,16 @@ class Boss {
 
   begin(state, timer) {
     this.state = state;
-    // Fase 1: mais lenta e com mais tempo de reação; fase 2 em diante: bem mais rápida.
-    if (state === 'idle' || state === 'recover' || state === 'tele') {
-      const scale = this.phase === 1 ? 1.55 : this.phase === 2 ? 0.82 : 0.62;
+    // Pausas entre ataques: o chefe respira antes de voltar para a ofensiva.
+    // A fase 1 é bem lenta; as fases 2/3 aceleram, mas sem spam impossível de desviar.
+    if (state === 'idle') {
+      const scale = this.phase === 1 ? 1.3 : this.phase === 2 ? 1.0 : 0.88;
+      timer = Math.max(0.52, timer * scale);
+    } else if (state === 'recover') {
+      const scale = this.phase === 1 ? 1.15 : this.phase === 2 ? 1.0 : 0.9;
+      timer = Math.max(0.46, timer * scale);
+    } else if (state === 'tele') {
+      const scale = this.phase === 1 ? 1.12 : this.phase === 2 ? 0.95 : 0.88;
       timer *= scale;
     }
     this.timer = timer;
@@ -3510,7 +3517,7 @@ class Boss {
       laser: 0.72, meteor: 0.62, barrage: 0.34, orbit: 0.5,
       rush: 0.34, quake: 0.5, combo: 0.3
     }[attack] || 0.42;
-    return Math.max(0.16, base / (this.aggro * (1 + (this.phase - 1) * 0.18)));
+    return Math.max(0.3, base / (this.aggro * (1 + (this.phase - 1) * 0.1)));
   }
 
   update(dt, game) {
@@ -3556,7 +3563,7 @@ class Boss {
     if (this.phase === 1 && this.hp <= this.maxHp * 0.66) {
       this.phase = 2;
       this.speed *= 1.24;
-      this.timer = Math.min(this.timer, 0.32);
+      this.timer = Math.min(this.timer, 0.5);
       game.toast('FASE 2 — ' + this.cfg.name, this.color);
       game.shake(0.5);
       Sfx.tone(90, 0.5, { type: 'sawtooth', vol: 0.16, slide: 120 });
@@ -3566,7 +3573,7 @@ class Boss {
     if (this.phase === 2 && this.hp <= this.maxHp * 0.32) {
       this.phase = 3;
       this.speed *= 1.18;
-      this.timer = Math.min(this.timer, 0.28);
+      this.timer = Math.min(this.timer, 0.45);
       game.toast('FASE 3 — ' + (this.cfg.final ? 'SINAL VERMELHO' : this.cfg.name), '#ff5d7a');
       game.shake(0.7);
       Sfx.tone(80, 0.7, { type: 'sawtooth', vol: 0.18, slide: 180 });
@@ -3600,10 +3607,10 @@ class Boss {
     } else if (this.state === 'recover') {
       this.vx = approach(this.vx, 0, 2400 * dt);
       if (this.timer <= 0) {
-        if (this.phase >= 2 && Math.random() < 0.42) {
+        if (this.phase >= 2 && Math.random() < 0.16) {
           this.chooseAttack(game);
         } else {
-          this.begin('idle', rand(0.28, 0.62) / (this.aggro * (1 + (this.phase - 1) * 0.08)));
+          this.begin('idle', rand(0.6, 1.05) / (this.aggro * (1 + (this.phase - 1) * 0.05)));
         }
       }
     } else {
@@ -3648,7 +3655,7 @@ class Boss {
       if (this.barrageLeft > 0 && this.barrageTimer <= 0) {
         this.fireBarrage(game);
         this.barrageLeft--;
-        this.barrageTimer = this.phase === 3 ? 0.085 : 0.12;
+        this.barrageTimer = this.phase === 3 ? 0.12 : 0.16;
       }
       if (this.barrageLeft <= 0) this.begin('recover', 0.3);
     } else if (this.state === 'rush') {
@@ -3657,7 +3664,7 @@ class Boss {
         if (this.rushLeft > 0) {
           this.dir *= -1;
           this.vx = this.dir * (this.phase >= 3 ? 1020 : 900);
-          this.timer = 0.34;
+          this.timer = 0.44;
           game.shake(0.25);
           FX.burst(this.cx, this.cy, 14, {
             color: this.color, speedMax: 260, lifeMax: 0.4, shape: 'line',
